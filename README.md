@@ -6,10 +6,11 @@ search: domain-informed seeds and parent selection, local tree-edit mutation
 (deterministic rules + LLM-guided proposals), and a structure-aware coefficient
 optimizer that fits, simplifies, and scores each candidate.
 
-This repository is the **review snapshot** accompanying the paper
+This repository accompanies the paper
 *FunctionEvolve: Structure-Guided Symbolic Regression with LLMs*
-(`tex/neurips_2026.pdf`). It contains the implementation, run launchers, baselines,
-the raw per-run logs behind every reported number, and the curated result tables.
+([arXiv:2606.07704](https://arxiv.org/abs/2606.07704)). It contains the
+implementation, run launchers, baselines, the raw per-run logs behind every
+reported number, and the curated result tables.
 
 > Note: this is a curated snapshot for reviewers and readers. Large process
 > artifacts (per-run token CSVs, re-evaluation transcripts, hyper-parameter sweeps)
@@ -154,7 +155,6 @@ datasets/               # LLM-SRBench GT + AI-Feynman metadata and prep scripts
 logs/                   # raw per-run transcripts, one per task (see below)
 docs/results/           # final per-experiment result CSVs (see docs/results/README.md)
 docs/figures/ docs/tables/ docs/notes/   # paper figures, generated tables, analysis notes
-tex/neurips_2026.pdf    # the paper
 ```
 
 **Logs.** `logs/<dataset>/<experiment>/<model>/<task>.txt` is the full
