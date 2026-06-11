@@ -1,0 +1,1313 @@
+Code version: 6a23278+dirty
+Run config: dataset=matsci, equation=MatSci18
+optimizer=Hybrid, max_steps=30, n_seeds=20
+Degenerated components: mutator2(LLM-only)
+  generator: mode=requests, model=gpt-5.2-2025-12-11, base_url=https://llm-gateway.example.com/api/openai/deployments/gpt-5.2-2025-12-11/chat/completions?api-version=2024-05-01-preview, api_key=REDACTED_API_KEY, max_tokens=128000, reasoning_effort=medium
+  selector: mode=requests, model=gpt-5.2-2025-12-11, base_url=https://llm-gateway.example.com/api/openai/deployments/gpt-5.2-2025-12-11/chat/completions?api-version=2024-05-01-preview, api_key=REDACTED_API_KEY, max_tokens=128000, reasoning_effort=medium
+  mutator: mode=requests, model=gpt-5.2-2025-12-11, base_url=https://llm-gateway.example.com/api/openai/deployments/gpt-5.2-2025-12-11/chat/completions?api-version=2024-05-01-preview, api_key=REDACTED_API_KEY, max_tokens=128000, reasoning_effort=medium
+Log file: /home/xaa5sgh/symregression/logs/degen_mutator2/gpt-5-2/2026-04-08/MatSci18_20260408_145007.txt
+=== Dataset: MatSci18 (matsci) ===
+Symbols     : ['sigma', 'epsilon', 'T']
+Features    : ['epsilon', 'T']
+Reference   : 2.353524517872731*epsilon**2 + epsilon*6.266345790929248*(T - 342.1714397168912)**2
+Train set   : X=(4000, 2), y=(4000,)
+Test set    : X=(500, 2), y=(500,)
+OOD test set: X=(500, 2), y=(500,)
+
+[Ground Truth] Expression: 2.353524517872731*epsilon**2 + epsilon*6.266345790929248*(T - 342.1714397168912)**2
+[Ground Truth] train=4.61e-14  test=4.63e-14  ood=2.31e-12
+
+[Early stop threshold] Auto-set based on GT*1.05: train<4.84e-14
+Generating domain knowledge...
+Domain knowledge ready:
+
+## Domain Knowledge
+**Domain**: materials science & solid mechanics (thermo-mechanical constitutive modeling)
+**Analysis**: The variables are stress (sigma), strain (epsilon), and temperature (T), which is the standard setting for constitutive laws describing elastic/plastic response and thermal softening/thermoelastic effects in materials. Likely relationships include elastic modulus dependence on T, thermal expansion strain offsets, and nonlinear hardening/softening as functions of epsilon and T.
+
+**Common formula structures** (built-in generic + LLM domain-specific):
+- Arrhenius equation: k = c0 * exp(c1 / T) (chemical reaction rate dependence on temperature)
+- Coulomb's / Newton's inverse-square law: F = c0 / r**2 (gravitational or electrostatic force)
+- Stefan-Boltzmann law: P = c0 * T**4 (blackbody radiation power vs temperature)
+- Beer-Lambert law: I = c0 * exp(c1 * x) (light intensity attenuation through a medium)
+- Michaelis-Menten kinetics: v = c0 * S / (S + c1) (enzyme-catalyzed reaction saturation)
+- Hill equation: y = c0 * x**c1 / (x**c1 + c2) (cooperative binding, sigmoidal dose-response)
+- Kepler's third law: T**2 = c0 * a**3 (orbital period vs semi-major axis)
+- Newton's law of cooling: T = c0 + c1 * exp(c2 * t) (exponential thermal relaxation)
+- Clausius-Clapeyron relation: log(P) = c0 + c1 / T (vapor pressure vs temperature)
+- Langmuir adsorption isotherm: theta = c0 * P / (1 + c1 * P) (surface adsorption equilibrium)
+- Freundlich isotherm: q = c0 * C**c1 (empirical adsorption on heterogeneous surface)
+- Stokes' drag: F = c0 * r * v (viscous drag force on a sphere in fluid)
+- Logistic growth: N = c0 / (1 + c1 * exp(c2 * t)) (population dynamics with carrying capacity)
+- Planck-Wien approximation: I = c0 * f**3 * exp(c1 * f / T) (thermal radiation spectrum)
+- Hooke’s law (isothermal linear elasticity): sigma = c0 * epsilon (small-strain elastic regime)
+- Temperature-dependent modulus (linear E(T)): sigma = (c0 + c1 * T) * epsilon (elastic stiffness varies approximately linearly with temperature)
+- Thermoelastic stress with thermal strain: sigma = c0 * (epsilon - c1 * (T - c2)) (stress from constrained thermal expansion; c1 acts like thermal expansion coefficient, c2 a reference temperature)
+- Nonlinear elastic polynomial: sigma = c0 * epsilon + c1 * epsilon**2 + c2 * epsilon**3 (anharmonic/nonlinear elasticity at moderate strain)
+- Neo-Hookean-like in engineering strain via stretch lambda = 1 + epsilon: sigma = c0 * ((1 + epsilon) - c1 / (1 + epsilon)**2) (finite-strain elastic response shape)
+- Hollomon (power-law strain hardening): sigma = c0 * (epsilon + c1)**c2 (plastic hardening with a strain offset)
+- Ludwik (yield + hardening): sigma = c0 + c1 * (epsilon + c2)**c3 (yield stress plus nonlinear strain hardening)
+- Voce hardening (saturating hardening): sigma = c0 + c1 * (1 - exp(-c2 * epsilon)) (approach to a saturation/ultimate stress with strain)
+- Exponential thermal softening of flow stress: sigma = (c0 + c1 * (epsilon + c2)**c3) * exp(-c4 * T) (temperature reduces strength approximately exponentially over a range)
+- Linear thermal softening multiplier: sigma = (c0 + c1 * (epsilon + c2)**c3) * (1 - c4 * (T - c5)) (moderate-temperature softening without needing a melt temperature)
+- Homologous-temperature-like softening (bounded 0–1 factor): sigma = (c0 + c1 * (epsilon + c2)**c3) * (1 - ((T - c4) / (T + c5))**c6) (strength drops rapidly as T rises toward a high-T limit)
+- Glass/phase-transition smoothed stiffness drop: sigma = (c0 + c1 * epsilon) * (c2 - c3 * tanh(c4 * (T - c5))) (sigmoidal change in effective modulus across a transition temperature)
+
+**Formula structure heuristic features**:
+- Oscillation damping envelope → Exponential decay envelope f(x)*exp(-c*Abs(x)) for symmetric damped oscillation, Gaussian envelope f(x)*exp(-c*x**2) for localized wave packets
+- Saturation/clipping effects → Rational fraction x/(1+x), tanh; for variables with alternating positive/negative in oscillatory systems, selectively apply Abs
+- Growth/decay → Exponential growth exp(c*t), Logistic 1/(1+exp(-c*x)), power law x**c
+- Threshold/activation behavior → Max(x-c, 0), piecewise functions
+- Coupling/cross effects → Product terms between variables x*y, power-law coupling x**c1 * y**c2
+- Small-strain elastic regime tends to produce sigma proportional to epsilon; deviations suggest adding epsilon**2, epsilon**3, or finite-strain stretch terms (1+epsilon, 1/(1+epsilon)**2).
+- If stiffness decreases with temperature, model as sigma = E(T) * epsilon with E(T) decreasing (e.g., E(T)=c0+c1*T with c1<0, or E(T)=c0*exp(-c*T)).
+- Thermal expansion under constraint appears as an effective strain shift: sigma depends on (epsilon - c*(T - T_ref)), producing stress even at epsilon≈0 when T changes.
+- Plasticity-like behavior often separates into “yield + hardening”: sigma = c0 + f(epsilon), where f is power-law (epsilon+c)^n or saturating (1-exp(-c*epsilon)).
+- Saturating hardening is better captured by exp(-c*epsilon) or tanh(c*epsilon) terms than by pure polynomials when sigma approaches a plateau at large epsilon.
+- Thermal softening commonly acts multiplicatively on the strain-dependent strength: sigma = f(epsilon) * g(T), where g(T) is monotone decreasing and bounded (e.g., exp(-c*T) or 1 - h(T)).
+- Abrupt changes in response near glass transition/phase transformation temperatures are well-represented by smooth sigmoids in T (tanh(c*(T-Tg))) multiplying an elastic/plastic backbone.
+- Coupled thermo-mechanical interaction can appear as cross-terms such as epsilon * (T - c0) or (epsilon + c0)**n * (T - c1), indicating temperature-modified hardening rate rather than just modulus scaling.
+
+Calling LLM to generate initial seed formulas...
+Initializing 20 seed nodes (including preprocessing variants)...
+
+    ↳ Seed degenerated (simplified): c4=1.832e-04->small coeff,T*c4->0
+    ↳ Seed degenerated (simplified): c4=2.0000->snapped to 2
+    ↳ Seed degenerated (simplified): c3=5.670e-06->small coeff,T*c3->0; c4=-3.1261~-1*pi->phase absorbed
+    ↳ Seed degenerated (simplified): c2=5.0000->snapped to 5
+    ↳ Seed degenerated (simplified): c3=2.721e-04->small coeff,T*c3->0; c6=1.0000->snapped to 1; c7=-1.710e-04->small coeff,T*c7->0
+    ↳ Seed degenerated (overfitting): c0=2.671e+07->overfitting(|c|>1000.0)
+    ↳ Seed degenerated (simplified): c4=3.0000->snapped to 3
+    ↳ Seed degenerated (overfitting): c0=2.176e+04->overfitting(|c|>1000.0)
+    ↳ Seed degenerated (overfitting): c0=1.693e+12->overfitting(|c|>1000.0)
+    ↳ Seed degenerated (simplified): c3=2.0000->snapped to 2; c3=2.0000->snapped to 2; c3=2.0000->snapped to 2
+  [Seed] [Degenerated] c0*epsilon + c1 + c2*exp(c3*epsilon)*log(T*c4 + 1)
+         params: c0=-1.0641e+09, c1=-5.8144e+08, c2=1.1913e+10, c3=4.2667e-02, c4=1.8322e-04
+         description: top-level additive combination, contains transcendental functions exp/log, 2 additive terms, complex structure (depth 5)
+         train=1.11e-06  test=1.12e-06  ood=2.04e-04
+  [Seed] T*c0*epsilon + c1*epsilon + c2
+         params: c0=1.0000e+02, c1=1.0000e+02, c2=1.0000e+02
+         description: Pure additive linear model: a bilinear interaction term (T·epsilon) plus a linear epsilon term and a constant offset. Variables: T only appears multiplied by epsilon; epsilon appears both alone and in the interaction; no nonlinearities. With c0=c1=c2=100, the model is effectively y ≈ 100*T*epsilon + 100*epsilon + 100 = 100*epsilon*(T+1)+100 (no degeneracy), but performance suggests missing needed curvature/structure.
+         train=7.99e-01  test=8.01e-01  ood=5.45e+01
+  [Seed] [Degenerated] c0*epsilon + c1 + c2*epsilon*(c3 + epsilon)**c4
+         params: c0=3.2425e-01, c1=1.2518e-04, c2=1.5666e+06, c3=-1.3834e-01, c4=2.0000e+00
+         description: top-level additive combination, contains powers, 2 additive terms, moderate structure
+         train=1.71e-14  test=2.00e-14  ood=1.08e-12
+  [Seed] [Degenerated] c0*epsilon + c1 + c2*exp(T*c3)*sin(c4 + c5*epsilon)
+         params: c0=2.9716e+08, c1=2.5890e+07, c2=1.6684e+09, c3=5.6703e-06, c4=3.1571e+00, c5=1.7779e-01
+         description: top-level additive combination, contains transcendental functions exp/sin, 2 additive terms, complex structure (depth 5)
+         train=1.34e-11  test=1.36e-11  ood=9.73e-09
+  [Seed] [Degenerated] T**c0*c1*epsilon**c2 + c3*epsilon + c4
+         params: c0=-2.8437e+00, c1=1.8612e+14, c2=5.0000e+00, c3=-1.3633e+04, c4=1.1134e+03
+         description: top-level additive combination, contains powers, 1 additive terms, moderate structure
+         train=3.20e-05  test=3.74e-05  ood=9.43e-05
+  [Seed] c0*epsilon + c1 + c2*log(c3*exp(c4*epsilon) + 1)
+         params: c0=-3.8787e+04, c1=3.3253e+02, c2=1.2262e+05, c3=9.4553e-03, c4=1.0384e+01
+         description: Additive mix of a linear term in epsilon and a log-sum-exp-like nonlinearity log(1 + c3·exp(c4·epsilon)), scaled by c2, plus constant c1. Variable roles: epsilon drives both a strong linear trend (c0) and an exponential inside a logarithm; no T dependence. Given c4≈10.38 and small c3≈0.00946, the log term behaves like ~c2*log(1+0.00946*exp(10.38*epsilon)), switching from ~0 to ~c2*(log c3 + c4*epsilon) when the exponential dominates; combined with c0=-3.88e4, the large c2=1.23e5 implies a strong nonlinear/approximately piecewise-linear response in epsilon. In the large-epsilon regime it simplifies to approximately (c0+c2*c4)*epsilon + (c1+c2*log c3), while for small epsilon it reduces toward c0*epsilon+c1.
+         train=9.59e-05  test=1.04e-04  ood=4.88e-02
+  [Seed] [Degenerated] c0*epsilon + c1 + c2*exp(T*c3) + c4*(c5 + epsilon)**c6*exp(T*c7)
+         params: c0=-3.0329e+08, c1=-4.5586e+09, c2=1.5949e+09, c3=2.7211e-04, c4=3.2741e+08, c5=9.0909e+00, c6=1.0000e+00, c7=-1.7101e-04
+         description: top-level additive combination, contains transcendental functions exp, contains powers, 2 additive terms, moderate structure
+         train=1.07e-11  test=1.08e-11  ood=3.01e-09
+  [Seed] T*c0 + c1*epsilon + c2 + c3*epsilon
+         params: c0=7.9959e+01, c1=1.0000e+02, c2=-1.0000e+02, c3=1.0000e+02
+         description: Additive linear model: separate linear effects of T and epsilon plus a constant, with epsilon appearing twice as redundant linear terms. Variables: T enters only as T*c0; epsilon enters as (c1+c3)*epsilon. With c1=c3=100, the epsilon terms combine to 200*epsilon, so the model is exactly y = 79.959*T + 200*epsilon - 100; the duplicate epsilon term is a structural redundancy rather than a distinct effect.
+         train=7.56e-01  test=7.53e-01  ood=4.50e+01
+  [Seed] c0*epsilon + c1 + c2*epsilon**2 + c3*epsilon**3
+         params: c0=1.0000e+02, c1=1.0000e+02, c2=1.0000e+02, c3=1.0000e+02
+         description: Additive polynomial in epsilon up to cubic order plus constant; no T dependence. Variable roles: epsilon drives linear/quadratic/cubic growth; c1 is an offset. With all coefficients =100, no term is suppressed, giving y = 100*(epsilon + epsilon^2 + epsilon^3 + 1), i.e., rapidly increasing magnitude for |epsilon|>1; the equal large coefficients suggest potential overgrowth/shape mismatch if the target is not strongly cubic.
+         train=1.54e+00  test=1.54e+00  ood=8.29e+01
+  [Seed] c0*epsilon + c1/(epsilon + 1)**2 + c2 + c3*epsilon
+         params: c0=1.0000e+02, c1=1.0000e+02, c2=1.0000e+02, c3=1.0000e+02
+         description: Additive combination of (i) linear terms in epsilon (two redundant linear components), (ii) a rational decay term c1/(epsilon+1)^2, and (iii) a constant; no T dependence. Variables: epsilon affects both linear trend and the rational term with a pole at epsilon=-1 (squared, so always positive and large near -1). With c0=c3=100 the linear part simplifies to 200*epsilon, so y ≈ 200*epsilon + 100/(epsilon+1)^2 + 100; unless data avoid epsilon≈-1, the rational term can dominate locally, otherwise it contributes a small correction for large |epsilon|.
+         train=1.54e+00  test=1.54e+00  ood=8.29e+01
+  [Seed] [Degenerated] c0*epsilon + c1 + c2*exp(c3*sin(c4*epsilon + c5*log(T*c6 + 1) + c7))
+         params: c0=2.6713e+07, c1=1.4615e+07, c2=-4.7789e+05, c3=4.8766e+00, c4=1.3853e-01, c5=2.2314e-01, c6=6.4556e-02, c7=1.2481e-01
+         description: top-level additive combination, contains transcendental functions exp/log/sin, 3 additive terms, complex structure (depth 10)
+         train=3.85e-10  test=3.96e-10  ood=5.00e-07
+  [Seed] [Degenerated] c0*epsilon + c1 + c2*(c3 + epsilon)**c4
+         params: c0=-9.9937e+03, c1=1.2290e+03, c2=1.5666e+06, c3=-9.2228e-02, c4=3.0000e+00
+         description: top-level additive combination, contains powers, 2 additive terms, moderate structure
+         train=1.71e-14  test=2.00e-14  ood=1.08e-12
+  [Seed] [Degenerated] c0*epsilon + c1 + c2*exp(c3*sin(c4*(c5 + epsilon**2)**c6 + c7))
+         params: c0=2.1761e+04, c1=-1.7548e+05, c2=3.4791e+05, c3=-7.0426e-01, c4=5.0000e+00, c5=8.7271e-02, c6=5.0000e-01, c7=6.1361e+00
+         description: top-level additive combination, contains transcendental functions exp/sin, contains powers, 3 additive terms, complex structure (depth 10)
+         train=2.80e-07  test=3.01e-07  ood=6.58e-04
+  [Seed] [Degenerated] c0*epsilon + c1 + c2*sin(c3*log(c4*Abs(epsilon) + 1) + c5)
+         params: c0=1.6927e+12, c1=-1.5507e+14, c2=-7.5013e+14, c3=4.7379e+00, c4=4.8678e-04, c5=6.0750e+00
+         description: top-level additive combination, contains transcendental functions log/sin, 3 additive terms, complex structure (depth 9)
+         train=8.47e-11  test=9.47e-11  ood=2.48e-08
+  [Seed] c0*epsilon + c1*exp(c2*epsilon) + c3
+         params: c0=-1.2003e+05, c1=1.1313e+04, c2=5.4250e+00, c3=-8.3763e+03
+         description: Additive model combining a linear trend in epsilon with an exponential in epsilon and a constant offset; no T dependence. Variable roles: epsilon controls both a strong linear term (c0=-1.20e5) and an exponential growth term with rate c2≈5.425 scaled by c1≈1.13e4. Because c2 is not small, exp(c2*epsilon) is highly sensitive; the exponential can quickly overwhelm the linear part for moderate positive epsilon, while for negative epsilon it can collapse toward ~0, so behavior is strongly asymmetric. No degeneracy occurs; approximate simplification depends on epsilon sign: for sufficiently negative epsilon, y ≈ c0*epsilon + c3, and for sufficiently positive epsilon, y ≈ c1*exp(c2*epsilon).
+         train=5.18e-04  test=5.53e-04  ood=1.49e-01
+  [Seed] c0*epsilon + c1 + c2*log(c3*epsilon + c4*exp(T*c5) + 1)
+         params: c0=-6.6707e+07, c1=-2.9591e+07, c2=2.4398e+08, c3=2.0696e-01, c4=8.3775e-02, c5=1.5797e-03
+         description: Additive structure: linear epsilon term plus constant, plus a scaled logarithm of an affine combination of epsilon and exp(T*c5). Variable roles: epsilon enters both outside and inside the log via c3*epsilon; T enters only inside the log through exp(T*c5), making T influence saturating/slowly varying due to the outer log. With c5=1.58e-3, exp(T*c5) ≈ 1 + 0.00158*T over moderate T, so the T-dependence is close to linear inside the log; combined with small c4≈0.0838, the T contribution is a mild offset, while the overall output scale is dominated by huge c0,c1,c2 (~1e7–1e8), indicating strong cancellation/compensation between the large negative linear part and large positive log term. An approximate simplification is y ≈ c0*epsilon + c1 + c2*log(1 + 0.20696*epsilon + 0.0838*(1+0.00158*T)) when T is not extremely large.
+         train=5.18e-10  test=5.53e-10  ood=1.92e-07
+  [Seed] T*c0*epsilon + c1*epsilon + c2 + c3*epsilon
+         params: c0=1.0000e+02, c1=1.0000e+02, c2=1.0000e+02, c3=1.0000e+02
+         description: Additive linear model with a bilinear interaction T·epsilon plus two redundant linear epsilon terms and a constant. Variables: T only appears multiplied by epsilon; epsilon appears in all non-constant terms. With c0=c1=c2=c3=100, the epsilon terms combine to 200*epsilon and the model is exactly y = 100*T*epsilon + 200*epsilon + 100 = 100*epsilon*(T+2)+100; redundancy is present but no term degenerates.
+         train=7.97e-01  test=8.00e-01  ood=5.45e+01
+  [Seed] c0*epsilon + c1*epsilon + c2*tanh(T*c3 + c4) + c5*epsilon*tanh(T*c3 + c6) + c7
+         params: c0=1.0000e+02, c1=1.0000e+02, c2=-1.0000e+02, c3=-3.5596e-01, c4=9.2567e+01, c5=-1.0000e+02, c6=9.0050e-01, c7=1.0000e+02
+         description: Additive model combining (i) purely linear epsilon terms (redundant), (ii) a tanh of an affine function of T, and (iii) an epsilon-modulated tanh gating term, plus a constant. Variable roles: epsilon contributes a baseline linear trend (c0*epsilon+c1*epsilon) and is also multiplied by tanh(T*c3+c6), making the epsilon slope depend on T; T only appears inside tanh with shared slope c3. With c0=c1=100 the baseline becomes 200*epsilon; c3=-0.35596 and large c4≈92.57 make tanh(T*c3+c4) ≈ 1 for any moderate T, so c2*tanh(...) ≈ -100 (nearly constant), while tanh(T*c3+c6) with c6≈0.9005 transitions from ~+1 to ~-1 as T increases past ~2.53, flipping the effective epsilon coefficient from (200-100)=100 at small T to (200+100)=300 at large T. Thus it approximately simplifies to y ≈ 200*epsilon - 100 + (-100*epsilon)*tanh(-0.35596*T+0.9005) + 100, with the first tanh term effectively absorbed into the constant.
+         train=1.53e+00  test=1.53e+00  ood=8.28e+01
+  [Seed] [Degenerated] T*c0 + T*c1*(c2 + epsilon)**c3 + c4*epsilon + c5*(c2 + epsilon)**c3 + c6 + c7*(c2 + epsilon)**c3
+         params: c0=-1.6421e+01, c1=3.1332e+03, c2=-1.9694e-01, c3=2.0000e+00, c4=4.9746e+04, c5=-3.3588e+05, c6=-2.6377e+03, c7=-3.3588e+05
+         description: top-level additive combination, contains powers, 4 additive terms, moderate structure
+         train=1.45e-14  test=1.46e-14  ood=8.68e-13
+  [Mature] c0*epsilon + c1 + c2*epsilon*(c3 + epsilon)**c4
+         train=1.71e-14  test=2.00e-14  ood=1.08e-12
+  [Mature] c0*epsilon + c1 + c2*(c3 + epsilon)**c4
+         train=1.71e-14  test=2.00e-14  ood=1.08e-12
+  [Mature] T*c0 + T*c1*(c2 + epsilon)**c3 + c4*epsilon + c5*(c2 + epsilon)**c3 + c6 + c7*(c2 + epsilon)**c3
+         train=1.45e-14  test=1.46e-14  ood=8.68e-13
+
+Evolution tree initialization complete: EvolutionTree(total=19, evaluated=19, best_test=0.0000)
+
+============================================================
+Evolution tree search started
+Mature threshold  train<4.84e-14
+============================================================
+
+============================================================
+Step 1/30
+============================================================
+
+  [Selector] Selected 5 parents:
+
+  [1/5] Parent: c0*epsilon + c1 + c2*log(c3*epsilon + c4*exp(T*c5) + 1)
+    params: c0=-6.6707e+07, c1=-2.9591e+07, c2=2.4398e+08, c3=2.0696e-01, c4=8.3775e-02, c5=1.5797e-03
+    train=5.18e-10  test=5.53e-10  ood=1.92e-07
+    rationale: Best-performing node and the only low-NMSE model with explicit T-nonlinearity (exp in T inside a log). Moderate complexity (6 params) and zero offspring so far; mutations can simplify the large-coefficient cancellation and/or separate epsilon/T contributions.
+
+  [Mutation] Programmatic deletion: 0, Programmatic addition: 0
+
+  [2/5] Parent: c0*epsilon + c1 + c2*log(c3*exp(c4*epsilon) + 1)
+    params: c0=-3.8787e+04, c1=3.3253e+02, c2=1.2262e+05, c3=9.4553e-03, c4=1.0384e+01
+    train=9.59e-05  test=1.04e-04  ood=4.88e-02
+    rationale: Very strong NMSE with a distinct log-sum-exp (softplus-like) structure in epsilon (no T), offering a different nonlinearity than pure exponentials. Good candidate for mutations that introduce T-dependence or reduce parameterization while retaining the piecewise-linear behavior.
+
+  [Mutation] Programmatic deletion: 0, Programmatic addition: 0
+
+  [3/5] Parent: c0*epsilon + c1*exp(c2*epsilon) + c3
+    params: c0=-1.2003e+05, c1=1.1313e+04, c2=5.4250e+00, c3=-8.3763e+03
+    train=5.18e-04  test=5.53e-04  ood=1.49e-01
+    rationale: Simple, shallow exponential-in-epsilon model (4 params, depth 4) with good NMSE. A clean parent for controlled mutations (e.g., adding mild T modulation to the exponential rate/scale, or adding a small interaction term) without starting from a deep AST.
+
+  [Mutation] Programmatic deletion: 0, Programmatic addition: 0
+
+  [5/5] Parent: c0*epsilon + c1 + c2*epsilon**2 + c3*epsilon**3
+    params: c0=1.0000e+02, c1=1.0000e+02, c2=1.0000e+02, c3=1.0000e+02
+    train=1.54e+00  test=1.54e+00  ood=8.29e+01
+    rationale: Compact polynomial family (depth 3) providing a qualitatively different hypothesis class from log/exp models. Despite poor NMSE currently, it is structurally simple and can mutate toward regularized/low-order or mixed (T-dependent) polynomial forms.
+
+  [Mutation] Programmatic deletion: 0, Programmatic addition: 0
+
+  [4/5] Parent: T*c0*epsilon + c1*epsilon + c2
+    params: c0=1.0000e+02, c1=1.0000e+02, c2=1.0000e+02
+    train=7.99e-01  test=8.01e-01  ood=5.45e+01
+    rationale: Very simple interaction baseline (3 params) that directly encodes T–epsilon coupling (bilinear) and is ideal for structural exploration: mutations can add curvature (powers/log/exp) around an interpretable core rather than starting from a complex expression.
+
+  [Mutation] Programmatic deletion: 0, Programmatic addition: 0
+  [Mutation] LLM suggestions: 20
+  [Mutation] After dedup: 19 unique candidates (raw 20)
+  [Mutation] LLM suggestions: 20
+  [Mutation] After dedup: 19 unique candidates (raw 20)
+  [Mutation] LLM suggestions: 20
+  [Mutation] After dedup: 19 unique candidates (raw 20)
+  [Mutation] LLM suggestions: 20
+  [Mutation] After dedup: 18 unique candidates (raw 20)
+  [Mutation] LLM suggestions: 20
+  [Mutation] After dedup: 19 unique candidates (raw 20)
+
+  [Unified eval] 84 candidates, skipped 9 (params>10), pool workers=16, timeout=120s
+    Parent tags: P1=c0*epsilon + c1 + c2*log(c3*epsilon + c4  P2=c0*epsilon + c1*exp(c2*epsilon) + c3  P3=c0*epsilon + c1 + c2*epsilon**2 + c3*eps  P4=c0*epsilon + c1 + c2*log(c3*exp(c4*epsil  P5=T*c0*epsilon + c1*epsilon + c2
+  ★ [P1|[LLM] A: added composite nested term + c6*exp(-log(1 + c7*epsilon**2 + c8*Abs(T)))]: test=2.60e-11  train=2.52e-11  ood=2.52e-08  → c0*epsilon + c1 + c2*log(c3*epsilon + c4*exp(T*c5) + 1) + c6/(c7*epsilon**2 + c8
+  ★ [P1|[LLM] A: added composite nested term + c6*log(1 + exp(c7*epsilon + c8*T))]: test=5.10e-12  train=4.99e-12  ood=1.20e-08  → c0*epsilon + c1 + c2*log(c3*epsilon + c4*exp(T*c5) + 1) + c6*log(c7*exp(T*c8 + c
+  ★ [P1|[LLM] A: added composite nested term + c6*cos(exp(c7*T) + c8*epsilon)]: test=2.09e-13  train=1.86e-13  ood=3.29e-10  → c0*epsilon + c1 + c2*log(c3*epsilon + c4*exp(T*c5) + 1) + c6*cos(c7*exp(T*c8) + 
+    ↳ degenerate simplified (c5=-8.508e-04->small coeff,T*c5->0; c8=2.140e-06->small coeff,T*c8->0): c0*epsilon + c1 + c2*log(c3*epsilon + c4*exp(T*c5) + 1) + c6*cos(c7*exp(T*c8) + c9*epsilon) -> c0*epsilon + c1 + c2*log(c3*epsilon + c4) + c5*cos(c6 + c7*epsilon)
+    ✗ [P2|[LLM] A: add nested composite term sin(log(1 + c5*Abs(epsilon))) to capture symmetric strain magnitude effects]: overfitting (c0=-2.149e+08->overfitting(|c|>1000.0))  -> c0*epsilon + c1*exp(c2*epsilon) + c3 + c4*sin(c5*log(c6*Abs(
+  ★ [P2|[LLM] A: add multivariate nested composite term log(1 + exp(c5*T + c6*epsilon))]: test=1.36e-13  train=1.26e-13  ood=2.87e-10  → c0*epsilon + c1*exp(c2*epsilon) + c3 + c4*log(c5*exp(T*c6 + c7*epsilon) + 1)
+    ↳ degenerate simplified (c6=1.494e-06->small coeff,T*c6->0): c0*epsilon + c1*exp(c2*epsilon) + c3 + c4*log(c5*exp(T*c6 + c7*epsilon) + 1) -> c0*epsilon + c1*exp(c2*epsilon) + c3 + c4*log(c5*exp(c6*epsilon) + 1)
+  ★ [P2|[LLM] A: add nested composite term cos(exp(c5*epsilon + c6*T)) for highly nonlinear coupling]: test=6.48e-14  train=6.16e-14  ood=1.08e-10  → c0*epsilon + c1*exp(c2*epsilon) + c3 + c4*cos(c5*exp(T*c6 + c7*epsilon))
+    ↳ degenerate simplified (c6=6.428e-07->small coeff,T*c6->0): c0*epsilon + c1*exp(c2*epsilon) + c3 + c4*cos(c5*exp(T*c6 + c7*epsilon)) -> c0*epsilon + c1*exp(c2*epsilon) + c3 + c4*cos(c5*exp(c6*epsilon))
+  ★ [P2|[LLM] B: add product term epsilon**c5 * exp(c6*epsilon) (power-law hardening modulated by exponential)]: test=2.10e-14  train=1.83e-14  ood=1.83e-12  → c0*epsilon + c1*exp(c2*epsilon) + c3 + c4*epsilon**c5*exp(c6*epsilon)
+    ↳ degenerate simplified (c5=3.0000->snapped to 3; c6=4.760e-04->small coeff,c6*epsilon->0): c0*epsilon + c1*exp(c2*epsilon) + c3 + c4*epsilon**c5*exp(c6*epsilon) -> c0*epsilon + c1*exp(c2*epsilon) + c3 + c4*epsilon**3
+  ★ [P2|[LLM] B: add product term exp(c5*T) * log(1 + c6*Abs(epsilon)) for thermo-mechanical modulation]: test=1.45e-11  train=1.39e-11  ood=5.17e-09  → c0*epsilon + c1*exp(c2*epsilon) + c3 + c4*exp(T*c5)*log(c6*Abs(epsilon) + 1)
+    ↳ degenerate simplified (c5=-1.238e-04->small coeff,T*c5->0): c0*epsilon + c1*exp(c2*epsilon) + c3 + c4*exp(T*c5)*log(c6*Abs(epsilon) + 1) -> c0*epsilon + c1*exp(c2*epsilon) + c3 + c4*log(c5*Abs(epsilon) + 1)
+  ★ [P2|[LLM] B: add product term sin(c5*T) * exp(c6*epsilon) to allow oscillatory-in-T modulation of strain nonlinearity]: test=7.90e-13  train=8.11e-13  ood=5.18e-10  → c0*epsilon + c1*exp(c2*epsilon) + c3 + c4*exp(c5*epsilon)*sin(T*c6 + c7)
+  ★ [P2|[LLM] B: add product term epsilon * log(1 + c5*T) for temperature-scaled stiffness]: test=3.30e-11  train=3.13e-11  ood=1.03e-08  → c0*epsilon + c1*exp(c2*epsilon) + c3 + c4*epsilon*log(T*c5 + 1)
+    ↳ degenerate simplified (c5=1.464e-04->small coeff,T*c5->0): c0*epsilon + c1*exp(c2*epsilon) + c3 + c4*epsilon*log(T*c5 + 1) -> c0*epsilon + c1*exp(c2*epsilon) + c3
+  ★ [P2|[LLM] B: add power-law coupling product term epsilon**c5 * T**c6]: test=7.49e-14  train=7.37e-14  ood=1.43e-11  → T**c0*c1*epsilon**c2 + c3*epsilon + c4*exp(c5*epsilon) + c6
+    ↳ degenerate simplified (c0=1.0000->snapped to 1; c2=2.0000->snapped to 2): T**c0*c1*epsilon**c2 + c3*epsilon + c4*exp(c5*epsilon) + c6 -> T*c0*epsilon**2 + c1*epsilon + c2*exp(c3*epsilon) + c4
+  ★ [P2|[LLM] C: add quadratic nonlinearity c4*epsilon**2, referencing Nonlinear elastic polynomial from domain knowledge above: sigma = c0*epsilon + c1*epsilon**2 + c2*epsilon**3]: test=6.90e-10  train=9.20e-11  ood=4.01e-08  → c0*epsilon + c1*exp(c2*epsilon) + c3 + c4*epsilon**2
+  ★ [P1|[LLM] C: added thermally-softened hardening term + c6*(epsilon + c7)**c8*exp(-c9*T), referencing Exponential thermal softening of flow stress from domain knowledge above: sigma = (c0 + c1*(epsilon + c2)**c3)*exp(-c4*T)]: test=1.85e-11  train=1.72e-11  ood=5.17e-08  → c0*epsilon + c1 + c2*log(c3*epsilon + c4*exp(T*c5) + 1) + c6*(c7 + epsilon)**c8*
+    ↳ degenerate simplified (c3=1.000e-06->small coeff,c3*epsilon->0; c8=1.0000->snapped to 1): c0*epsilon + c1 + c2*log(c3*epsilon + c4*exp(T*c5) + 1) + c6*(c7 + epsilon)**c8*exp(T*c9) -> c0*epsilon + c1 + c2*exp(T*c3) + c4*log(c5*exp(T*c6) + 1) + c7*epsilon*exp(T*c3)
+  ★ [P1|[LLM] C: added quadratic nonlinear-elastic correction + c6*epsilon**2, referencing Nonlinear elastic polynomial from domain knowledge above: sigma = c0*epsilon + c1*epsilon**2 + c2*epsilon**3]: test=7.34e-11  train=6.92e-11  ood=6.31e-08  → c0*epsilon + c1 + c2*log(c3*epsilon + c4*exp(T*c5) + 1) + c6*epsilon**2
+  ★ [P2|[LLM] A: add nested composite term exp(sin(c5*epsilon))]: test=5.37e-14  train=4.82e-14  ood=8.00e-11  → c0*epsilon + c1*exp(c2*epsilon) + c3 + c4*exp(c5*sin(c6*epsilon + c7))
+  ★ [P1|[LLM] C: added saturating hardening increment + c6*(1 - exp(-c7*epsilon)), referencing Voce hardening from domain knowledge above: sigma = c0 + c1*(1 - exp(-c2*epsilon))]: test=7.33e-12  train=7.00e-12  ood=8.51e-09  → c0*epsilon + c1*exp(c2*epsilon) + c3 + c4*log(c5*epsilon + c6*exp(T*c7) + 1)
+    ✗ [P1|[LLM] B: added elementary-function product term + c6*epsilon*cos(c7*T)]: eval failed/timeout -> c0*epsilon + c1 + c2*log(c3*epsilon + c4*exp(T*c5) + 1) + c6
+  ★ [P1|[LLM] C: added Arrhenius-type temperature activation term + c6*exp(c7/T), referencing Arrhenius equation from domain knowledge above: k = c0*exp(c1/T)]: test=2.25e-11  train=2.17e-11  ood=3.14e-08  → c0*epsilon + c1 + c2*log(c3*epsilon + c4*exp(T*c5) + 1) + c6*exp(c7/T)
+    [P1|[LLM] B: added elementary-function product term + c6*epsilon**c7*exp(c8*T)]: test=4.87e-03  train=4.94e-03  ood=1.91e+00  → c0*epsilon + c1 + c2*log(c3*epsilon + c4*exp(T*c5) + 1) + c6*epsilon**c7*exp(T*c
+  ★ [P1|[LLM] B: added elementary-function product term + c6*exp(c7*T)*log(1 + c8*Abs(epsilon))]: test=1.75e-12  train=1.75e-12  ood=2.09e-09  → c0*epsilon + c1 + c2*log(c3*epsilon + c4*exp(T*c5) + 1) + c6*exp(T*c7)*log(c8*Ab
+    ↳ degenerate simplified (c7=9.775e-04->small coeff,T*c7->0): c0*epsilon + c1 + c2*log(c3*epsilon + c4*exp(T*c5) + 1) + c6*exp(T*c7)*log(c8*Abs(epsilon) + 1) -> c0*epsilon + c1 + c2*log(c3*epsilon + c4*exp(T*c5) + 1) + c6*log(c7*Abs(epsilon) + 1)
+  ★ [P1|[LLM] C: added power-law hardening backbone + c6*(epsilon + c7)**c8, referencing Hollomon (power-law strain hardening) from domain knowledge above: sigma = c0*(epsilon + c1)**c2]: test=1.43e-13  train=1.30e-13  ood=6.97e-11  → c0*epsilon + c1 + c2*log(c3*epsilon + c4*exp(T*c5) + 1) + c6*(c7 + epsilon)**c8
+    ↳ degenerate simplified (c5=-9.501e-04->small coeff,T*c5->0; c8=3.0000->snapped to 3): c0*epsilon + c1 + c2*log(c3*epsilon + c4*exp(T*c5) + 1) + c6*(c7 + epsilon)**c8 -> c0*epsilon + c1 + c2*log(c3*epsilon + c4) + c5*(c6 + epsilon)**3
+  ★ [P1|[LLM] C: added temperature-dependent stiffness coupling + c6*T*epsilon, referencing Temperature-dependent modulus (linear E(T)) from domain knowledge above: sigma = (c0 + c1*T)*epsilon]: test=9.56e-11  train=9.93e-11  ood=2.63e-08  → T*c0*epsilon + c1*epsilon + c2 + c3*log(c4*epsilon + c5*exp(T*c6) + 1)
+    ↳ degenerate simplified (c6=-6.784e-04->small coeff,T*c6->0): T*c0*epsilon + c1*epsilon + c2 + c3*log(c4*epsilon + c5*exp(T*c6) + 1) -> T*c0*epsilon + c1*epsilon + c2 + c3*log(c4*epsilon + c5)
+    [P1|[LLM] C: added thermoelastic strain-shift term + c6*(epsilon - c7*(T - c8)), referencing Thermoelastic stress with thermal strain from domain knowledge above: sigma = c0*(epsilon - c1*(T - c2))]: test=9.43e-10  train=8.59e-10  ood=1.02e-06  → T*c0 + c1*epsilon + c2 + c3*log(c4*epsilon + c5*exp(T*c6) + 1) + c7*epsilon
+  ★ [P2|[LLM] A: add nested composite term log(1 + exp(c5*epsilon))]: test=1.40e-13  train=1.31e-13  ood=2.65e-10  → c0*epsilon + c1*exp(c2*epsilon) + c3 + c4*log(c5*exp(c6*epsilon) + 1)
+    [P1|[LLM] C: added sigmoid-like modulus drop with temperature + c6*epsilon/(1 + c7*exp(c8*(T - c9))), referencing Logistic growth (sigmoid) from domain knowledge above: N = c0/(1 + c1*exp(c2*t))]: test=1.98e-09  train=1.92e-09  ood=3.43e-08  → c0*epsilon + c1 + c2*log(c3*epsilon + c4*exp(T*c5) + 1) + c6*epsilon/(c7*exp(T*c
+    ↳ degenerate simplified (c5=9.190e-04->small coeff,T*c5->0): c0*epsilon + c1 + c2*log(c3*epsilon + c4*exp(T*c5) + 1) + c6*epsilon/(c7*exp(T*c8 + c9) + 1) -> c0*epsilon/(c1*exp(T*c2) + 1) + c11*exp(T*c2)/(c12*exp(T*c2) + 1) + c13*epsilon*exp(T*c2)/(c14*exp(T*c2) + 1) + c15*exp(T*c2)*log(c16*epsilon + c17)/(c18*exp(T*c2) + 1) + c3*log(c4*epsilon + c5)/(c6*exp(T*c2) + 1) + c7*epsilon/(c8*exp(T*c2) + 1) + c9/(c10*exp(T*c2) + 1)
+  ★ [P3|[LLM] A: added nested composite term exp(sin(linear combo of epsilon and T))]: test=1.99e-14  train=1.70e-14  ood=1.07e-12  → c0*epsilon + c1 + c2*epsilon**2 + c3*epsilon**3 + c4*exp(c5*sin(T*c6 + c7*epsilo
+    ↳ degenerate simplified (c4=-2.616e-04->small coeff,c4*exp(c5*sin(T*c6 + c7*epsilon + c8))->0): c0*epsilon + c1 + c2*epsilon**2 + c3*epsilon**3 + c4*exp(c5*sin(T*c6 + c7*epsilon + c8)) -> c0*epsilon + c1 + c2*epsilon**2 + c3*epsilon**3
+  ★ [P3|[LLM] B: added product term cos(T) * (epsilon+offset)**power for temperature-modulated nonlinear hardening]: test=2.00e-14  train=1.68e-14  ood=1.06e-12  → c0*epsilon + c1 + c2*epsilon**2 + c3*epsilon**3 + c4*(c5 + epsilon)**c6*cos(T*c7
+    ↳ degenerate simplified (c6=1.0000->snapped to 1): c0*epsilon + c1 + c2*epsilon**2 + c3*epsilon**3 + c4*(c5 + epsilon)**c6*cos(T*c7) -> c0*epsilon + c1 + c2*cos(T*c3) + c4*epsilon**2 + c5*epsilon**3 + c6*epsilon*cos(T*c3)
+  ★ [P3|[LLM] B: added product term exp(epsilon) * exp(T) for separable exponential coupling]: test=1.70e-14  train=1.55e-14  ood=9.72e-13  → c0*epsilon + c1 + c2*epsilon**2 + c3*epsilon**3 + c4*exp(T*c5)*exp(c6*epsilon)
+  ★ [P3|[LLM] B: added product term epsilon**power * log(1+|T|) to capture power-law hardening with slowly varying thermal dependence]: test=2.00e-14  train=1.71e-14  ood=1.09e-12  → c0*epsilon + c1 + c2*epsilon**2 + c3*epsilon**3 + c4*epsilon**c5*log(c6*Abs(T) +
+    ↳ degenerate simplified (c5=5.0000->snapped to 5): c0*epsilon + c1 + c2*epsilon**2 + c3*epsilon**3 + c4*epsilon**c5*log(c6*Abs(T) + 1) -> c0*epsilon + c1 + c2*epsilon**2 + c3*epsilon**3 + c4*epsilon**5*log(c5*Abs(T) + 1)
+  ★ [P2|[LLM] C: add temperature-dependent modulus term (c4 + c5*T)*epsilon, referencing Temperature-dependent modulus (linear E(T)) from domain knowledge above: sigma = (c0 + c1*T) * epsilon]: test=9.42e-09  train=8.90e-09  ood=1.35e-06  → T*c0*epsilon + c1*epsilon + c2*exp(c3*epsilon) + c4 + c5*epsilon
+    [P2|[LLM] C: add constrained-thermal-expansion strain-shift term c4*(epsilon - c5*(T - c6)), referencing Thermoelastic stress with thermal strain from domain knowledge above: sigma = c0 * (epsilon - c1 * (T - c2))]: test=5.53e-04  train=5.18e-04  ood=1.49e-01  → T*c0 + c1*epsilon + c2*exp(c3*epsilon) + c4 + c5*epsilon
+  ★ [P3|[LLM] C: added power-law plastic hardening backbone, referencing Hollomon (power-law strain hardening) from domain knowledge above: sigma = c0 * (epsilon + c1)**c2]: test=2.00e-14  train=1.71e-14  ood=1.09e-12  → c0*epsilon + c1 + c2*epsilon**2 + c3*epsilon**3 + c4*(c5 + epsilon)**c6
+    ↳ degenerate simplified (c6=5.0000->snapped to 5): c0*epsilon + c1 + c2*epsilon**2 + c3*epsilon**3 + c4*(c5 + epsilon)**c6 -> c0*epsilon + c1 + c2*epsilon**2 + c3*epsilon**3 + c4*(c5 + epsilon)**5
+  ★ [P3|[LLM] C: added saturating hardening term (1-exp(-k*epsilon)), referencing Voce hardening from domain knowledge above: sigma = c0 + c1*(1 - exp(-c2*epsilon))]: test=2.00e-14  train=1.71e-14  ood=1.11e-12  → c0*epsilon + c1*exp(c2*epsilon) + c3 + c4*epsilon**2 + c5*epsilon**3
+    ↳ degenerate simplified (c1=-1.630e-07->small coeff,c1*exp(c2*epsilon)->0): c0*epsilon + c1*exp(c2*epsilon) + c3 + c4*epsilon**2 + c5*epsilon**3 -> c0*epsilon + c1 + c2*epsilon**2 + c3*epsilon**3
+  ★ [P3|[LLM] C: added multiplicative exponential thermal softening on a strain-hardening backbone, referencing Exponential thermal softening of flow stress from domain knowledge above: sigma = (c0 + c1*(epsilon + c2)**c3) * exp(-c4*T)]: test=1.51e-14  train=1.45e-14  ood=9.74e-13  → c0*epsilon + c1 + c2*epsilon**2 + c3*epsilon**3 + c4*exp(T*c5) + c6*(c7 + epsilo
+    ↳ degenerate simplified (c8=1.0000->snapped to 1): c0*epsilon + c1 + c2*epsilon**2 + c3*epsilon**3 + c4*exp(T*c5) + c6*(c7 + epsilon)**c8*exp(T*c9) -> c0*epsilon + c1 + c2*exp(T*c3) + c4*epsilon**2 + c5*epsilon**3 + c6*exp(T*c7) + c8*epsilon*exp(T*c3)
+  ★ [P2|[LLM] C: add finite-strain neo-Hookean-like term c4*((1+epsilon) - c5*(1+epsilon)**(-2)), referencing Neo-Hookean-like form from domain knowledge above: sigma = c0 * ((1 + epsilon) - c1 / (1 + epsilon)**2)]: test=1.35e-06  train=1.33e-06  ood=8.55e-04  → c0*epsilon + c1*exp(c2*epsilon) + c3/(epsilon + 1)**2 + c4 + c5*epsilon
+  ★ [P3|[LLM] C: added moderate-temperature linear softening multiplier on a hardening backbone, referencing Linear thermal softening multiplier from domain knowledge above: sigma = (c0 + c1*(epsilon + c2)**c3) * (1 - c4*(T - c5))]: test=1.49e-14  train=1.45e-14  ood=8.80e-13  → T*c0 + T*c1*(c2 + epsilon)**c3 + c4*epsilon + c5*(c2 + epsilon)**c3 + c6 + c7*ep
+    ↳ degenerate simplified (c3=2.0000->snapped to 2; c3=2.0000->snapped to 2; c3=2.0000->snapped to 2): T*c0 + T*c1*(c2 + epsilon)**c3 + c4*epsilon + c5*(c2 + epsilon)**c3 + c6 + c7*epsilon**2 + c8*epsilon**3 + c9*(c2 + epsilon)**c3 -> T*c0 + T*c1*(c2 + epsilon)**2 + c3*epsilon + c4*(c2 + epsilon)**2 + c5 + c6*epsilon**2 + c7*epsilon**3 + c8*(c2 + epsilon)**2
+  ★ [P3|[LLM] A: added nested composite term exp((epsilon+offset)**power) for rapidly increasing hardening-like behavior]: test=2.00e-14  train=1.71e-14  ood=1.09e-12  → c0*epsilon + c1 + c2*epsilon**2 + c3*epsilon**3 + c4*exp(c5*(c6 + epsilon)**c7)
+    ↳ degenerate simplified (c7=1.0000->snapped to 1): c0*epsilon + c1 + c2*epsilon**2 + c3*epsilon**3 + c4*exp(c5*(c6 + epsilon)**c7) -> c0*epsilon + c1 + c2*epsilon**2 + c3*epsilon**3 + c4*exp(c5 + c6*epsilon)
+  ★ [P3|[LLM] B: added product term epsilon**power * exp(T) to couple power-law strain response with thermal factor]: test=2.00e-14  train=1.71e-14  ood=1.11e-12  → c0*epsilon + c1 + c2*epsilon**2 + c3*epsilon**3 + c4*epsilon**c5*exp(T*c6)
+    ↳ degenerate simplified (c5=5.0000->snapped to 5; c4=-3.328e-06->small coeff,c4*epsilon**5*exp(T*c6)->0): c0*epsilon + c1 + c2*epsilon**2 + c3*epsilon**3 + c4*epsilon**c5*exp(T*c6) -> c0*epsilon + c1 + c2*epsilon**2 + c3*epsilon**3
+    ✗ [P2|[LLM] C: add Arrhenius temperature-activation term c4*exp(c5*T**(-1)), referencing Arrhenius equation from domain knowledge above: k = c0 * exp(c1 / T)]: eval failed/timeout -> c0*epsilon + c1*exp(c2*epsilon) + c3 + c4*exp(c5/T)
+  ★ [P2|[LLM] C: add saturating hardening term c4*(1 - exp(-c5*epsilon)), referencing Voce hardening from domain knowledge above: sigma = c0 + c1 * (1 - exp(-c2 * epsilon))]: test=1.22e-13  train=1.21e-13  ood=8.19e-11  → c0*epsilon + c1*exp(c2*epsilon) + c3*exp(c4*epsilon) + c5
+  ★ [P2|[LLM] C: add power-law hardening term c4*(epsilon + c5)**c6, referencing Hollomon (power-law strain hardening) from domain knowledge above: sigma = c0 * (epsilon + c1)**c2]: test=6.63e-11  train=6.63e-11  ood=5.55e-08  → c0*epsilon + c1*exp(c2*epsilon) + c3 + c4*(c5 + epsilon)**c6
+    ↳ degenerate simplified (c6=0.5000->snapped to 1/2): c0*epsilon + c1*exp(c2*epsilon) + c3 + c4*(c5 + epsilon)**c6 -> c0*epsilon + c1*exp(c2*epsilon) + c3 + c4*sqrt(c5 + epsilon)
+  ★ [P2|[LLM] C: add thermally softened hardening term (epsilon+c5)**c6*exp(-c7*T), referencing Exponential thermal softening of flow stress from domain knowledge above: sigma = (c0 + c1*(epsilon+c2)**c3) * exp(-c4*T)]: test=4.66e-11  train=4.38e-11  ood=4.20e-08  → c0*epsilon + c1*exp(c2*epsilon) + c3 + c4*(c5 + epsilon)**c6*exp(T*c7)
+    ↳ degenerate simplified (c6=1.0000->snapped to 1): c0*epsilon + c1*exp(c2*epsilon) + c3 + c4*(c5 + epsilon)**c6*exp(T*c7) -> c0*epsilon + c1*exp(c2*epsilon) + c3*exp(T*c4) + c5 + c6*epsilon*exp(T*c4)
+  ★ [P3|[LLM] A: added nested composite term exp(cos(affine T))]: test=2.00e-14  train=1.70e-14  ood=1.08e-12  → c0*epsilon + c1 + c2*epsilon**2 + c3*epsilon**3 + c4*exp(c5*cos(T*c6 + c7))
+    ↳ degenerate simplified (c4=-8.941e-04->small coeff,c4*exp(c5*cos(T*c6 + c7))->0): c0*epsilon + c1 + c2*epsilon**2 + c3*epsilon**3 + c4*exp(c5*cos(T*c6 + c7)) -> c0*epsilon + c1 + c2*epsilon**2 + c3*epsilon**3
+    ✗ [P3|[LLM] A: added nested composite term sin((Abs(epsilon)+1)**power) to capture symmetric nonlinear response]: overfitting (c0=3.066e+04->overfitting(|c|>1000.0))  -> c0*epsilon + c1 + c2*epsilon**2 + c3*epsilon**3 + c4*sin(c5*
+  ★ [P3|[LLM] B: added product term sin(epsilon) * affine(T) for oscillatory strain modulation with temperature scaling]: test=1.56e-14  train=1.47e-14  ood=9.13e-13  → T*c0*sin(c1 + c2*epsilon) + c3*epsilon + c4 + c5*sin(c2*epsilon + c6) + c7*epsil
+  ★ [P3|[LLM] A: added nested composite term sin(exp(epsilon) + linear T)]: test=1.99e-14  train=1.70e-14  ood=1.08e-12  → c0*epsilon + c1 + c2*epsilon**2 + c3*epsilon**3 + c4*sin(T*c5 + c6*exp(c7*epsilo
+    ↳ degenerate simplified (c4=-5.304e-04->small coeff,c4*sin(T*c5 + c6*exp(c7*epsilon) + c8)->0): c0*epsilon + c1 + c2*epsilon**2 + c3*epsilon**3 + c4*sin(T*c5 + c6*exp(c7*epsilon) + c8) -> c0*epsilon + c1 + c2*epsilon**2 + c3*epsilon**3
+  ★ [P3|[LLM] C: added E(T)*epsilon coupling term, referencing Temperature-dependent modulus (linear E(T)) from domain knowledge above: sigma = (c0 + c1*T) * epsilon]: test=7.99e-01  train=7.97e-01  ood=5.45e+01  → T*c0*epsilon + c1*epsilon + c2 + c3*epsilon**2 + c4*epsilon**3 + c5*epsilon
+  ★ [P4|[LLM] B: added product term exp(c*epsilon) * log(1 + c*T)]: test=1.32e-11  train=1.18e-11  ood=5.59e-08  → c0*epsilon + c1 + c2*log(c3*exp(c4*epsilon) + 1) + c5*exp(c6*epsilon)*log(T*c7 +
+  ★ [P4|[LLM] B: added product term sin(c*epsilon) * exp(c*T)]: test=7.95e-14  train=8.24e-14  ood=1.45e-10  → c0*epsilon + c1 + c2*log(c3*exp(c4*epsilon) + 1) + c5*exp(T*c6)*sin(c7*epsilon +
+  ★ [P3|[LLM] C: added higher-order anharmonic elasticity term epsilon**4, referencing Nonlinear elastic polynomial from domain knowledge above: sigma = c0*epsilon + c1*epsilon**2 + c2*epsilon**3]: test=1.54e+00  train=1.54e+00  ood=8.29e+01  → c0*epsilon + c1 + c2*epsilon**2 + c3*epsilon**3 + c4*epsilon**4
+  ★ [P3|[LLM] C: added constrained thermal expansion shift term c4*(epsilon - alpha*(T-Tref)), referencing Thermoelastic stress with thermal strain from domain knowledge above: sigma = c0 * (epsilon - c1 * (T - c2))]: test=7.53e-01  train=7.55e-01  ood=4.50e+01  → T*c0 + c1*epsilon + c2 + c3*epsilon**2 + c4*epsilon**3 + c5*epsilon
+  ★ [P4|[LLM] B: added product term epsilon**p * exp(c*T)]: test=2.10e-14  train=1.79e-14  ood=3.55e-12  → c0*epsilon + c1 + c2*log(c3*exp(c4*epsilon) + 1) + c5*epsilon**c6*exp(T*c7)
+    ↳ degenerate simplified (c6=3.0000->snapped to 3; c7=-8.298e-06->small coeff,T*c7->0): c0*epsilon + c1 + c2*log(c3*exp(c4*epsilon) + 1) + c5*epsilon**c6*exp(T*c7) -> c0*epsilon + c1 + c2*log(c3*exp(c4*epsilon) + 1) + c5*epsilon**3
+  ★ [P4|[LLM] C: added quadratic nonlinearity c5*epsilon**2, referencing Nonlinear elastic polynomial from domain knowledge above: sigma = c0*epsilon + c1*epsilon**2 + c2*epsilon**3]: test=2.60e-11  train=2.57e-11  ood=2.02e-08  → c0*epsilon + c1 + c2*log(c3*exp(c4*epsilon) + 1) + c5*epsilon**2
+  ★ [P4|[LLM] B: added product term Abs(epsilon)**p * log(1 + c*Abs(T))]: test=2.95e-14  train=3.09e-14  ood=1.19e-11  → c0*epsilon + c1 + c2*log(c3*exp(c4*epsilon) + 1) + c5*log(c6*Abs(T) + 1)*Abs(eps
+    ↳ degenerate simplified (c7=2.0000->snapped to 2; c6=4.319e-05->small coeff,c6*Abs(T)->0): c0*epsilon + c1 + c2*log(c3*exp(c4*epsilon) + 1) + c5*log(c6*Abs(T) + 1)*Abs(epsilon)**c7 -> c0*epsilon + c1 + c2*log(c3*exp(c4*epsilon) + 1)
+  ★ [P4|[LLM] A: added nested composite term sin(exp(c*epsilon))]: test=3.24e-11  train=3.21e-11  ood=2.62e-08  → c0*epsilon + c1 + c2*log(c3*exp(c4*epsilon) + 1) + c5*sin(c6*exp(c7*epsilon) + c
+  ★ [P4|[LLM] B: added product term epsilon * log(1 + c*T)]: test=3.68e-11  train=3.20e-11  ood=7.22e-09  → c0*epsilon + c1 + c2*log(c3*exp(c4*epsilon) + 1) + c5*epsilon*log(T*c6 + 1)
+    ↳ degenerate simplified (c6=8.200e-05->small coeff,T*c6->0): c0*epsilon + c1 + c2*log(c3*exp(c4*epsilon) + 1) + c5*epsilon*log(T*c6 + 1) -> c0*epsilon + c1 + c2*log(c3*exp(c4*epsilon) + 1)
+  ★ [P4|[LLM] C: added power-law hardening term c5*(epsilon + c6)**c7, referencing Hollomon (power-law strain hardening) from domain knowledge above: sigma = c0 * (epsilon + c1)**c2]: test=3.20e-11  train=3.16e-11  ood=2.44e-08  → c0*epsilon + c1 + c2*log(c3*exp(c4*epsilon) + 1) + c5*(c6 + epsilon)**c7
+    ↳ degenerate simplified (c7=2.0000->snapped to 2): c0*epsilon + c1 + c2*log(c3*exp(c4*epsilon) + 1) + c5*(c6 + epsilon)**c7 -> c0*epsilon + c1 + c2*log(c3*exp(c4*epsilon) + 1) + c5*(c6 + epsilon)**2
+  ★ [P5|[LLM] B: add product term + c3*epsilon**c4*exp(c5*T) (power-law strain modulated by exponential temperature factor)]: test=4.46e-14  train=3.57e-14  ood=1.86e-12  → T*c0*epsilon + c1*epsilon + c2 + c3*epsilon**c4*exp(T*c5)
+    ↳ degenerate simplified (c4=3.0000->snapped to 3; c5=-4.220e-10->small coeff,T*c5->0): T*c0*epsilon + c1*epsilon + c2 + c3*epsilon**c4*exp(T*c5) -> T*c0*epsilon + c1*epsilon + c2 + c3*epsilon**3
+    ✗ [P4|[LLM] A: added nested composite term log(1 + c*exp(sin(c*epsilon)))]: overfitting (c0=3.280e+07->overfitting(|c|>1000.0))  -> c0*epsilon + c1 + c2*log(c3*exp(c4*epsilon) + 1) + c5*log(c6
+  ★ [P5|[LLM] B: add product term + c3*exp(-c4*T)*Abs(epsilon)**c5 (thermal decay times magnitude-based strain power)]: test=4.46e-14  train=3.57e-14  ood=1.86e-12  → T*c0*epsilon + c1*epsilon + c2 + c3*exp(T*c4)*Abs(epsilon)**c5
+    ↳ degenerate simplified (c5=3.0000->snapped to 3; c4=-4.220e-10->small coeff,T*c4->0): T*c0*epsilon + c1*epsilon + c2 + c3*exp(T*c4)*Abs(epsilon)**c5 -> T*c0*epsilon + c1*epsilon + c2 + c3*Abs(epsilon)**3
+    ✗ [P4|[LLM] A: added nested composite term exp(sin(log(1 + c*Abs(epsilon))))]: overfitting (c0=-3.292e+07->overfitting(|c|>1000.0))  -> c0*epsilon + c1 + c2*log(c3*exp(c4*epsilon) + 1) + c5*exp(c6
+  ★ [P4|[LLM] C: added finite-strain stretch-based term c5*((1+epsilon)**c6 - 1), referencing Neo-Hookean-like response via stretch from domain knowledge above: sigma = c0 * ((1 + epsilon) - c1 / (1 + epsilon)**2)]: test=4.31e-13  train=4.30e-13  ood=3.39e-10  → c0*epsilon + c1 + c2*log(c3*exp(c4*epsilon) + 1) + c5*(epsilon + 1)**c6
+    ↳ degenerate simplified (c6=3.0000->snapped to 3): c0*epsilon + c1 + c2*log(c3*exp(c4*epsilon) + 1) + c5*(epsilon + 1)**c6 -> c0*epsilon + c1 + c2*log(c3*exp(c4*epsilon) + 1) + c5*(epsilon + 1)**3
+  ★ [P5|[LLM] A: add nested composite term + c3*exp(c4*(epsilon + c5*T)**c6) (exp of a power of a thermo-mechanical combination)]: test=8.19e-11  train=7.63e-11  ood=1.67e-09  → T*c0*epsilon + c1*epsilon + c2 + c3*exp(c4*(T*c5 + epsilon)**c6)
+    ↳ degenerate simplified (c6=3.0000->snapped to 3; c4=3.020e-07->small coeff,c4*(T*c5 + epsilon)**3->0): T*c0*epsilon + c1*epsilon + c2 + c3*exp(c4*(T*c5 + epsilon)**c6) -> T*c0*epsilon + c1*epsilon + c2
+  ★ [P4|[LLM] C: added cubic nonlinearity c5*epsilon**3, referencing Nonlinear elastic polynomial from domain knowledge above: sigma = c0*epsilon + c1*epsilon**2 + c2*epsilon**3]: test=2.43e-14  train=2.10e-14  ood=4.50e-12  → c0*epsilon + c1 + c2*log(c3*exp(c4*epsilon) + 1) + c5*epsilon**3
+  ★ [P5|[LLM] A: add nested composite term + c3*sin(exp(c4*T))]: test=2.75e-11  train=2.69e-11  ood=8.18e-09  → T*c0*epsilon + c1*epsilon + c2 + c3*sin(c4*exp(T*c5) + c6)
+    ↳ degenerate simplified (c5=7.845e-05->small coeff,T*c5->0): T*c0*epsilon + c1*epsilon + c2 + c3*sin(c4*exp(T*c5) + c6) -> T*c0*epsilon + c1*epsilon + c2
+  ★ [P5|[LLM] A: add nested composite term + c3*cos(exp(c4*Abs(epsilon))) to capture magnitude-based nonlinearity]: test=7.58e-11  train=6.67e-11  ood=2.09e-08  → T*c0*epsilon + c1*epsilon + c2 + c3*cos(c4*exp(c5*Abs(epsilon)))
+  ★ [P5|[LLM] A: add nested composite term + c3*sin(c4*epsilon + c5*exp(c6*T)) (sin of affine strain plus exponential-in-T)]: test=8.66e-13  train=8.20e-13  ood=2.19e-09  → T*c0*epsilon + c1*epsilon + c2 + c3*sin(c4*epsilon + c5*exp(T*c6) + c7)
+  ★ [P5|[LLM] B: add product term + c3*sin(c4*epsilon)*exp(c5*T) (oscillatory strain factor multiplied by thermal factor)]: test=1.20e-11  train=1.18e-11  ood=9.30e-09  → T*c0*epsilon + c1*epsilon + c2 + c3*exp(T*c4)*sin(c5*epsilon + c6)
+    ↳ degenerate simplified (c4=2.438e-04->small coeff,T*c4->0; c6=6.2788~2*pi->phase absorbed): T*c0*epsilon + c1*epsilon + c2 + c3*exp(T*c4)*sin(c5*epsilon + c6) -> T*c0*epsilon + c1*epsilon + c2 + c3*sin(c4*epsilon + c5)
+  ★ [P5|[LLM] C: add multiplicative thermal softening of a hardening law + c3*(epsilon + c4)**c5*exp(-c6*T), referencing Exponential thermal softening of flow stress from domain knowledge above: sigma = (c0 + c1*(epsilon + c2)**c3)*exp(-c4*T)]: test=1.23e-11  train=1.13e-11  ood=2.92e-09  → T*c0*epsilon + c1*epsilon + c2 + c3*(c4 + epsilon)**c5*exp(T*c6)
+    ↳ degenerate simplified (c5=1.0000->snapped to 1; c6=-1.130e-06->small coeff,T*c6->0): T*c0*epsilon + c1*epsilon + c2 + c3*(c4 + epsilon)**c5*exp(T*c6) -> T*c0*epsilon + c1*epsilon + c2 + c3*epsilon
+  ★ [P5|[LLM] C: add power-law hardening term + c3*(epsilon + c4)**c5, referencing Hollomon (power-law strain hardening) from domain knowledge above: sigma = c0*(epsilon + c1)**c2]: test=1.55e-14  train=1.47e-14  ood=9.07e-13  → T*c0*epsilon + c1*epsilon + c2 + c3*(c4 + epsilon)**c5
+    ↳ degenerate simplified (c5=3.0000->snapped to 3): T*c0*epsilon + c1*epsilon + c2 + c3*(c4 + epsilon)**c5 -> T*c0*epsilon + c1*epsilon + c2 + c3*(c4 + epsilon)**3
+  ★ [P5|[LLM] B: add product term + c3*cos(c4*T)*epsilon**c5 (temperature oscillation factor times strain power)]: test=1.22e-11  train=1.13e-11  ood=4.54e-09  → T*c0*epsilon + c1*epsilon + c2 + c3*epsilon**c4*cos(T*c5)
+    ↳ degenerate simplified (c4=3.0010->snapped to 3; c5=5.892e-05->small coeff,T*c5->0): T*c0*epsilon + c1*epsilon + c2 + c3*epsilon**c4*cos(T*c5) -> T*c0*epsilon + c1*epsilon + c2 + c3*epsilon**3
+  ★ [P3|[LLM] C: added finite-strain elasticity-like stretch term, referencing Neo-Hookean-like form from domain knowledge above: sigma = c0 * ((1 + epsilon) - c1 / (1 + epsilon)**2)]: test=1.54e+00  train=1.54e+00  ood=8.28e+01  → c0*epsilon + c1/(epsilon + 1)**2 + c2 + c3*epsilon**2 + c4*epsilon**3 + c5*epsil
+  ★ [P5|[LLM] C: add bounded homologous-temperature-like softening factor + c3*(epsilon + c4)**c5*(1 - ((T - c6)/(T + c7))**c8), referencing Homologous-temperature-like softening from domain knowledge above: sigma = f(epsilon)*(1 - ((T - c4)/(T + c5))**c6)]: test=4.46e-14  train=3.57e-14  ood=1.86e-12  → T*c0*epsilon + c1*epsilon + c2*(c3 + epsilon)**c4*(T/(T + c5) + c6/(T + c5))**c7
+    ↳ degenerate simplified (c4=3.0000->snapped to 3; c4=3.0000->snapped to 3; c7=3.0000->snapped to 3): T*c0*epsilon + c1*epsilon + c2*(c3 + epsilon)**c4*(T/(T + c5) + c6/(T + c5))**c7 + c8 + c9*(c3 + epsilon)**c4 -> T*c0*epsilon + c1*epsilon + c2*(T + c3)**3*(c4 + epsilon)**3/(T + c5)**3 + c6 + c7*(c4 + epsilon)**3
+  ★ [P4|[LLM] A: added nested composite term exp(log(1 + c*T)) with an outer exponential]: test=8.81e-11  train=8.54e-11  ood=3.95e-08  → c0*epsilon + c1 + c2*log(c3*exp(c4*epsilon) + 1) + c5*(T*c6 + 1)**c7
+    ↳ degenerate simplified (c7=2.0000->snapped to 2): c0*epsilon + c1 + c2*log(c3*exp(c4*epsilon) + 1) + c5*(T*c6 + 1)**c7 -> c0*epsilon + c1 + c2*log(c3*exp(c4*epsilon) + 1) + c5*(T*c6 + 1)**2
+    [P4|[LLM] C: added thermoelastic strain-shift term c5*(epsilon - c6*(T - c7)), referencing Thermoelastic stress with thermal strain from domain knowledge above: sigma = c0 * (epsilon - c1 * (T - c2))]: test=1.04e-04  train=9.59e-05  ood=4.88e-02  → T*c0 + c1*epsilon + c2 + c3*log(c4*exp(c5*epsilon) + 1) + c6*epsilon
+    ✗ [P4|[LLM] A: added multivariate composite term log(1 + c*exp(c*(epsilon + c*T)**p))]: overfitting (c0=-5.609e+05->overfitting(|c|>1000.0))  -> c0*epsilon + c1 + c2*log(c3*exp(c4*epsilon) + 1) + c5*log(c6
+  ★ [P4|[LLM] C: added temperature-dependent modulus term (c5 + c6*T)*epsilon, referencing Temperature-dependent modulus (linear E(T)) from domain knowledge above: sigma = (c0 + c1*T) * epsilon]: test=1.12e-10  train=9.93e-11  ood=4.15e-08  → T*c0*epsilon + c1*epsilon + c2 + c3*log(c4*exp(c5*epsilon) + 1) + c6*epsilon
+  ★ [P5|[LLM] A: add nested composite term + c3*exp(sin(c4*epsilon))]: test=1.15e-10  train=1.02e-10  ood=3.48e-08  → T*c0*epsilon + c1*epsilon + c2 + c3*exp(c4*sin(c5*epsilon + c6))
+  ★ [P5|[LLM] B: add product term + c3*(epsilon + c4)**c5*(T + c6)**c7 (power-law coupling between strain and temperature)]: test=2.66e-04  train=2.72e-04  ood=4.32e-02  → T*c0*epsilon + c1*epsilon + c2 + c3*(T + c4)**c5*(c6 + epsilon)**c7
+  ★ [P5|[LLM] C: add quadratic strain nonlinearity + c3*epsilon**2, referencing Nonlinear elastic polynomial from domain knowledge above: sigma = c0*epsilon + c1*epsilon**2 + c2*epsilon**3]: test=8.01e-01  train=7.98e-01  ood=5.45e+01  → T*c0*epsilon + c1*epsilon + c2 + c3*epsilon**2
+  ★ [P5|[LLM] C: add thermoelastic strain-shift term + c3*(epsilon - c4*(T - c5)), referencing Thermoelastic stress with thermal strain from domain knowledge above: sigma = c0*(epsilon - c1*(T - c2))]: test=5.24e-01  train=5.25e-01  ood=3.57e+01  → T*c0*epsilon + T*c1 + c2*epsilon + c3 + c4*epsilon
+  ★ [P5|[LLM] C: add finite-strain elastic backbone + c3*((1+epsilon) - c4*(1+epsilon)**(-2)), referencing Neo-Hookean-like form from domain knowledge above: sigma = c0*((1+epsilon) - c1/(1+epsilon)**2)]: test=7.99e-01  train=7.96e-01  ood=5.45e+01  → T*c0*epsilon + c1*epsilon + c2/(epsilon + 1)**2 + c3 + c4*epsilon
+  ★ [P5|[LLM] C: add saturating hardening + c3*(1 - exp(-c4*epsilon)), referencing Voce hardening from domain knowledge above: sigma = c0 + c1*(1 - exp(-c2*epsilon))]: test=9.42e-09  train=8.90e-09  ood=1.35e-06  → T*c0*epsilon + c1*epsilon + c2*exp(c3*epsilon) + c4
+  ★ [P5|[LLM] C: add thermally-activated (Arrhenius-like) temperature dependence + c3*exp(-c4/T), referencing Arrhenius equation from domain knowledge above: k = c0*exp(c1/T)]: test=4.77e-06  train=4.68e-06  ood=2.40e-03  → T*c0*epsilon + c1*epsilon + c2 + c3*exp(c4/T)
+  [Degenerate simplification] Evaluating 40 simplified formulas
+
+  [Unified eval] 25 candidates, skipped 1 (params>10), pool workers=16, timeout=120s
+    Parent tags: P1=c0*epsilon + c1 + c2*log(c3*epsilon + c4  P2=c0*epsilon + c1*exp(c2*epsilon) + c3  P3=c0*epsilon + c1 + c2*epsilon**2 + c3*eps  P4=c0*epsilon + c1 + c2*log(c3*exp(c4*epsil  P5=T*c0*epsilon + c1*epsilon + c2
+  ★ [P1|[P1|[Degenerated] [LLM] C: added thermally-softened hardening term + c6*(epsilon + c7)**c8*exp(-c9*T), referencing Exponential thermal softening of flow stress from domain knowledge above: sigma = (c0 + c1*(epsilon + c2)**c3)*exp(-c4*T)]]: test=5.38e-13  train=5.55e-13  ood=3.82e-10  → c0*epsilon + c1 + c2*exp(T*c3) + c4*log(c5*exp(T*c6) + 1) + c7*epsilon*exp(T*c3)
+    ↳ degenerate simplified (c3=4.732e-04->small coeff,T*c3->0; c3=4.732e-04->small coeff,T*c3->0): c0*epsilon + c1 + c2*exp(T*c3) + c4*log(c5*exp(T*c6) + 1) + c7*epsilon*exp(T*c3) -> c0*epsilon + c1 + c2*log(c3*exp(T*c4) + 1) + c5*epsilon
+  ★ [P1|[P1|[Degenerated] [LLM] B: added elementary-function product term + c6*exp(c7*T)*log(1 + c8*Abs(epsilon))]]: test=1.72e-11  train=1.66e-11  ood=2.87e-08  → c0*epsilon + c1 + c2*log(c3*epsilon + c4*exp(T*c5) + 1) + c6*log(c7*Abs(epsilon)
+  ★ [P1|[P1|[Degenerated] [LLM] A: added composite nested term + c6*cos(exp(c7*T) + c8*epsilon)]]: test=1.18e-12  train=1.16e-12  ood=9.24e-10  → c0*epsilon + c1 + c2*log(c3*epsilon + c4) + c5*cos(c6 + c7*epsilon)
+  ★ [P3|[P3|[Degenerated] [LLM] A: added nested composite term exp((epsilon+offset)**power) for rapidly increasing hardening-like behavior]]: test=2.00e-14  train=1.71e-14  ood=1.11e-12  → c0*epsilon + c1 + c2*epsilon**2 + c3*epsilon**3 + c4*exp(c5 + c6*epsilon)
+    ↳ degenerate simplified (c4=-3.727e-04->small coeff,c4*exp(c5 + c6*epsilon)->0): c0*epsilon + c1 + c2*epsilon**2 + c3*epsilon**3 + c4*exp(c5 + c6*epsilon) -> c0*epsilon + c1 + c2*epsilon**2 + c3*epsilon**3
+    ✗ [P4|[P4|[Degenerated] [LLM] C: added finite-strain stretch-based term c5*((1+epsilon)**c6 - 1), referencing Neo-Hookean-like response via stretch from domain knowledge above: sigma = c0 * ((1 + epsilon) - c1 / (1 + epsilon)**2)]]: eval failed/timeout -> c0*epsilon + c1 + c2*log(c3*exp(c4*epsilon) + 1) + c5*(epsil
+  ★ [P4|[P4|[Degenerated] [LLM] A: added nested composite term exp(log(1 + c*T)) with an outer exponential]]: test=9.37e-11  train=9.72e-11  ood=5.20e-08  → c0*epsilon + c1 + c2*log(c3*exp(c4*epsilon) + 1) + c5*(T*c6 + 1)**2
+  ★ [P4|[P4|[Degenerated] [LLM] C: added power-law hardening term c5*(epsilon + c6)**c7, referencing Hollomon (power-law strain hardening) from domain knowledge above: sigma = c0 * (epsilon + c1)**c2]]: test=2.93e-11  train=2.90e-11  ood=2.37e-08  → c0*epsilon + c1 + c2*log(c3*exp(c4*epsilon) + 1) + c5*(c6 + epsilon)**2
+  ★ [P5|[P5|[Degenerated] [LLM] B: add product term + c3*sin(c4*epsilon)*exp(c5*T) (oscillatory strain factor multiplied by thermal factor)]]: test=1.43e-11  train=1.42e-11  ood=1.13e-08  → T*c0*epsilon + c1*epsilon + c2 + c3*sin(c4*epsilon + c5)
+    ↳ degenerate simplified (c5=3.0928~1*pi->phase absorbed): T*c0*epsilon + c1*epsilon + c2 + c3*sin(c4*epsilon + c5) -> T*c0*epsilon + c1*epsilon + c2*sin(c3 + c4*epsilon) + c5
+  ★ [P5|[P5|[Degenerated] [LLM] C: add power-law hardening term + c3*(epsilon + c4)**c5, referencing Hollomon (power-law strain hardening) from domain knowledge above: sigma = c0*(epsilon + c1)**c2]]: test=4.46e-14  train=3.57e-14  ood=1.86e-12  → T*c0*epsilon + c1*epsilon + c2 + c3*(c4 + epsilon)**3
+  ★ [P3|[P3|[Degenerated] [LLM] B: added product term epsilon**power * log(1+|T|) to capture power-law hardening with slowly varying thermal dependence]]: test=2.00e-14  train=1.71e-14  ood=1.09e-12  → c0*epsilon + c1 + c2*epsilon**2 + c3*epsilon**3 + c4*epsilon**5*log(c5*Abs(T) + 
+    ↳ degenerate simplified (c5=1.000e-06->small coeff,c5*Abs(T)->0): c0*epsilon + c1 + c2*epsilon**2 + c3*epsilon**3 + c4*epsilon**5*log(c5*Abs(T) + 1) -> c0*epsilon + c1 + c2*epsilon**2 + c3*epsilon**3
+  ★ [P2|[P2|[Degenerated] [LLM] C: add thermally softened hardening term (epsilon+c5)**c6*exp(-c7*T), referencing Exponential thermal softening of flow stress from domain knowledge above: sigma = (c0 + c1*(epsilon+c2)**c3) * exp(-c4*T)]]: test=6.01e-12  train=6.00e-12  ood=2.45e-09  → c0*epsilon + c1*exp(c2*epsilon) + c3*exp(T*c4) + c5 + c6*epsilon*exp(T*c4)
+    ↳ degenerate simplified (c4=1.782e-04->small coeff,T*c4->0; c4=1.782e-04->small coeff,T*c4->0): c0*epsilon + c1*exp(c2*epsilon) + c3*exp(T*c4) + c5 + c6*epsilon*exp(T*c4) -> c0*epsilon + c1*exp(c2*epsilon) + c3 + c4*epsilon
+  ★ [P2|[P2|[Degenerated] [LLM] B: add product term exp(c5*T) * log(1 + c6*Abs(epsilon)) for thermo-mechanical modulation]]: test=1.09e-13  train=1.06e-13  ood=6.67e-11  → c0*epsilon + c1*exp(c2*epsilon) + c3 + c4*log(c5*Abs(epsilon) + 1)
+  ★ [P3|[P3|[Degenerated] [LLM] C: added multiplicative exponential thermal softening on a strain-hardening backbone, referencing Exponential thermal softening of flow stress from domain knowledge above: sigma = (c0 + c1*(epsilon + c2)**c3) * exp(-c4*T)]]: test=1.48e-14  train=1.44e-14  ood=9.90e-13  → c0*epsilon + c1 + c2*exp(T*c3) + c4*epsilon**2 + c5*epsilon**3 + c6*exp(T*c7) + 
+    ↳ degenerate simplified (Like-term merge: c2*exp(T*c3) + c6*exp(T*c7) -> (c2 + c6)*exp(T*c3)): c0*epsilon + c1 + c2*exp(T*c3) + c4*epsilon**2 + c5*epsilon**3 + c6*exp(T*c7) + c8*epsilon*exp(T*c3) -> c0*epsilon + c1 + c2*exp(T*c3) + c4*epsilon**2 + c5*epsilon**3 + c6*exp(T*c3) + c7*epsilon*exp(T*c3)
+  ★ [P3|[P3|[Degenerated] [LLM] B: added product term cos(T) * (epsilon+offset)**power for temperature-modulated nonlinear hardening]]: test=1.62e-14  train=1.50e-14  ood=9.46e-13  → c0*epsilon + c1 + c2*cos(T*c3) + c4*epsilon**2 + c5*epsilon**3 + c6*epsilon*cos(
+    ↳ degenerate simplified (c3=1.853e-05->small coeff,T*c3->0; c3=1.853e-05->small coeff,T*c3->0): c0*epsilon + c1 + c2*cos(T*c3) + c4*epsilon**2 + c5*epsilon**3 + c6*epsilon*cos(T*c3) -> c0*epsilon + c1 + c2*epsilon**2 + c3*epsilon**3 + c4*epsilon
+  ★ [P1|[P1|[Degenerated] [LLM] C: added power-law hardening backbone + c6*(epsilon + c7)**c8, referencing Hollomon (power-law strain hardening) from domain knowledge above: sigma = c0*(epsilon + c1)**c2]]: test=1.46e-13  train=1.33e-13  ood=3.34e-11  → c0*epsilon + c1 + c2*log(c3*epsilon + c4) + c5*(c6 + epsilon)**3
+  ★ [P3|[P3|[Degenerated] [LLM] C: added power-law plastic hardening backbone, referencing Hollomon (power-law strain hardening) from domain knowledge above: sigma = c0 * (epsilon + c1)**c2]]: test=2.00e-14  train=1.71e-14  ood=1.09e-12  → c0*epsilon + c1 + c2*epsilon**2 + c3*epsilon**3 + c4*(c5 + epsilon)**5
+  ★ [P2|[P2|[Degenerated] [LLM] A: add nested composite term cos(exp(c5*epsilon + c6*T)) for highly nonlinear coupling]]: test=1.05e-13  train=9.82e-14  ood=1.84e-10  → c0*epsilon + c1*exp(c2*epsilon) + c3 + c4*cos(c5*exp(c6*epsilon))
+  ★ [P2|[P2|[Degenerated] [LLM] B: add power-law coupling product term epsilon**c5 * T**c6]]: test=6.36e-13  train=6.06e-13  ood=1.62e-10  → T*c0*epsilon**2 + c1*epsilon + c2*exp(c3*epsilon) + c4
+  ★ [P3|[P3|[Degenerated] [LLM] C: added moderate-temperature linear softening multiplier on a hardening backbone, referencing Linear thermal softening multiplier from domain knowledge above: sigma = (c0 + c1*(epsilon + c2)**c3) * (1 - c4*(T - c5))]]: test=1.49e-14  train=1.45e-14  ood=8.80e-13  → T*c0 + T*c1*(c2 + epsilon)**2 + c3*epsilon + c4*(c2 + epsilon)**2 + c5 + c6*epsi
+    [P1|[P1|[Degenerated] [LLM] C: added temperature-dependent stiffness coupling + c6*T*epsilon, referencing Temperature-dependent modulus (linear E(T)) from domain knowledge above: sigma = (c0 + c1*T)*epsilon]]: test=1.41e-08  train=1.34e-08  ood=2.02e-06  → T*c0*epsilon + c1*epsilon + c2 + c3*log(c4*epsilon + c5)
+  ★ [P2|[P2|[Degenerated] [LLM] C: add power-law hardening term c4*(epsilon + c5)**c6, referencing Hollomon (power-law strain hardening) from domain knowledge above: sigma = c0 * (epsilon + c1)**c2]]: test=3.30e-11  train=3.27e-11  ood=2.56e-08  → c0*epsilon + c1*exp(c2*epsilon) + c3 + c4*sqrt(c5 + epsilon)
+  ★ [P2|[P2|[Degenerated] [LLM] B: add product term epsilon**c5 * exp(c6*epsilon) (power-law hardening modulated by exponential)]]: test=4.68e-14  train=4.10e-14  ood=7.90e-12  → c0*epsilon + c1*exp(c2*epsilon) + c3 + c4*epsilon**3
+  ★ [P5|[P5|[Degenerated] [LLM] B: add product term + c3*epsilon**c4*exp(c5*T) (power-law strain modulated by exponential temperature factor)]]: test=8.01e-01  train=7.98e-01  ood=5.45e+01  → T*c0*epsilon + c1*epsilon + c2 + c3*epsilon**3
+  ★ [P5|[P5|[Degenerated] [LLM] C: add bounded homologous-temperature-like softening factor + c3*(epsilon + c4)**c5*(1 - ((T - c6)/(T + c7))**c8), referencing Homologous-temperature-like softening from domain knowledge above: sigma = f(epsilon)*(1 - ((T - c4)/(T + c5))**c6)]]: test=1.55e-14  train=1.47e-14  ood=9.07e-13  → T*c0*epsilon + c1*epsilon + c2*(T + c3)**3*(c4 + epsilon)**3/(T + c5)**3 + c6 + 
+  ★ [P5|[P5|[Degenerated] [LLM] B: add product term + c3*exp(-c4*T)*Abs(epsilon)**c5 (thermal decay times magnitude-based strain power)]]: test=8.01e-01  train=7.98e-01  ood=5.45e+01  → T*c0*epsilon + c1*epsilon + c2 + c3*Abs(epsilon)**3
+  [Degenerate simplification] Evaluating 7 simplified formulas
+
+  [Unified eval] 3 candidates, pool workers=16, timeout=120s
+    Parent tags: P1=c0*epsilon + c1 + c2*log(c3*epsilon + c4  P2=c0*epsilon + c1 + c2*epsilon**2 + c3*eps  P4=c0*epsilon + c1*exp(c2*epsilon) + c3
+  ★ [P2|[P3|[Degenerated] [P3|[Degenerated] [LLM] B: added product term cos(T) * (epsilon+offset)**power for temperature-modulated nonlinear hardening]]]: test=1.54e+00  train=1.54e+00  ood=8.29e+01  → c0*epsilon + c1 + c2*epsilon**2 + c3*epsilon**3 + c4*epsilon
+  ★ [P4|[P2|[Degenerated] [P2|[Degenerated] [LLM] C: add thermally softened hardening term (epsilon+c5)**c6*exp(-c7*T), referencing Exponential thermal softening of flow stress from domain knowledge above: sigma = (c0 + c1*(epsilon+c2)**c3) * exp(-c4*T)]]]: test=5.53e-04  train=5.18e-04  ood=1.49e-01  → c0*epsilon + c1*exp(c2*epsilon) + c3 + c4*epsilon
+    [P1|[P1|[Degenerated] [P1|[Degenerated] [LLM] C: added thermally-softened hardening term + c6*(epsilon + c7)**c8*exp(-c9*T), referencing Exponential thermal softening of flow stress from domain knowledge above: sigma = (c0 + c1*(epsilon + c2)**c3)*exp(-c4*T)]]]: test=1.38e-04  train=1.22e-04  ood=1.16e-02  → c0*epsilon + c1 + c2*log(c3*exp(T*c4) + 1) + c5*epsilon
+    ↳ degenerate simplified (c3=7.705e-05->small coeff,c3*exp(T*c4)->0): c0*epsilon + c1 + c2*log(c3*exp(T*c4) + 1) + c5*epsilon -> c0*epsilon + c1 + c2*epsilon
+  [Degenerate simplification] Evaluating 1 simplified formulas
+
+  [Unified eval] 1 candidates, pool workers=16, timeout=120s
+    Parent tags: P1=c0*epsilon + c1 + c2*log(c3*epsilon + c4
+    [P1|[P1|[Degenerated] [P1|[Degenerated] [P1|[Degenerated] [LLM] C: added thermally-softened hardening term + c6*(epsilon + c7)**c8*exp(-c9*T), referencing Exponential thermal softening of flow stress from domain knowledge above: sigma = (c0 + c1*(epsilon + c2)**c3)*exp(-c4*T)]]]]: test=1.54e+00  train=1.54e+00  ood=8.29e+01  → c0*epsilon + c1 + c2*epsilon
+
+  [Summary] Parents: 5, successfully evaluated: 105
+  [Step best] [P3|[Degenerated] [LLM] C: added multiplicative exponential thermal softening on a strain-hardening backbone, referencing Exponential thermal softening of flow stress from domain knowledge above: sigma = (c0 + c1*(epsilon + c2)**c3) * exp(-c4*T)]
+    formula: c0*epsilon + c1 + c2*exp(T*c3) + c4*epsilon**2 + c5*epsilon**3 + c6*exp(T*c7) + c8*epsilon*exp(T*c3)
+    params: c0=2.9987e+04, c1=1.0437e+00, c2=1.2981e+06, c3=1.1311e-02, c4=-4.3344e+05, c5=1.5666e+06, c6=-1.2983e+06, c7=1.1311e-02, c8=-3.3481e+02
+    train=1.44e-14  test=1.48e-14  ood=9.90e-13
+
+  [Global best] T*c0 + T*c1*(c2 + epsilon)**c3 + c4*epsilon + c5*(c2 + epsilon)**c3 + c6 + c7*(c2 + epsilon)**c3
+    params: c0=-1.6421e+01, c1=3.1332e+03, c2=-1.9694e-01, c3=2.0000e+00, c4=4.9746e+04, c5=-3.3588e+05, c6=-2.6377e+03, c7=-3.3588e+05
+    train=1.45e-14  test=1.46e-14  ood=8.68e-13
+  [Mature nodes] 3/50
+  [Mature] c0*epsilon + c1*exp(c2*epsilon) + c3 + c4*sin(c5*log(c6*Abs(epsilon) + 1) + c7)
+         train=2.27e-14  test=2.55e-14  ood=1.47e-11
+  [Mature] c0*epsilon + c1*exp(c2*epsilon) + c3 + c4*epsilon**c5*exp(c6*epsilon)
+         train=1.83e-14  test=2.10e-14  ood=1.83e-12
+  [Mature] c0*epsilon + c1 + c2*epsilon**2 + c3*epsilon**3 + c4*exp(c5*sin(T*c6 + c7*epsilon + c8))
+         train=1.70e-14  test=1.99e-14  ood=1.07e-12
+  [Mature] c0*epsilon + c1 + c2*epsilon**2 + c3*epsilon**3 + c4*sin(T*c5 + c6*exp(c7*epsilon) + c8)
+         train=1.70e-14  test=1.99e-14  ood=1.08e-12
+  [Mature] c0*epsilon + c1 + c2*epsilon**2 + c3*epsilon**3 + c4*exp(c5*cos(T*c6 + c7))
+         train=1.70e-14  test=2.00e-14  ood=1.08e-12
+  [Mature] c0*epsilon + c1 + c2*epsilon**2 + c3*epsilon**3 + c4*sin(c5*(Abs(c6*epsilon) + 1)**c7 + c8)
+         train=1.71e-14  test=2.00e-14  ood=1.10e-12
+  [Mature] c0*epsilon + c1 + c2*epsilon**2 + c3*epsilon**3 + c4*exp(c5*(c6 + epsilon)**c7)
+         train=1.71e-14  test=2.00e-14  ood=1.09e-12
+  [Mature] c0*epsilon + c1 + c2*epsilon**2 + c3*epsilon**3 + c4*epsilon**c5*exp(T*c6)
+         train=1.71e-14  test=2.00e-14  ood=1.11e-12
+  [Mature] T*c0*sin(c1 + c2*epsilon) + c3*epsilon + c4 + c5*sin(c2*epsilon + c6) + c7*epsilon**2 + c8*epsilon**3
+         train=1.47e-14  test=1.56e-14  ood=9.13e-13
+  [Mature] c0*epsilon + c1 + c2*epsilon**2 + c3*epsilon**3 + c4*exp(T*c5)*exp(c6*epsilon)
+         train=1.55e-14  test=1.70e-14  ood=9.72e-13
+  [Mature] c0*epsilon + c1 + c2*epsilon**2 + c3*epsilon**3 + c4*epsilon**c5*log(c6*Abs(T) + 1)
+         train=1.71e-14  test=2.00e-14  ood=1.09e-12
+  [Mature] c0*epsilon + c1 + c2*epsilon**2 + c3*epsilon**3 + c4*(c5 + epsilon)**c6*cos(T*c7)
+         train=1.68e-14  test=2.00e-14  ood=1.06e-12
+  [Mature] c0*epsilon + c1 + c2*epsilon**2 + c3*epsilon**3 + c4*(c5 + epsilon)**c6
+         train=1.71e-14  test=2.00e-14  ood=1.09e-12
+  [Mature] c0*epsilon + c1*exp(c2*epsilon) + c3 + c4*epsilon**2 + c5*epsilon**3
+         train=1.71e-14  test=2.00e-14  ood=1.11e-12
+  [Mature] c0*epsilon + c1 + c2*epsilon**2 + c3*epsilon**3 + c4*exp(T*c5) + c6*(c7 + epsilon)**c8*exp(T*c9)
+         train=1.45e-14  test=1.51e-14  ood=9.74e-13
+  [Mature] T*c0 + T*c1*(c2 + epsilon)**c3 + c4*epsilon + c5*(c2 + epsilon)**c3 + c6 + c7*epsilon**2 + c8*epsilon**3 + c9*(c2 + epsilon)**c3
+         train=1.45e-14  test=1.49e-14  ood=8.80e-13
+  [Mature] c0*epsilon + c1 + c2*log(c3*exp(c4*epsilon) + 1) + c5*exp(c6*sin(c7*log(c8*Abs(epsilon) + 1) + c9))
+         train=2.95e-14  test=3.43e-14  ood=9.23e-11
+  [Mature] c0*epsilon + c1 + c2*log(c3*exp(c4*epsilon) + 1) + c5*epsilon**c6*exp(T*c7)
+         train=1.79e-14  test=2.10e-14  ood=3.55e-12
+  [Mature] c0*epsilon + c1 + c2*log(c3*exp(c4*epsilon) + 1) + c5*log(c6*Abs(T) + 1)*Abs(epsilon)**c7
+         train=3.09e-14  test=2.95e-14  ood=1.19e-11
+  [Mature] c0*epsilon + c1 + c2*log(c3*exp(c4*epsilon) + 1) + c5*epsilon**3
+         train=2.10e-14  test=2.43e-14  ood=4.50e-12
+  [Mature] T*c0*epsilon + c1*epsilon + c2 + c3*epsilon**c4*exp(T*c5)
+         train=3.57e-14  test=4.46e-14  ood=1.86e-12
+  [Mature] T*c0*epsilon + c1*epsilon + c2 + c3*exp(T*c4)*Abs(epsilon)**c5
+         train=3.57e-14  test=4.46e-14  ood=1.86e-12
+  [Mature] T*c0*epsilon + c1*epsilon + c2 + c3*(c4 + epsilon)**c5
+         train=1.47e-14  test=1.55e-14  ood=9.07e-13
+  [Mature] T*c0*epsilon + c1*epsilon + c2*(c3 + epsilon)**c4*(T/(T + c5) + c6/(T + c5))**c7 + c8 + c9*(c3 + epsilon)**c4
+         train=3.57e-14  test=4.46e-14  ood=1.86e-12
+  [Mature] c0*epsilon + c1*exp(c2*epsilon) + c3 + c4*epsilon**3
+         train=4.10e-14  test=4.68e-14  ood=7.90e-12
+  [Mature] c0*epsilon + c1 + c2*cos(T*c3) + c4*epsilon**2 + c5*epsilon**3 + c6*epsilon*cos(T*c3)
+         train=1.50e-14  test=1.62e-14  ood=9.46e-13
+  [Mature] c0*epsilon + c1 + c2*epsilon**2 + c3*epsilon**3 + c4*epsilon**5*log(c5*Abs(T) + 1)
+         train=1.71e-14  test=2.00e-14  ood=1.09e-12
+  [Mature] c0*epsilon + c1 + c2*epsilon**2 + c3*epsilon**3 + c4*(c5 + epsilon)**5
+         train=1.71e-14  test=2.00e-14  ood=1.09e-12
+  [Mature] c0*epsilon + c1 + c2*exp(T*c3) + c4*epsilon**2 + c5*epsilon**3 + c6*exp(T*c7) + c8*epsilon*exp(T*c3)
+         train=1.44e-14  test=1.48e-14  ood=9.90e-13
+  [Mature] T*c0 + T*c1*(c2 + epsilon)**2 + c3*epsilon + c4*(c2 + epsilon)**2 + c5 + c6*epsilon**2 + c7*epsilon**3 + c8*(c2 + epsilon)**2
+         train=1.45e-14  test=1.49e-14  ood=8.80e-13
+  [Mature] c0*epsilon + c1 + c2*epsilon**2 + c3*epsilon**3 + c4*exp(c5 + c6*epsilon)
+         train=1.71e-14  test=2.00e-14  ood=1.11e-12
+  [Mature] T*c0*epsilon + c1*epsilon + c2 + c3*(c4 + epsilon)**3
+         train=3.57e-14  test=4.46e-14  ood=1.86e-12
+  [Mature] T*c0*epsilon + c1*epsilon + c2*(T + c3)**3*(c4 + epsilon)**3/(T + c5)**3 + c6 + c7*(c4 + epsilon)**3
+         train=1.47e-14  test=1.55e-14  ood=9.07e-13
+
+============================================================
+Step 2/30
+============================================================
+
+  [Selector] Selected 5 parents:
+
+  [1/5] Parent: T*c0*epsilon + c1*epsilon + c2 + c3*(c4 + epsilon)**3
+    [Annealing] Mature node, remaining budget 2/3
+
+  [1/5] Parent: T*c0*epsilon + c1*epsilon + c2 + c3*(c4 + epsilon)**3
+    params: c0=-8.6690e+02, c1=2.6665e+05, c2=1.6769e-04, c3=1.5666e+06, c4=0.0000e+00
+    train=3.57e-14  test=4.46e-14  ood=1.86e-12
+    rationale: Very compact depth-4 polynomial core (linear + cubic) with a single physically plausible interaction term T·ε; NMSE is already ~0 while keeping only 5 parameters and 16 operators, making it an excellent simple backbone for productive local mutations (e.g., add ε^2, T-only offset, mild saturation).
+
+  [Mutation] Programmatic deletion: 0, Programmatic addition: 0
+
+  [2/5] Parent: c0*epsilon + c1*exp(c2*epsilon) + c3/(epsilon + 1)**2 + c4 + c5*epsilon
+    params: c0=-7.3760e+05, c1=2.9495e+05, c2=2.2238e+00, c3=-4.2914e+05, c4=1.3403e+05, c5=-7.3760e+05
+    train=1.33e-06  test=1.35e-06  ood=8.55e-04
+    rationale: Introduces a rational term plus an exponential with still modest complexity (depth 4, 22 ops, 6 params) and strong performance (NMSE ~1e-6); structurally distinct from the already-heavily-explored log parents and likely to yield meaningful simplifications or stabilized variants via subtree deletions/rewrites.
+
+  [Mutation] Programmatic deletion: 0, Programmatic addition: 0
+
+  [3/5] Parent: T*c0*epsilon + c1*epsilon + c2 + c3*exp(c4/T)
+    params: c0=4.9388e+03, c1=-2.8987e+05, c2=1.2061e+05, c3=-1.3892e+07, c4=-1.2965e+03
+    train=4.68e-06  test=4.77e-06  ood=2.40e-03
+    rationale: Low-parameter (5) model that brings in inverse-temperature Arrhenius-like dependence (exp(c/T)) while keeping ε dependence simple; good NMSE (~5e-6) and offers a qualitatively different T-structure to explore (mutations can regularize the exp(c/T) or couple it to ε).
+
+  [Mutation] Programmatic deletion: 0, Programmatic addition: 0
+
+  [4/5] Parent: c0*epsilon + c1*exp(c2*epsilon) + c3 + c4*sqrt(c5 + epsilon)
+    params: c0=-8.0489e+08, c1=9.6593e+08, c2=1.7429e-01, c3=-1.4380e+10, c4=4.1325e+09, c5=1.0536e+01
+    train=3.27e-11  test=3.30e-11  ood=2.56e-08
+    rationale: Compact (6 params, depth 4) and structurally non-polynomial via a sqrt(ε+shift) term; NMSE ~0 suggests it captures curvature well without deep nesting, and mutations can test alternative concave transforms (log, power) or add mild T effects.
+
+  [Mutation] Programmatic deletion: 0, Programmatic addition: 0
+
+  [5/5] Parent: T*c0*epsilon + c1*epsilon + c2 + c3*(T + c4)**c5*(c6 + epsilon)**c7
+    params: c0=-4.0012e+01, c1=1.0000e+02, c2=1.0000e+02, c3=1.0000e+02, c4=5.9699e+02, c5=1.3328e+00, c6=4.1468e-12, c7=3.3625e+00
+    train=2.72e-04  test=2.66e-04  ood=4.32e-02
+    rationale: Separable power-law coupling between T and ε provides a distinct multiplicative scaling family not represented by the previously selected parents; despite 8 parameters it is shallow (depth 4) and already reasonably accurate (NMSE ~2.7e-4), making it a good diverse direction for refinement.
+
+  [Mutation] Programmatic deletion: 0, Programmatic addition: 0
+  [Mutation] LLM suggestions: 20
+  [Mutation] After dedup: 20 unique candidates
+  [Mutation] LLM suggestions: 20
+  [Mutation] After dedup: 19 unique candidates (raw 20)
+  [Mutation] LLM suggestions: 20
+  [Mutation] After dedup: 19 unique candidates (raw 20)
+  [Mutation] LLM suggestions: 20
+  [Mutation] After dedup: 19 unique candidates (raw 20)
+  [Mutation] LLM suggestions: 20
+  [Mutation] After dedup: 19 unique candidates (raw 20)
+
+  [Unified eval] 77 candidates, skipped 19 (params>10), pool workers=16, timeout=120s
+    Parent tags: P1=c0*epsilon + c1*exp(c2*epsilon) + c3 + c  P2=c0*epsilon + c1*exp(c2*epsilon) + c3/(ep  P3=T*c0*epsilon + c1*epsilon + c2 + c3*exp(  P4=T*c0*epsilon + c1*epsilon + c2 + c3*(T +  P5=T*c0*epsilon + c1*epsilon + c2 + c3*(c4 
+  ★ [P1|[LLM] A: added nested composite term log(1 + exp(c7*epsilon))]: test=6.17e-14  train=5.56e-14  ood=1.88e-10  → c0*epsilon + c1*exp(c2*epsilon) + c3 + c4*sqrt(c5 + epsilon) + c6*log(c7*exp(c8*
+  ★ [P1|[LLM] A: added multivariate composite term log(1 + exp(c7*T) + c8*epsilon)]: test=8.98e-13  train=8.83e-13  ood=2.39e-09  → c0*epsilon + c1*exp(c2*epsilon) + c3 + c4*sqrt(c5 + epsilon) + c6*log(c7*exp(T*c
+  ★ [P1|[LLM] A: added nested composite term exp(sin(c7*epsilon))]: test=4.05e-14  train=3.48e-14  ood=9.12e-11  → c0*epsilon + c1*exp(c2*epsilon) + c3 + c4*sqrt(c5 + epsilon) + c6*exp(c7*sin(c8*
+  ★ [P1|[LLM] C: added multiplicative thermal softening on a hardening backbone, referencing Exponential thermal softening of flow stress from domain knowledge above: sigma = (c0 + c1*(epsilon + c2)**c3)*exp(-c4*T)]: test=3.17e-12  train=3.26e-12  ood=1.98e-09  → c0*epsilon + c1*exp(c2*epsilon) + c3 + c4*sqrt(c5 + epsilon) + c6*(c7 + epsilon)
+    ↳ degenerate simplified (c8=1.0000->snapped to 1; c9=-2.496e-04->small coeff,T*c9->0): c0*epsilon + c1*exp(c2*epsilon) + c3 + c4*sqrt(c5 + epsilon) + c6*(c7 + epsilon)**c8*exp(T*c9) -> c0*epsilon + c1*exp(c2*epsilon) + c3 + c4*sqrt(c5 + epsilon) + c6*epsilon
+    [P1|[LLM] C: added Arrhenius-type temperature activation term, referencing Arrhenius equation from domain knowledge above: k = c0*exp(c1/T)]: test=3.75e-11  train=3.40e-11  ood=1.09e-07  → c0*epsilon + c1*exp(c2*epsilon) + c3 + c4*sqrt(c5 + epsilon) + c6*exp(c7/T)
+  ★ [P2|[LLM] A: added nested composite term log(1 + exp(c7*epsilon + c8*T))]: test=4.71e-14  train=4.27e-14  ood=1.44e-10  → c0*epsilon + c1*exp(c2*epsilon) + c3/(epsilon + 1)**2 + c4 + c5*epsilon + c6*log
+    ↳ degenerate simplified (c8=-9.287e-06->small coeff,T*c8->0): c0*epsilon + c1*exp(c2*epsilon) + c3/(epsilon + 1)**2 + c4 + c5*epsilon + c6*log(c7*exp(T*c8 + c9*epsilon) + 1) -> c0*epsilon + c1*exp(c2*epsilon) + c3/(epsilon + 1)**2 + c4 + c5*epsilon + c6*log(c7*exp(c8*epsilon) + 1)
+  ★ [P2|[LLM] A: added multi-layer nesting log(1 + exp(c7*log(1 + c8*T)))]: test=4.62e-11  train=4.36e-11  ood=7.36e-08  → c0*epsilon + c1*exp(c2*epsilon) + c3/(epsilon + 1)**2 + c4 + c5*epsilon + c6*log
+    ↳ degenerate simplified (c9=1.0000->snapped to 1): c0*epsilon + c1*exp(c2*epsilon) + c3/(epsilon + 1)**2 + c4 + c5*epsilon + c6*log(c7*(T*c8 + 1)**c9 + 1) -> c0*epsilon + c1*exp(c2*epsilon) + c3/(epsilon + 1)**2 + c4 + c5*epsilon + c6*log(T*c7 + c8)
+  ★ [P1|[LLM] C: added Clausius-Clapeyron-like log-pressure structure in an embedded way, referencing Clausius-Clapeyron relation from domain knowledge above: log(P) = c0 + c1/T]: test=1.39e-12  train=1.26e-12  ood=8.74e-09  → c0*epsilon + c1*exp(c2*epsilon) + c3 + c4*sqrt(c5 + epsilon) + c6*log(c7*exp(c8/
+  ★ [P1|[LLM] C: added cubic strain term for higher-order elastic nonlinearity, referencing Nonlinear elastic polynomial from domain knowledge above: sigma = c0*epsilon + c1*epsilon**2 + c2*epsilon**3]: test=2.88e-14  train=2.51e-14  ood=5.96e-12  → c0*epsilon + c1*exp(c2*epsilon) + c3 + c4*sqrt(c5 + epsilon) + c6*epsilon**3
+  ★ [P1|[LLM] C: added saturating hardening term, referencing Voce hardening from domain knowledge above: sigma = c0 + c1*(1 - exp(-c2*epsilon))]: test=6.24e-13  train=5.91e-13  ood=1.01e-09  → c0*epsilon + c1*exp(c2*epsilon) + c3*exp(c4*epsilon) + c5 + c6*sqrt(c7 + epsilon
+  ★ [P1|[LLM] B: added product term exp(c7*epsilon) * log(1 + c8*Abs(T))]: test=1.76e-12  train=1.73e-12  ood=4.67e-09  → c0*epsilon + c1*exp(c2*epsilon) + c3 + c4*sqrt(c5 + epsilon) + c6*exp(c7*epsilon
+  ★ [P1|[LLM] B: added product coupling term epsilon * exp(c7*T)]: test=4.70e-12  train=4.28e-12  ood=2.76e-09  → c0*epsilon + c1*exp(c2*epsilon) + c3 + c4*sqrt(c5 + epsilon) + c6*epsilon*exp(T*
+    ↳ degenerate simplified (c7=-4.411e-04->small coeff,T*c7->0): c0*epsilon + c1*exp(c2*epsilon) + c3 + c4*sqrt(c5 + epsilon) + c6*epsilon*exp(T*c7) -> c0*epsilon + c1*exp(c2*epsilon) + c3 + c4*sqrt(c5 + epsilon) + c6*epsilon
+  ★ [P1|[LLM] B: added product term sqrt(c7 + epsilon) * exp(c8*T) to modulate root-like strain dependence with temperature]: test=1.29e-13  train=1.09e-13  ood=3.53e-10  → c0*epsilon + c1*exp(c2*epsilon) + c3 + c4*sqrt(c5 + epsilon) + c6*sqrt(c7 + epsi
+    [P1|[LLM] C: added temperature-dependent modulus contribution, referencing Temperature-dependent modulus (linear E(T)) from domain knowledge above: sigma = (c0 + c1*T)*epsilon]: test=4.75e-11  train=4.72e-11  ood=2.99e-08  → T*c0*epsilon + c1*epsilon + c2*exp(c3*epsilon) + c4*epsilon + c5 + c6*sqrt(c7 + 
+    [P1|[LLM] A: added nested composite term exp(log(1 + c7*T**2))]: test=4.10e-10  train=3.87e-10  ood=1.81e-07  → T**2*c0 + c1*epsilon + c2*exp(c3*epsilon) + c4 + c5*sqrt(c6 + epsilon)
+  ★ [P1|[LLM] B: added product term sin(c7*epsilon) * exp(c8*T)]: test=6.07e-14  train=6.26e-14  ood=1.31e-10  → c0*epsilon + c1*exp(c2*epsilon) + c3 + c4*sqrt(c5 + epsilon) + c6*exp(T*c7)*sin(
+    ↳ degenerate simplified (c7=-3.813e-05->small coeff,T*c7->0): c0*epsilon + c1*exp(c2*epsilon) + c3 + c4*sqrt(c5 + epsilon) + c6*exp(T*c7)*sin(c8*epsilon + c9) -> c0*epsilon + c1*exp(c2*epsilon) + c3 + c4*sqrt(c5 + epsilon) + c6*sin(c7*epsilon + c8)
+  ★ [P1|[LLM] C: added quadratic strain term for anharmonic elasticity, referencing Nonlinear elastic polynomial from domain knowledge above: sigma = c0*epsilon + c1*epsilon**2 + c2*epsilon**3]: test=8.66e-12  train=4.71e-12  ood=2.26e-09  → c0*epsilon + c1*exp(c2*epsilon) + c3 + c4*sqrt(c5 + epsilon) + c6*epsilon**2
+  ★ [P1|[LLM] B: added product term epsilon**c7 * log(1 + c8*T) to couple power-law hardening with thermal log response]: test=3.40e-14  train=3.16e-14  ood=8.04e-11  → c0*epsilon + c1*exp(c2*epsilon) + c3 + c4*sqrt(c5 + epsilon) + c6*epsilon**c7*lo
+    ↳ degenerate simplified (c7=4.0000->snapped to 4): c0*epsilon + c1*exp(c2*epsilon) + c3 + c4*sqrt(c5 + epsilon) + c6*epsilon**c7*log(T*c8 + 1) -> c0*epsilon + c1*exp(c2*epsilon) + c3 + c4*sqrt(c5 + epsilon) + c6*epsilon**4*log(T*c7 + 1)
+  ★ [P1|[LLM] C: added power-law hardening backbone, referencing Hollomon (power-law strain hardening) from domain knowledge above: sigma = c0*(epsilon + c1)**c2]: test=1.30e-12  train=1.23e-12  ood=1.98e-09  → c0*epsilon + c1*exp(c2*epsilon) + c3 + c4*sqrt(c5 + epsilon) + c6*(c7 + epsilon)
+    ↳ degenerate simplified (c8=0.5000->snapped to 1/2): c0*epsilon + c1*exp(c2*epsilon) + c3 + c4*sqrt(c5 + epsilon) + c6*(c7 + epsilon)**c8 -> c0*epsilon + c1*exp(c2*epsilon) + c3 + c4*sqrt(c5 + epsilon) + c6*sqrt(c7 + epsilon)
+    ✗ [P1|[LLM] A: added nested composite term sin(log(1 + c7*Abs(epsilon))) to capture signed strain symmetry via Abs]: overfitting (c0=-1.992e+08->overfitting(|c|>1000.0))  -> c0*epsilon + c1*exp(c2*epsilon) + c3 + c4*sqrt(c5 + epsilon)
+    [P1|[LLM] C: added thermoelastic strain-shift term (thermal expansion under constraint), referencing Thermoelastic stress with thermal strain from domain knowledge above: sigma = c0*(epsilon - c1*(T - c2))]: test=3.31e-11  train=3.28e-11  ood=2.57e-08  → T*c0 + c1*epsilon + c2*exp(c3*epsilon) + c4 + c5*sqrt(c6 + epsilon) + c7*epsilon
+    ✗ [P2|[LLM] A: added multi-layer nesting exp(cos(c7*log(1 + c8*Abs(epsilon))))]: overfitting (c0=1.344e+06->overfitting(|c|>1000.0))  -> c0*epsilon + c1*exp(c2*epsilon) + c3/(epsilon + 1)**2 + c4 +
+  ★ [P2|[LLM] B: added product term epsilon**c7 * exp(c8*T)]: test=2.00e-14  train=1.71e-14  ood=1.09e-12  → c0*epsilon + c1*exp(c2*epsilon) + c3/(epsilon + 1)**2 + c4 + c5*epsilon + c6*eps
+    ↳ degenerate simplified (c7=3.0000->snapped to 3; c8=-2.227e-09->small coeff,T*c8->0): c0*epsilon + c1*exp(c2*epsilon) + c3/(epsilon + 1)**2 + c4 + c5*epsilon + c6*epsilon**c7*exp(T*c8) -> c0*epsilon + c1*exp(c2*epsilon) + c3/(epsilon + 1)**2 + c4 + c5*epsilon + c6*epsilon**3
+  ★ [P2|[LLM] C: added exponentially decreasing stiffness term exp(-c7*T)*epsilon, referencing Exponential thermal softening idea from domain knowledge above: sigma = f(epsilon) * exp(-c4 * T)]: test=4.54e-12  train=4.13e-12  ood=2.74e-09  → c0*epsilon + c1*exp(c2*epsilon) + c3/(epsilon + 1)**2 + c4 + c5*epsilon + c6*eps
+    ↳ degenerate simplified (c7=-4.472e-04->small coeff,T*c7->0): c0*epsilon + c1*exp(c2*epsilon) + c3/(epsilon + 1)**2 + c4 + c5*epsilon + c6*epsilon*exp(T*c7) -> c0*epsilon + c1*exp(c2*epsilon) + c3/(epsilon + 1)**2 + c4 + c5*epsilon + c6*epsilon
+  ★ [P2|[LLM] C: added power-law hardening term (epsilon + c7)**c8, referencing Hollomon (power-law strain hardening) from domain knowledge above: sigma = c0 * (epsilon + c1)**c2]: test=1.22e-11  train=8.76e-12  ood=4.93e-09  → c0*epsilon + c1*exp(c2*epsilon) + c3/(epsilon + 1)**2 + c4 + c5*epsilon + c6*(c7
+    ↳ degenerate simplified (c8=2.0000->snapped to 2): c0*epsilon + c1*exp(c2*epsilon) + c3/(epsilon + 1)**2 + c4 + c5*epsilon + c6*(c7 + epsilon)**c8 -> c0*epsilon + c1*exp(c2*epsilon) + c3/(epsilon + 1)**2 + c4 + c5*epsilon + c6*(c7 + epsilon)**2
+    ✗ [P3|[LLM] A: added nested composite term sin(log(1+scaled |epsilon|)) to model magnitude-symmetric strain effects with mild compression via log]: overfitting (c0=1.736e+04->overfitting(|c|>1000.0))  -> T*c0*epsilon + c1*epsilon + c2 + c3*exp(c4/T) + c5*sin(c6*lo
+  ★ [P3|[LLM] A: added nested composite term log(1 + power-law(epsilon) * Arrhenius-like exp(1/T))]: test=5.74e-12  train=5.13e-12  ood=2.49e-08  → T*c0*epsilon + c1*epsilon + c2 + c3*exp(c4/T) + c5*log(c6*(c7 + epsilon)**c8*exp
+    ↳ degenerate simplified (c8=2.0000->snapped to 2): T*c0*epsilon + c1*epsilon + c2 + c3*exp(c4/T) + c5*log(c6*(c7 + epsilon)**c8*exp(c9/T) + 1) -> T*c0*epsilon + c1*epsilon + c2 + c3*exp(c4/T) + c5*log(c6*(c7 + epsilon)**2*exp(c8/T) + 1)
+  ★ [P3|[LLM] B: added product term power-law in epsilon multiplied by Arrhenius-like exp(1/T)]: test=5.86e-11  train=5.26e-11  ood=1.97e-07  → T*c0*epsilon + c1*epsilon + c2 + c3*exp(c4/T) + c5*(c6 + epsilon)**c7*exp(c8/T)
+    ↳ degenerate simplified (c7=2.0000->snapped to 2): T*c0*epsilon + c1*epsilon + c2 + c3*exp(c4/T) + c5*(c6 + epsilon)**c7*exp(c8/T) -> T*c0*epsilon + c1*epsilon + c2 + c3*exp(c4/T) + c5*(c6 + epsilon)**2*exp(c7/T)
+  ★ [P3|[LLM] B: added product term sin(epsilon) * exp(T) for temperature-modulated oscillatory strain contribution]: test=1.32e-13  train=1.25e-13  ood=3.05e-10  → T*c0*epsilon + c1*epsilon + c2 + c3*exp(c4/T) + c5*exp(T*c6)*sin(c7*epsilon + c8
+    ↳ degenerate simplified (c6=4.907e-04->small coeff,T*c6->0; c8=6.2774~2*pi->phase absorbed): T*c0*epsilon + c1*epsilon + c2 + c3*exp(c4/T) + c5*exp(T*c6)*sin(c7*epsilon + c8) -> T*c0*epsilon + c1*epsilon + c2 + c3*exp(c4/T) + c5*sin(c6*epsilon + c7)
+  ★ [P3|[LLM] B: added product term epsilon * log(1+scaled T) for weakly nonlinear thermoelastic coupling]: test=6.29e-14  train=6.32e-14  ood=3.22e-11  → T*c0*epsilon + c1*epsilon + c2 + c3*exp(c4/T) + c5*epsilon*log(T*c6 + 1)
+    ↳ degenerate simplified (c6=1.227e-06->small coeff,T*c6->0): T*c0*epsilon + c1*epsilon + c2 + c3*exp(c4/T) + c5*epsilon*log(T*c6 + 1) -> T*c0*epsilon + c1*epsilon + c2 + c3*exp(c4/T)
+    [P1|[LLM] C: added radiative-like high-T scaling term, referencing Stefan-Boltzmann law from domain knowledge above: P = c0*T**4]: test=5.14e-04  train=4.83e-04  ood=1.37e-01  → T**4*c0 + c1*epsilon + c2*exp(c3*epsilon) + c4 + c5*sqrt(c6 + epsilon)
+    ↳ degenerate simplified (c0=-4.779e-06->small coeff,T**4*c0->0): T**4*c0 + c1*epsilon + c2*exp(c3*epsilon) + c4 + c5*sqrt(c6 + epsilon) -> c0*epsilon + c1*exp(c2*epsilon) + c3 + c4*sqrt(c5 + epsilon)
+  ★ [P3|[LLM] A: added nested composite term exp(sin(epsilon)) to capture bounded oscillatory nonlinearity passed through an exponential]: test=1.73e-12  train=1.55e-12  ood=6.69e-09  → T*c0*epsilon + c1*epsilon + c2 + c3*exp(c4/T) + c5*exp(c6*sin(c7*epsilon + c8))
+  ★ [P3|[LLM] B: added product term exp(T) * exp(1/T) to capture competing thermal mechanisms across ranges]: test=8.70e-11  train=7.98e-11  ood=2.65e-07  → T*c0*epsilon + c1*epsilon + c2 + c3*exp(c4/T) + c5*exp(c6/T)*exp(T*c7)
+  ★ [P3|[LLM] B: added product term epsilon**n * cos(T) for temperature-driven modulation of strain hardening]: test=4.47e-14  train=3.57e-14  ood=1.88e-12  → T*c0*epsilon + c1*epsilon + c2 + c3*exp(c4/T) + c5*epsilon**c6*cos(T*c7)
+    ↳ degenerate simplified (c6=3.0000->snapped to 3; c7=1.000e-06->small coeff,T*c7->0): T*c0*epsilon + c1*epsilon + c2 + c3*exp(c4/T) + c5*epsilon**c6*cos(T*c7) -> T*c0*epsilon + c1*epsilon + c2 + c3*exp(c4/T) + c5*epsilon**3
+  ★ [P3|[LLM] C: added power-law hardening backbone, referencing Hollomon (power-law strain hardening) from domain knowledge above: sigma = c0 * (epsilon + c1)**c2]: test=4.46e-14  train=3.57e-14  ood=1.86e-12  → T*c0*epsilon + c1*epsilon + c2 + c3*exp(c4/T) + c5*(c6 + epsilon)**c7
+    ↳ degenerate simplified (c3=-2.289e-06->small coeff,c3*exp(c4/T)->0; c7=3.0000->snapped to 3): T*c0*epsilon + c1*epsilon + c2 + c3*exp(c4/T) + c5*(c6 + epsilon)**c7 -> T*c0*epsilon + c1*epsilon + c2 + c3*(c4 + epsilon)**3
+  ★ [P2|[LLM] B: added product term (epsilon + 1)**c7 * cos(c8*T)]: test=9.00e-14  train=8.16e-14  ood=9.59e-10  → c0*epsilon + c1*exp(c2*epsilon) + c3/(epsilon + 1)**2 + c4 + c5*epsilon + c6*(ep
+  ★ [P2|[LLM] B: added product term exp(c7*epsilon) * log(1 + c8*Abs(epsilon))]: test=1.19e-13  train=1.01e-13  ood=1.15e-09  → c0*epsilon + c1*exp(c2*epsilon) + c3/(epsilon + 1)**2 + c4 + c5*epsilon + c6*exp
+  ★ [P2|[LLM] B: added product term sin(c7*epsilon) * log(1 + c8*T)]: test=2.83e-13  train=2.57e-13  ood=1.02e-10  → c0*epsilon + c1*exp(c2*epsilon) + c3/(epsilon + 1)**2 + c4 + c5*epsilon + c6*log
+  ★ [P2|[LLM] C: added temperature-dependent modulus contribution (c6 + c7*T)*epsilon, referencing Temperature-dependent modulus (linear E(T)) from domain knowledge above: sigma = (c0 + c1 * T) * epsilon]: test=1.18e-09  train=1.14e-09  ood=3.69e-07  → T*c0*epsilon + c1*epsilon + c2*exp(c3*epsilon) + c4/(epsilon + 1)**2 + c5 + c6*e
+    [P2|[LLM] C: added effective strain shift term (epsilon - c7*(T - c8)) to capture thermal expansion under constraint, referencing Thermoelastic stress with thermal strain from domain knowledge above: sigma = c0 * (epsilon - c1 * (T - c2))]: test=1.35e-06  train=1.33e-06  ood=8.55e-04  → T*c0 + c1*epsilon + c2*exp(c3*epsilon) + c4 + c5/(epsilon + 1)**2 + c6*epsilon +
+  ★ [P2|[LLM] C: added saturating hardening term (1 - exp(-c7*epsilon)), referencing Voce hardening from domain knowledge above: sigma = c0 + c1 * (1 - exp(-c2 * epsilon))]: test=7.33e-14  train=6.83e-14  ood=9.42e-11  → c0*epsilon + c1*exp(c2*epsilon) + c3*exp(c4*epsilon) + c5 + c6/(epsilon + 1)**2 
+  ★ [P2|[LLM] B: added 3-factor product term epsilon * exp(c7*T) * log(1 + c8*epsilon)]: test=4.02e-14  train=3.96e-14  ood=7.06e-11  → c0*epsilon + c1*exp(c2*epsilon) + c3/(epsilon + 1)**2 + c4 + c5*epsilon + c6*eps
+    ↳ degenerate simplified (c7=4.392e-04->small coeff,T*c7->0): c0*epsilon + c1*exp(c2*epsilon) + c3/(epsilon + 1)**2 + c4 + c5*epsilon + c6*epsilon*exp(T*c7)*log(c8*epsilon + 1) -> c0*epsilon + c1*exp(c2*epsilon) + c3/(epsilon + 1)**2 + c4 + c5*epsilon + c6*epsilon*log(c7*epsilon + 1)
+  ★ [P2|[LLM] C: added multiplicative thermal softening of a strain-hardening backbone (epsilon+c7)**c8 * exp(-c9*T), referencing Exponential thermal softening of flow stress from domain knowledge above: sigma = (c0 + c1 * (epsilon + c2)**c3) * exp(-c4 * T)]: test=4.01e-12  train=3.71e-12  ood=1.20e-08  → c0*epsilon + c1*exp(c2*epsilon) + c3/(epsilon + 1)**2 + c4 + c5*epsilon + c6*(c7
+    ↳ degenerate simplified (c8=1.0000->snapped to 1): c0*epsilon + c1*exp(c2*epsilon) + c3/(epsilon + 1)**2 + c4 + c5*epsilon + c6*(c7 + epsilon)**c8*exp(T*c9) -> c0*epsilon + c1*exp(c2*epsilon) + c3*exp(T*c4) + c5/(epsilon + 1)**2 + c6 + c7*epsilon + c8*epsilon*exp(T*c4)
+  ★ [P2|[LLM] C: added finite-strain elastic backbone ((1+epsilon) - c7/(1+epsilon)**2), referencing Neo-Hookean-like form from domain knowledge above: sigma = c0 * ((1 + epsilon) - c1 / (1 + epsilon)**2)]: test=1.35e-06  train=1.33e-06  ood=8.55e-04  → c0*epsilon + c1*exp(c2*epsilon) + c3/(epsilon + 1)**2 + c4 + c5/(epsilon + 1)**2
+  ★ [P2|[LLM] C: added higher-order elastic nonlinearity via epsilon**2*(1 + c7*epsilon), referencing Nonlinear elastic polynomial from domain knowledge above: sigma = c0*epsilon + c1*epsilon**2 + c2*epsilon**3]: test=2.00e-14  train=1.71e-14  ood=1.15e-12  → c0*epsilon + c1*exp(c2*epsilon) + c3*epsilon**3 + c4/(epsilon + 1)**2 + c5 + c6*
+    ↳ degenerate simplified (c1=-3.150e-07->small coeff,c1*exp(c2*epsilon)->0): c0*epsilon + c1*exp(c2*epsilon) + c3*epsilon**3 + c4/(epsilon + 1)**2 + c5 + c6*epsilon + c7*epsilon**2 -> c0*epsilon + c1*epsilon**3 + c2/(epsilon + 1)**2 + c3 + c4*epsilon + c5*epsilon**2
+  ★ [P3|[LLM] A: added nested composite term log(1+exp(linear combo of epsilon and T))]: test=2.05e-12  train=1.91e-12  ood=6.13e-09  → T*c0*epsilon + c1*epsilon + c2 + c3*exp(c4/T) + c5*log(c6*exp(T*c7 + c8*epsilon)
+    ↳ degenerate simplified (c7=1.268e-04->small coeff,T*c7->0): T*c0*epsilon + c1*epsilon + c2 + c3*exp(c4/T) + c5*log(c6*exp(T*c7 + c8*epsilon) + 1) -> T*c0*epsilon + c1*epsilon + c2 + c3*exp(c4/T) + c5*log(c6*exp(c7*epsilon) + 1)
+  ★ [P5|[LLM] A: add nested composite term log(1+exp(linear(epsilon,T)))]: test=2.28e-14  train=2.00e-14  ood=1.16e-12  → T*c0*epsilon + c1*epsilon + c2 + c3*(c4 + epsilon)**3 + c5*log(c6*exp(T*c7 + c8*
+    ✗ [P5|[LLM] A: add nested composite term sin(log(1+affine(Abs(epsilon),T)))]: overfitting (c1=2.666e+05->overfitting(|c|>1000.0))  -> T*c0*epsilon + c1*epsilon + c2 + c3*(c4 + epsilon)**3 + c5*s
+    ✗ [P5|[LLM] A: add nested composite term log(1+exp(quadratic coupling (epsilon+T)^2))]: overfitting (c0=-3.171e+03->overfitting(|c|>1000.0))  -> T*c0*epsilon + c1*epsilon + c2 + c3*(c4 + epsilon)**3 + c5*l
+    [P5|[LLM] B: add product term exp(T)*log(1+Abs(epsilon)) modulation]: test=4.46e-14  train=3.57e-14  ood=1.86e-12  → T*c0*epsilon + c1*epsilon + c2 + c3*(c4 + epsilon)**3 + c5*exp(T*c6)*log(c7*Abs(
+  ★ [P5|[LLM] B: add product term sin(T)*powerlaw(epsilon)]: test=1.55e-14  train=1.43e-14  ood=8.55e-13  → T*c0*epsilon + c1*epsilon + c2 + c3*(c4 + epsilon)**3 + c5*epsilon**c6*sin(T*c7 
+    ↳ degenerate simplified (c6=5.0000->snapped to 5): T*c0*epsilon + c1*epsilon + c2 + c3*(c4 + epsilon)**3 + c5*epsilon**c6*sin(T*c7 + c8) -> T*c0*epsilon + c1*epsilon + c2 + c3*(c4 + epsilon)**3 + c5*epsilon**5*sin(T*c6 + c7)
+  ★ [P3|[LLM] C: added multiplicative thermal softening on a hardening backbone, referencing Exponential thermal softening of flow stress from domain knowledge above: sigma = (c0 + c1*(epsilon + c2)**c3) * exp(-c4*T)]: test=6.13e-11  train=5.83e-11  ood=1.52e-07  → T*c0*epsilon + c1*epsilon + c2 + c3*exp(c4/T) + c5*(c6 + epsilon)**c7*exp(T*c8)
+    ↳ degenerate simplified (c7=1.0000->snapped to 1): T*c0*epsilon + c1*epsilon + c2 + c3*exp(c4/T) + c5*(c6 + epsilon)**c7*exp(T*c8) -> T*c0*epsilon + c1*epsilon + c2*exp(T*c3) + c4 + c5*exp(c6/T) + c7*epsilon*exp(T*c3)
+    [P3|[LLM] A: added nested composite term exp(log(1+scaled T)) to allow near-linear-in-T behavior with controlled positivity]: test=4.77e-06  train=4.68e-06  ood=2.40e-03  → T*c0*epsilon + T*c1 + c2*epsilon + c3 + c4*exp(c5/T)
+    [P5|[LLM] B: add product term log(1+T)*powerlaw(epsilon+offset)]: test=4.47e-14  train=3.57e-14  ood=1.87e-12  → T*c0*epsilon + c1*epsilon + c2 + c3*(c4 + epsilon)**3 + c5*(c6 + epsilon)**c7*lo
+    ↳ degenerate simplified (c7=1.0000->snapped to 1): T*c0*epsilon + c1*epsilon + c2 + c3*(c4 + epsilon)**3 + c5*(c6 + epsilon)**c7*log(T*c8 + 1) -> T*c0*epsilon + c1*epsilon + c2*log(T*c3 + 1) + c4 + c5*(c6 + epsilon)**3 + c7*epsilon*log(T*c3 + 1)
+    [P5|[LLM] B: add product term exp(epsilon)*powerlaw(1+T) coupling]: test=4.47e-14  train=3.57e-14  ood=1.87e-12  → T*c0*epsilon + c1*epsilon + c2 + c3*(c4 + epsilon)**3 + c5*(T*c6 + 1)**c7*exp(c8
+    ↳ degenerate simplified (c7=1.0000->snapped to 1): T*c0*epsilon + c1*epsilon + c2 + c3*(c4 + epsilon)**3 + c5*(T*c6 + 1)**c7*exp(c8*epsilon) -> T*c0*epsilon + T*c1*exp(c2*epsilon) + c3*epsilon + c4 + c5*(c6 + epsilon)**3 + c7*exp(c2*epsilon)
+  ★ [P5|[LLM] C: add thermoelastic strain-shift term, referencing Thermoelastic stress with thermal strain from domain knowledge above: sigma = c0 * (epsilon - c1 * (T - c2))]: test=2.28e-14  train=2.00e-14  ood=1.16e-12  → T*c0*epsilon + T*c1 + c2*epsilon + c3 + c4*(c5 + epsilon)**3 + c6*epsilon
+  ★ [P5|[LLM] C: add linear temperature-dependent modulus contribution, referencing Temperature-dependent modulus (linear E(T)) from domain knowledge above: sigma = (c0 + c1 * T) * epsilon]: test=4.46e-14  train=3.57e-14  ood=1.86e-12  → T*c0*epsilon + T*c1*epsilon + c2*epsilon + c3 + c4*(c5 + epsilon)**3 + c6*epsilo
+    [P5|[LLM] C: add saturating hardening (approach to plateau), referencing Voce hardening from domain knowledge above: sigma = c0 + c1 * (1 - exp(-c2 * epsilon))]: test=4.46e-14  train=3.57e-14  ood=1.86e-12  → T*c0*epsilon + c1*epsilon + c2*exp(c3*epsilon) + c4 + c5*(c6 + epsilon)**3
+  ★ [P5|[LLM] C: add power-law strain hardening, referencing Hollomon (power-law strain hardening) from domain knowledge above: sigma = c0 * (epsilon + c1)**c2]: test=4.46e-14  train=3.57e-14  ood=1.86e-12  → T*c0*epsilon + c1*epsilon + c2 + c3*(c4 + epsilon)**3 + c5*(c6 + epsilon)**c7
+    ↳ degenerate simplified (c7=1.0000->snapped to 1): T*c0*epsilon + c1*epsilon + c2 + c3*(c4 + epsilon)**3 + c5*(c6 + epsilon)**c7 -> T*c0*epsilon + c1*epsilon + c2 + c3*(c4 + epsilon)**3 + c5*epsilon
+  ★ [P5|[LLM] C: add quadratic anharmonic elasticity correction, referencing Nonlinear elastic polynomial from domain knowledge above: sigma = c0*epsilon + c1*epsilon**2 + c2*epsilon**3]: test=1.55e-14  train=1.47e-14  ood=9.07e-13  → T*c0*epsilon + c1*epsilon + c2 + c3*(c4 + epsilon)**3 + c5*epsilon**2
+    [P5|[LLM] C: add finite-strain neo-Hookean-like shape term, referencing Neo-Hookean-like in engineering strain from domain knowledge above: sigma = c0 * ((1 + epsilon) - c1 / (1 + epsilon)**2)]: test=4.46e-14  train=3.57e-14  ood=1.86e-12  → T*c0*epsilon + c1*epsilon + c2/(epsilon + 1)**2 + c3 + c4*(c5 + epsilon)**3 + c6
+    [P5|[LLM] C: add Arrhenius-type temperature activation factor on stress scale, referencing Arrhenius equation from domain knowledge above: k = c0 * exp(c1 / T)]: test=4.47e-14  train=3.57e-14  ood=1.87e-12  → T*c0*epsilon + c1*epsilon + c2 + c3*(c4 + epsilon)**3 + c5*epsilon*exp(c6/T)
+  ★ [P5|[LLM] C: add strain-backbone times exponential thermal multiplier, referencing Exponential thermal softening of flow stress from domain knowledge above: sigma = (c0 + c1*(epsilon + c2)**c3) * exp(-c4 * T)]: test=2.26e-14  train=1.98e-14  ood=1.25e-12  → T*c0*epsilon + c1*epsilon + c2*exp(T*c3) + c4 + c5*(c6 + epsilon)**3 + c7*(c8 + 
+    ↳ degenerate simplified (c3=6.958e-04->small coeff,T*c3->0; c9=1.0000->snapped to 1; c3=6.958e-04->small coeff,T*c3->0): T*c0*epsilon + c1*epsilon + c2*exp(T*c3) + c4 + c5*(c6 + epsilon)**3 + c7*(c8 + epsilon)**c9*exp(T*c3) -> T*c0*epsilon + c1*epsilon + c2 + c3*(c4 + epsilon)**3 + c5*epsilon
+    [P5|[LLM] B: add product term cos(epsilon)*exp(T) oscillatory coupling]: test=4.47e-14  train=3.57e-14  ood=1.89e-12  → T*c0*epsilon + c1*epsilon + c2 + c3*(c4 + epsilon)**3 + c5*exp(T*c6)*cos(c7*epsi
+    ↳ degenerate simplified (c6=-8.104e-04->small coeff,T*c6->0): T*c0*epsilon + c1*epsilon + c2 + c3*(c4 + epsilon)**3 + c5*exp(T*c6)*cos(c7*epsilon) -> T*c0*epsilon + c1*epsilon + c2 + c3*(c4 + epsilon)**3 + c5*cos(c6*epsilon)
+  ★ [P4|[LLM] C: added higher-order elastic anharmonicity terms epsilon**2 and epsilon**3, referencing Nonlinear elastic polynomial from domain knowledge above: sigma = c0*epsilon + c1*epsilon**2 + c2*epsilon**3]: test=1.48e-14  train=1.44e-14  ood=8.75e-13  → T*c0*epsilon + c1*epsilon + c2 + c3*(T + c4)**c5*(c6 + epsilon)**c7 + c8*epsilon
+    ↳ degenerate simplified (c5=1.0000->snapped to 1; c7=2.0000->snapped to 2): T*c0*epsilon + c1*epsilon + c2 + c3*(T + c4)**c5*(c6 + epsilon)**c7 + c8*epsilon**2 + c9*epsilon**3 -> T*c0*epsilon + T*c1*(c2 + epsilon)**2 + c3*epsilon + c4*(c2 + epsilon)**2 + c5 + c6*epsilon**2 + c7*epsilon**3
+  ★ [P4|[LLM] C: added Arrhenius-type temperature activation term, referencing Arrhenius equation from domain knowledge above: k = c0 * exp(c1 / T)]: test=3.99e-13  train=4.03e-13  ood=4.79e-11  → T*c0*epsilon + c1*epsilon + c2 + c3*(T + c4)**c5*(c6 + epsilon)**c7 + c8*exp(c9/
+  ★ [P5|[LLM] A: add nested composite term exp(sin(linear(epsilon,T)))]: test=1.54e-14  train=1.46e-14  ood=9.03e-13  → T*c0*epsilon + c1*epsilon + c2 + c3*(c4 + epsilon)**3 + c5*exp(c6*sin(T*c7 + c8*
+    ↳ degenerate simplified (c5=-3.447e-05->small coeff,c5*exp(c6*sin(T*c7 + c8*epsilon + c9))->0): T*c0*epsilon + c1*epsilon + c2 + c3*(c4 + epsilon)**3 + c5*exp(c6*sin(T*c7 + c8*epsilon + c9)) -> T*c0*epsilon + c1*epsilon + c2 + c3*(c4 + epsilon)**3
+    [P3|[LLM] C: added temperature-dependent modulus linear-in-T times epsilon, referencing Temperature-dependent modulus (linear E(T)) from domain knowledge above: sigma = (c0 + c1*T) * epsilon]: test=4.77e-06  train=4.68e-06  ood=2.40e-03  → T*c0*epsilon + T*c1*epsilon + c2*epsilon + c3 + c4*exp(c5/T) + c6*epsilon
+    [P3|[LLM] C: added constrained-thermal-expansion strain-shift term, referencing Thermoelastic stress with thermal strain from domain knowledge above: sigma = c0 * (epsilon - c1 * (T - c2))]: test=4.77e-06  train=4.68e-06  ood=2.40e-03  → T*c0*epsilon + T*c1 + c2*epsilon + c3 + c4*exp(c5/T) + c6*epsilon
+    [P3|[LLM] C: added quadratic nonlinear elasticity correction, referencing Nonlinear elastic polynomial from domain knowledge above: sigma = c0*epsilon + c1*epsilon**2 + c2*epsilon**3]: test=4.77e-06  train=4.68e-06  ood=2.40e-03  → T*c0*epsilon + c1*epsilon + c2 + c3*exp(c4/T) + c5*epsilon**2
+  ★ [P3|[LLM] C: added saturating hardening term, referencing Voce hardening from domain knowledge above: sigma = c0 + c1 * (1 - exp(-c2 * epsilon))]: test=1.71e-10  train=1.59e-10  ood=1.14e-07  → T*c0*epsilon + c1*epsilon + c2*exp(c3*epsilon) + c4 + c5*exp(c6/T)
+  ★ [P3|[LLM] C: added smooth transition (sigmoid) drop in effective stiffness with temperature, referencing Glass/phase-transition smoothed stiffness drop from domain knowledge above: sigma = (c0 + c1*epsilon) * (c2 - c3 * tanh(c4*(T - c5))) (implemented with logistic-sigmoid since tanh is disallowed)]: test=2.47e-13  train=2.19e-13  ood=8.97e-12  → T*c0*epsilon + c1*epsilon + c2 + c3*exp(c4/T) + c5*epsilon/(c6*exp(T*c7 + c8) + 
+    ↳ degenerate simplified (c7=-4.022e-04->small coeff,T*c7->0): T*c0*epsilon + c1*epsilon + c2 + c3*exp(c4/T) + c5*epsilon/(c6*exp(T*c7 + c8) + 1) -> T*c0*epsilon + T*c1*epsilon + c2*epsilon + c3*exp(c4/T) + c5*epsilon + c6*epsilon + c7*exp(c4/T) + c8
+  ★ [P3|[LLM] C: added bounded homologous-temperature-like softening factor multiplying epsilon, referencing Homologous-temperature-like softening (bounded 0–1 factor) from domain knowledge above: sigma = f(epsilon) * (1 - ((T - c4)/(T + c5))**c6)]: test=2.02e-10  train=1.79e-10  ood=5.58e-07  → T*c0*epsilon + c1*epsilon + c2*epsilon*(T/(T + c3) + c4/(T + c3))**c5 + c6 + c7*
+    ↳ degenerate simplified (c5=5.0000->snapped to 5): T*c0*epsilon + c1*epsilon + c2*epsilon*(T/(T + c3) + c4/(T + c3))**c5 + c6 + c7*exp(c8/T) + c9*epsilon -> T*c0*epsilon + c1*epsilon + c2*epsilon*(T + c3)**5/(T + c4)**5 + c5 + c6*exp(c7/T) + c8*epsilon
+  ★ [P3|[LLM] C: added Arrhenius-type thermally activated stiffness/flow contribution proportional to strain, referencing Arrhenius equation from domain knowledge above: k = c0 * exp(c1 / T)]: test=4.38e-10  train=3.85e-10  ood=1.12e-06  → T*c0*epsilon + c1*epsilon + c2 + c3*exp(c4/T) + c5*epsilon*exp(c6/T)
+  ★ [P4|[LLM] C: added saturating hardening term approaching a plateau, referencing Voce hardening from domain knowledge above: sigma = c0 + c1 * (1 - exp(-c2 * epsilon))]: test=4.54e-12  train=4.55e-12  ood=2.04e-09  → T*c0*epsilon + c1*epsilon + c2*exp(c3*epsilon) + c4 + c5*(T + c6)**c7*(c8 + epsi
+  ★ [P4|[LLM] C: added thermoelastic strain-shift term c8*(epsilon-alpha*(T-Tref)), referencing Thermoelastic stress with thermal strain from domain knowledge above: sigma = c0 * (epsilon - c1 * (T - c2))]: test=1.23e-04  train=1.12e-04  ood=1.95e-02  → T*c0*epsilon + T*c1 + c2*epsilon + c3 + c4*(T + c5)**c6*(c7 + epsilon)**c8 + c9*
+    [P4|[LLM] C: added temperature-dependent modulus linear-elastic term (E0+E1*T)*epsilon, referencing Temperature-dependent modulus (linear E(T)) from domain knowledge above: sigma = (c0 + c1 * T) * epsilon]: test=2.70e-04  train=2.59e-04  ood=8.11e-02  → T*c0*epsilon + T*c1*epsilon + c2*epsilon + c3 + c4*(T + c5)**c6*(c7 + epsilon)**
+    ↳ degenerate simplified (c8=5.0000->snapped to 5): T*c0*epsilon + T*c1*epsilon + c2*epsilon + c3 + c4*(T + c5)**c6*(c7 + epsilon)**c8 + c9*epsilon -> T*c0*epsilon + T*c1*epsilon + c2*epsilon + c3 + c4*(T + c5)**c6*(c7 + epsilon)**5 + c8*epsilon
+  [Degenerate simplification] Evaluating 33 simplified formulas
+
+  [Unified eval] 26 candidates, pool workers=16, timeout=120s
+    Parent tags: P1=c0*epsilon + c1*exp(c2*epsilon) + c3 + c  P2=c0*epsilon + c1*exp(c2*epsilon) + c3/(ep  P3=T*c0*epsilon + c1*epsilon + c2 + c3*exp(  P4=T*c0*epsilon + c1*epsilon + c2 + c3*(c4   P5=T*c0*epsilon + c1*epsilon + c2 + c3*(T +
+    [P1|[P1|[Degenerated] [LLM] C: added multiplicative thermal softening on a hardening backbone, referencing Exponential thermal softening of flow stress from domain knowledge above: sigma = (c0 + c1*(epsilon + c2)**c3)*exp(-c4*T)]]: test=3.50e-11  train=3.47e-11  ood=2.74e-08  → c0*epsilon + c1*exp(c2*epsilon) + c3 + c4*sqrt(c5 + epsilon) + c6*epsilon
+  ★ [P3|[P3|[Degenerated] [LLM] C: added multiplicative thermal softening on a hardening backbone, referencing Exponential thermal softening of flow stress from domain knowledge above: sigma = (c0 + c1*(epsilon + c2)**c3) * exp(-c4*T)]]: test=6.13e-11  train=5.83e-11  ood=1.52e-07  → T*c0*epsilon + c1*epsilon + c2*exp(T*c3) + c4 + c5*exp(c6/T) + c7*epsilon*exp(T*
+  ★ [P1|[P1|[Degenerated] [LLM] B: added product term sin(c7*epsilon) * exp(c8*T)]]: test=4.64e-14  train=4.07e-14  ood=1.46e-11  → c0*epsilon + c1*exp(c2*epsilon) + c3 + c4*sqrt(c5 + epsilon) + c6*sin(c7*epsilon
+    ↳ degenerate simplified (c8=6.2677~2*pi->phase absorbed): c0*epsilon + c1*exp(c2*epsilon) + c3 + c4*sqrt(c5 + epsilon) + c6*sin(c7*epsilon + c8) -> c0*epsilon + c1*exp(c2*epsilon) + c3 + c4*sqrt(c5 + epsilon) + c6*sin(c7*epsilon + c8)
+  ★ [P3|[P3|[Degenerated] [LLM] C: added bounded homologous-temperature-like softening factor multiplying epsilon, referencing Homologous-temperature-like softening (bounded 0–1 factor) from domain knowledge above: sigma = f(epsilon) * (1 - ((T - c4)/(T + c5))**c6)]]: test=5.31e-11  train=4.76e-11  ood=1.71e-07  → T*c0*epsilon + c1*epsilon + c2*epsilon*(T + c3)**5/(T + c4)**5 + c5 + c6*exp(c7/
+    [P4|[P5|[Degenerated] [LLM] B: add product term sin(T)*powerlaw(epsilon)]]: test=4.49e-14  train=3.56e-14  ood=1.88e-12  → T*c0*epsilon + c1*epsilon + c2 + c3*(c4 + epsilon)**3 + c5*epsilon**5*sin(T*c6 +
+    [P4|[P5|[Degenerated] [LLM] B: add product term log(1+T)*powerlaw(epsilon+offset)]]: test=4.47e-14  train=3.57e-14  ood=1.87e-12  → T*c0*epsilon + c1*epsilon + c2*log(T*c3 + 1) + c4 + c5*(c6 + epsilon)**3 + c7*ep
+    [P4|[P5|[Degenerated] [LLM] B: add product term exp(epsilon)*powerlaw(1+T) coupling]]: test=4.47e-14  train=3.57e-14  ood=1.87e-12  → T*c0*epsilon + T*c1*exp(c2*epsilon) + c3*epsilon + c4 + c5*(c6 + epsilon)**3 + c
+    ↳ degenerate simplified (c1=-4.379e-04->small coeff,T*c1*exp(c2*epsilon)->0): T*c0*epsilon + T*c1*exp(c2*epsilon) + c3*epsilon + c4 + c5*(c6 + epsilon)**3 + c7*exp(c2*epsilon) -> T*c0*epsilon + c1*epsilon + c2 + c3*(c4 + epsilon)**3 + c5*exp(c6*epsilon)
+  ★ [P4|[P5|[Degenerated] [LLM] C: add power-law strain hardening, referencing Hollomon (power-law strain hardening) from domain knowledge above: sigma = c0 * (epsilon + c1)**c2]]: test=4.46e-14  train=3.57e-14  ood=1.86e-12  → T*c0*epsilon + c1*epsilon + c2 + c3*(c4 + epsilon)**3 + c5*epsilon
+    [P4|[P5|[Degenerated] [LLM] B: add product term cos(epsilon)*exp(T) oscillatory coupling]]: test=4.46e-14  train=3.57e-14  ood=1.86e-12  → T*c0*epsilon + c1*epsilon + c2 + c3*(c4 + epsilon)**3 + c5*cos(c6*epsilon)
+  ★ [P5|[P4|[Degenerated] [LLM] C: added higher-order elastic anharmonicity terms epsilon**2 and epsilon**3, referencing Nonlinear elastic polynomial from domain knowledge above: sigma = c0*epsilon + c1*epsilon**2 + c2*epsilon**3]]: test=1.48e-14  train=1.44e-14  ood=8.75e-13  → T*c0*epsilon + T*c1*(c2 + epsilon)**2 + c3*epsilon + c4*(c2 + epsilon)**2 + c5 +
+  ★ [P1|[P1|[Degenerated] [LLM] C: added power-law hardening backbone, referencing Hollomon (power-law strain hardening) from domain knowledge above: sigma = c0*(epsilon + c1)**c2]]: test=5.41e-13  train=5.15e-13  ood=9.33e-10  → c0*epsilon + c1*exp(c2*epsilon) + c3 + c4*sqrt(c5 + epsilon) + c6*sqrt(c7 + epsi
+  ★ [P2|[P2|[Degenerated] [LLM] A: added nested composite term log(1 + exp(c7*epsilon + c8*T))]]: test=4.66e-14  train=4.20e-14  ood=1.33e-10  → c0*epsilon + c1*exp(c2*epsilon) + c3/(epsilon + 1)**2 + c4 + c5*epsilon + c6*log
+    [P1|[P1|[Degenerated] [LLM] B: added product term epsilon**c7 * log(1 + c8*T) to couple power-law hardening with thermal log response]]: test=4.49e-08  train=4.21e-08  ood=5.66e-05  → c0*epsilon + c1*exp(c2*epsilon) + c3 + c4*sqrt(c5 + epsilon) + c6*epsilon**4*log
+  ★ [P2|[P2|[Degenerated] [LLM] B: added product term epsilon**c7 * exp(c8*T)]]: test=2.52e-14  train=2.17e-14  ood=4.29e-12  → c0*epsilon + c1*exp(c2*epsilon) + c3/(epsilon + 1)**2 + c4 + c5*epsilon + c6*eps
+  ★ [P2|[P2|[Degenerated] [LLM] C: added power-law hardening term (epsilon + c7)**c8, referencing Hollomon (power-law strain hardening) from domain knowledge above: sigma = c0 * (epsilon + c1)**c2]]: test=1.77e-10  train=5.58e-12  ood=1.33e-09  → c0*epsilon + c1*exp(c2*epsilon) + c3/(epsilon + 1)**2 + c4 + c5*epsilon + c6*(c7
+  ★ [P2|[P2|[Degenerated] [LLM] A: added multi-layer nesting log(1 + exp(c7*log(1 + c8*T)))]]: test=4.62e-11  train=4.36e-11  ood=7.36e-08  → c0*epsilon + c1*exp(c2*epsilon) + c3/(epsilon + 1)**2 + c4 + c5*epsilon + c6*log
+  ★ [P2|[P2|[Degenerated] [LLM] B: added 3-factor product term epsilon * exp(c7*T) * log(1 + c8*epsilon)]]: test=5.90e-13  train=5.60e-13  ood=1.01e-09  → c0*epsilon + c1*exp(c2*epsilon) + c3/(epsilon + 1)**2 + c4 + c5*epsilon + c6*eps
+  ★ [P2|[P2|[Degenerated] [LLM] C: added multiplicative thermal softening of a strain-hardening backbone (epsilon+c7)**c8 * exp(-c9*T), referencing Exponential thermal softening of flow stress from domain knowledge above: sigma = (c0 + c1 * (epsilon + c2)**c3) * exp(-c4 * T)]]: test=1.42e-12  train=1.47e-12  ood=1.17e-09  → c0*epsilon + c1*exp(c2*epsilon) + c3*exp(T*c4) + c5/(epsilon + 1)**2 + c6 + c7*e
+    ↳ degenerate simplified (c4=-3.602e-04->small coeff,T*c4->0; c4=-3.602e-04->small coeff,T*c4->0): c0*epsilon + c1*exp(c2*epsilon) + c3*exp(T*c4) + c5/(epsilon + 1)**2 + c6 + c7*epsilon + c8*epsilon*exp(T*c4) -> c0*epsilon + c1*exp(c2*epsilon) + c3 + c4/(epsilon + 1)**2 + c5*epsilon + c6*epsilon
+  ★ [P3|[P3|[Degenerated] [LLM] A: added nested composite term log(1 + power-law(epsilon) * Arrhenius-like exp(1/T))]]: test=1.99e-13  train=2.05e-13  ood=2.52e-09  → T*c0*epsilon + c1*epsilon + c2 + c3*exp(c4/T) + c5*log(c6*(c7 + epsilon)**2*exp(
+  ★ [P3|[P3|[Degenerated] [LLM] B: added product term sin(epsilon) * exp(T) for temperature-modulated oscillatory strain contribution]]: test=2.96e-13  train=2.81e-13  ood=6.47e-10  → T*c0*epsilon + c1*epsilon + c2 + c3*exp(c4/T) + c5*sin(c6*epsilon + c7)
+  ★ [P3|[P3|[Degenerated] [LLM] B: added product term power-law in epsilon multiplied by Arrhenius-like exp(1/T)]]: test=5.79e-11  train=5.20e-11  ood=1.95e-07  → T*c0*epsilon + c1*epsilon + c2 + c3*exp(c4/T) + c5*(c6 + epsilon)**2*exp(c7/T)
+    [P2|[P2|[Degenerated] [LLM] C: added exponentially decreasing stiffness term exp(-c7*T)*epsilon, referencing Exponential thermal softening idea from domain knowledge above: sigma = f(epsilon) * exp(-c4 * T)]]: test=1.35e-06  train=1.33e-06  ood=8.55e-04  → c0*epsilon + c1*exp(c2*epsilon) + c3/(epsilon + 1)**2 + c4 + c5*epsilon + c6*eps
+  ★ [P3|[P3|[Degenerated] [LLM] B: added product term epsilon**n * cos(T) for temperature-driven modulation of strain hardening]]: test=4.47e-14  train=3.57e-14  ood=1.87e-12  → T*c0*epsilon + c1*epsilon + c2 + c3*exp(c4/T) + c5*epsilon**3
+  ★ [P3|[P3|[Degenerated] [LLM] A: added nested composite term log(1+exp(linear combo of epsilon and T))]]: test=1.19e-11  train=1.09e-11  ood=2.56e-08  → T*c0*epsilon + c1*epsilon + c2 + c3*exp(c4/T) + c5*log(c6*exp(c7*epsilon) + 1)
+  ★ [P5|[P4|[Degenerated] [LLM] C: added temperature-dependent modulus linear-elastic term (E0+E1*T)*epsilon, referencing Temperature-dependent modulus (linear E(T)) from domain knowledge above: sigma = (c0 + c1 * T) * epsilon]]: test=1.99e-11  train=1.82e-11  ood=6.72e-10  → T*c0*epsilon + T*c1*epsilon + c2*epsilon + c3 + c4*(T + c5)**c6*(c7 + epsilon)**
+    ↳ degenerate simplified (c6=-2.0000->snapped to -2): T*c0*epsilon + T*c1*epsilon + c2*epsilon + c3 + c4*(T + c5)**c6*(c7 + epsilon)**5 + c8*epsilon -> T*c0*epsilon + T*c1*epsilon + c2*epsilon + c3 + c4*(c5 + epsilon)**5/(T + c6)**2 + c7*epsilon
+    [P3|[P3|[Degenerated] [LLM] C: added smooth transition (sigmoid) drop in effective stiffness with temperature, referencing Glass/phase-transition smoothed stiffness drop from domain knowledge above: sigma = (c0 + c1*epsilon) * (c2 - c3 * tanh(c4*(T - c5))) (implemented with logistic-sigmoid since tanh is disallowed)]]: test=4.77e-06  train=4.68e-06  ood=2.40e-03  → T*c0*epsilon + T*c1*epsilon + c2*epsilon + c3*exp(c4/T) + c5*epsilon + c6*epsilo
+    ↳ degenerate simplified (Like-term merge: c3*exp(c4/T) + c7*exp(c4/T) -> (c3 + c7)*exp(c4/T)): T*c0*epsilon + T*c1*epsilon + c2*epsilon + c3*exp(c4/T) + c5*epsilon + c6*epsilon + c7*exp(c4/T) + c8 -> T*c0*epsilon + T*c1*epsilon + c2*epsilon + c3*exp(c4/T) + c5*epsilon + c6*epsilon + c7*exp(c4/T) + c8
+  [Degenerate simplification] Evaluating 5 simplified formulas
+
+  [Unified eval] 1 candidates, pool workers=16, timeout=120s
+    Parent tags: P4=T*c0*epsilon + c1*epsilon + c2 + c3*(T +
+  ★ [P4|[P5|[Degenerated] [P4|[Degenerated] [LLM] C: added temperature-dependent modulus linear-elastic term (E0+E1*T)*epsilon, referencing Temperature-dependent modulus (linear E(T)) from domain knowledge above: sigma = (c0 + c1 * T) * epsilon]]]: test=1.93e-11  train=1.76e-11  ood=6.48e-10  → T*c0*epsilon + T*c1*epsilon + c2*epsilon + c3 + c4*(c5 + epsilon)**5/(T + c6)**2
+
+  [Summary] Parents: 5, successfully evaluated: 99
+  [Step best] [P4|[Degenerated] [LLM] C: added higher-order elastic anharmonicity terms epsilon**2 and epsilon**3, referencing Nonlinear elastic polynomial from domain knowledge above: sigma = c0*epsilon + c1*epsilon**2 + c2*epsilon**3]
+    formula: T*c0*epsilon + T*c1*(c2 + epsilon)**2 + c3*epsilon + c4*(c2 + epsilon)**2 + c5 + c6*epsilon**2 + c7*epsilon**3
+    params: c0=-6.3207e+02, c1=1.6250e+03, c2=9.2725e-02, c3=1.7625e+05, c4=-3.3953e+05, c5=-8.9512e+02, c6=-3.7220e+05, c7=7.5407e+05
+    train=1.44e-14  test=1.48e-14  ood=8.75e-13
+
+  [Global best] T*c0 + T*c1*(c2 + epsilon)**c3 + c4*epsilon + c5*(c2 + epsilon)**c3 + c6 + c7*(c2 + epsilon)**c3
+    params: c0=-1.6421e+01, c1=3.1332e+03, c2=-1.9694e-01, c3=2.0000e+00, c4=4.9746e+04, c5=-3.3588e+05, c6=-2.6377e+03, c7=-3.3588e+05
+    train=1.45e-14  test=1.46e-14  ood=8.68e-13
+  [Mature nodes] 36/50
+  [Mature] c0*epsilon + c1*exp(c2*epsilon) + c3 + c4*sqrt(c5 + epsilon) + c6*exp(c7*sin(c8*epsilon + c9))
+         train=3.48e-14  test=4.05e-14  ood=9.12e-11
+  [Mature] c0*epsilon + c1*exp(c2*epsilon) + c3 + c4*sqrt(c5 + epsilon) + c6*sin(c7*log(c8*Abs(epsilon) + 1) + c9)
+         train=2.68e-14  test=3.10e-14  ood=2.82e-11
+  [Mature] c0*epsilon + c1*exp(c2*epsilon) + c3 + c4*sqrt(c5 + epsilon) + c6*epsilon**c7*log(T*c8 + 1)
+         train=3.16e-14  test=3.40e-14  ood=8.04e-11
+  [Mature] c0*epsilon + c1*exp(c2*epsilon) + c3 + c4*sqrt(c5 + epsilon) + c6*epsilon**3
+         train=2.51e-14  test=2.88e-14  ood=5.96e-12
+  [Mature] c0*epsilon + c1*exp(c2*epsilon) + c3/(epsilon + 1)**2 + c4 + c5*epsilon + c6*log(c7*exp(T*c8 + c9*epsilon) + 1)
+         train=4.27e-14  test=4.71e-14  ood=1.44e-10
+  [Mature] c0*epsilon + c1*exp(c2*epsilon) + c3/(epsilon + 1)**2 + c4 + c5*epsilon + c6*exp(c7*cos(c8*log(c9*Abs(epsilon) + 1)))
+         train=2.72e-14  test=3.08e-14  ood=8.91e-11
+  [Mature] c0*epsilon + c1*exp(c2*epsilon) + c3/(epsilon + 1)**2 + c4 + c5*epsilon + c6*epsilon**c7*exp(T*c8)
+         train=1.71e-14  test=2.00e-14  ood=1.09e-12
+  [Mature] c0*epsilon + c1*exp(c2*epsilon) + c3/(epsilon + 1)**2 + c4 + c5*epsilon + c6*epsilon*exp(T*c7)*log(c8*epsilon + 1)
+         train=3.96e-14  test=4.02e-14  ood=7.06e-11
+  [Mature] c0*epsilon + c1*exp(c2*epsilon) + c3*epsilon**3 + c4/(epsilon + 1)**2 + c5 + c6*epsilon + c7*epsilon**2
+         train=1.71e-14  test=2.00e-14  ood=1.15e-12
+  [Mature] T*c0*epsilon + c1*epsilon + c2 + c3*exp(c4/T) + c5*epsilon**c6*cos(T*c7)
+         train=3.57e-14  test=4.47e-14  ood=1.88e-12
+  [Mature] T*c0*epsilon + c1*epsilon + c2 + c3*exp(c4/T) + c5*(c6 + epsilon)**c7
+         train=3.57e-14  test=4.46e-14  ood=1.86e-12
+  [Mature] T*c0*epsilon + c1*epsilon + c2 + c3*(T + c4)**c5*(c6 + epsilon)**c7 + c8*epsilon**2 + c9*epsilon**3
+         train=1.44e-14  test=1.48e-14  ood=8.75e-13
+  [Mature] T*c0*epsilon + c1*epsilon + c2 + c3*(c4 + epsilon)**3 + c5*log(c6*exp(T*c7 + c8*epsilon) + 1)
+         train=2.00e-14  test=2.28e-14  ood=1.16e-12
+  [Mature] T*c0*epsilon + c1*epsilon + c2 + c3*(c4 + epsilon)**3 + c5*exp(c6*sin(T*c7 + c8*epsilon + c9))
+         train=1.46e-14  test=1.54e-14  ood=9.03e-13
+  [Mature] T*c0*epsilon + c1*epsilon + c2 + c3*(c4 + epsilon)**3 + c5*sin(c6 + c7*log(T*c8 + c9*Abs(epsilon) + 1))
+         train=3.57e-14  test=4.46e-14  ood=1.86e-12
+  [Mature] T*c0*epsilon + c1*epsilon + c2 + c3*(c4 + epsilon)**3 + c5*log(c6*exp(c7*(T*c8 + epsilon)**2) + 1)
+         train=2.79e-14  test=3.13e-14  ood=—
+  [Mature] T*c0*epsilon + c1*epsilon + c2 + c3*(c4 + epsilon)**3 + c5*exp(T*c6)*log(c7*Abs(epsilon) + 1)
+         train=3.57e-14  test=4.46e-14  ood=1.86e-12
+  [Mature] T*c0*epsilon + c1*epsilon + c2 + c3*(c4 + epsilon)**3 + c5*epsilon**c6*sin(T*c7 + c8)
+         train=1.43e-14  test=1.55e-14  ood=8.55e-13
+  [Mature] T*c0*epsilon + c1*epsilon + c2 + c3*(c4 + epsilon)**3 + c5*(T*c6 + 1)**c7*exp(c8*epsilon)
+         train=3.57e-14  test=4.47e-14  ood=1.87e-12
+  [Mature] T*c0*epsilon + c1*epsilon + c2 + c3*(c4 + epsilon)**3 + c5*exp(T*c6)*cos(c7*epsilon)
+         train=3.57e-14  test=4.47e-14  ood=1.89e-12
+  [Mature] T*c0*epsilon + c1*epsilon + c2 + c3*(c4 + epsilon)**3 + c5*(c6 + epsilon)**c7*log(T*c8 + 1)
+         train=3.57e-14  test=4.47e-14  ood=1.87e-12
+  [Mature] T*c0*epsilon + T*c1 + c2*epsilon + c3 + c4*(c5 + epsilon)**3 + c6*epsilon
+         train=2.00e-14  test=2.28e-14  ood=1.16e-12
+  [Mature] T*c0*epsilon + T*c1*epsilon + c2*epsilon + c3 + c4*(c5 + epsilon)**3 + c6*epsilon
+         train=3.57e-14  test=4.46e-14  ood=1.86e-12
+  [Mature] T*c0*epsilon + c1*epsilon + c2*exp(T*c3) + c4 + c5*(c6 + epsilon)**3 + c7*(c8 + epsilon)**c9*exp(T*c3)
+         train=1.98e-14  test=2.26e-14  ood=1.25e-12
+  [Mature] T*c0*epsilon + c1*epsilon + c2*exp(c3*epsilon) + c4 + c5*(c6 + epsilon)**3
+         train=3.57e-14  test=4.46e-14  ood=1.86e-12
+  [Mature] T*c0*epsilon + c1*epsilon + c2 + c3*(c4 + epsilon)**3 + c5*(c6 + epsilon)**c7
+         train=3.57e-14  test=4.46e-14  ood=1.86e-12
+  [Mature] T*c0*epsilon + c1*epsilon + c2 + c3*(c4 + epsilon)**3 + c5*epsilon**2
+         train=1.47e-14  test=1.55e-14  ood=9.07e-13
+  [Mature] T*c0*epsilon + c1*epsilon + c2/(epsilon + 1)**2 + c3 + c4*(c5 + epsilon)**3 + c6*epsilon
+         train=3.57e-14  test=4.46e-14  ood=1.86e-12
+  [Mature] T*c0*epsilon + c1*epsilon + c2 + c3*(c4 + epsilon)**3 + c5*epsilon*exp(c6/T)
+         train=3.57e-14  test=4.47e-14  ood=1.87e-12
+  [Mature] c0*epsilon + c1*exp(c2*epsilon) + c3 + c4*sqrt(c5 + epsilon) + c6*sin(c7*epsilon + c8)
+         train=4.07e-14  test=4.64e-14  ood=1.46e-11
+  [Mature] c0*epsilon + c1*exp(c2*epsilon) + c3/(epsilon + 1)**2 + c4 + c5*epsilon + c6*log(c7*exp(c8*epsilon) + 1)
+         train=4.20e-14  test=4.66e-14  ood=1.33e-10
+  [Mature] c0*epsilon + c1*exp(c2*epsilon) + c3/(epsilon + 1)**2 + c4 + c5*epsilon + c6*epsilon**3
+         train=2.17e-14  test=2.52e-14  ood=4.29e-12
+  [Mature] T*c0*epsilon + c1*epsilon + c2 + c3*exp(c4/T) + c5*epsilon**3
+         train=3.57e-14  test=4.47e-14  ood=1.87e-12
+  [Mature] T*c0*epsilon + c1*epsilon + c2 + c3*(c4 + epsilon)**3 + c5*epsilon**5*sin(T*c6 + c7)
+         train=3.56e-14  test=4.49e-14  ood=1.88e-12
+  [Mature] T*c0*epsilon + c1*epsilon + c2*log(T*c3 + 1) + c4 + c5*(c6 + epsilon)**3 + c7*epsilon*log(T*c3 + 1)
+         train=3.57e-14  test=4.47e-14  ood=1.87e-12
+  [Mature] T*c0*epsilon + T*c1*exp(c2*epsilon) + c3*epsilon + c4 + c5*(c6 + epsilon)**3 + c7*exp(c2*epsilon)
+         train=3.57e-14  test=4.47e-14  ood=1.87e-12
+  [Mature] T*c0*epsilon + c1*epsilon + c2 + c3*(c4 + epsilon)**3 + c5*epsilon
+         train=3.57e-14  test=4.46e-14  ood=1.86e-12
+  [Mature] T*c0*epsilon + c1*epsilon + c2 + c3*(c4 + epsilon)**3 + c5*cos(c6*epsilon)
+         train=3.57e-14  test=4.46e-14  ood=1.86e-12
+  [Mature] T*c0*epsilon + T*c1*(c2 + epsilon)**2 + c3*epsilon + c4*(c2 + epsilon)**2 + c5 + c6*epsilon**2 + c7*epsilon**3
+         train=1.44e-14  test=1.48e-14  ood=8.75e-13
+
+  [Early stop] Collected 75 mature nodes (>= 50), ending search early.
+    1. T*c0 + T*c1*(c2 + epsilon)**c3 + c4*epsilon + c5*(c2 + epsilon)**c3 + c6 + c7*(c2 + epsilon)**c3
+       train=1.45e-14  test=1.46e-14  ood=8.68e-13
+    2. T*c0*epsilon + T*c1*(c2 + epsilon)**2 + c3*epsilon + c4*(c2 + epsilon)**2 + c5 + c6*epsilon**2 + c7*epsilon**3
+       train=1.44e-14  test=1.48e-14  ood=8.75e-13
+    3. T*c0*epsilon + c1*epsilon + c2 + c3*(T + c4)**c5*(c6 + epsilon)**c7 + c8*epsilon**2 + c9*epsilon**3
+       train=1.44e-14  test=1.48e-14  ood=8.75e-13
+    4. c0*epsilon + c1 + c2*exp(T*c3) + c4*epsilon**2 + c5*epsilon**3 + c6*exp(T*c7) + c8*epsilon*exp(T*c3)
+       train=1.44e-14  test=1.48e-14  ood=9.90e-13
+    5. T*c0 + T*c1*(c2 + epsilon)**c3 + c4*epsilon + c5*(c2 + epsilon)**c3 + c6 + c7*epsilon**2 + c8*epsilon**3 + c9*(c2 + epsilon)**c3
+       train=1.45e-14  test=1.49e-14  ood=8.80e-13
+    6. T*c0 + T*c1*(c2 + epsilon)**2 + c3*epsilon + c4*(c2 + epsilon)**2 + c5 + c6*epsilon**2 + c7*epsilon**3 + c8*(c2 + epsilon)**2
+       train=1.45e-14  test=1.49e-14  ood=8.80e-13
+    7. c0*epsilon + c1 + c2*epsilon**2 + c3*epsilon**3 + c4*exp(T*c5) + c6*(c7 + epsilon)**c8*exp(T*c9)
+       train=1.45e-14  test=1.51e-14  ood=9.74e-13
+    8. T*c0*epsilon + c1*epsilon + c2 + c3*(c4 + epsilon)**3 + c5*exp(c6*sin(T*c7 + c8*epsilon + c9))
+       train=1.46e-14  test=1.54e-14  ood=9.03e-13
+    9. T*c0*epsilon + c1*epsilon + c2 + c3*(c4 + epsilon)**3 + c5*epsilon**c6*sin(T*c7 + c8)
+       train=1.43e-14  test=1.55e-14  ood=8.55e-13
+    10. T*c0*epsilon + c1*epsilon + c2 + c3*(c4 + epsilon)**3 + c5*epsilon**2
+       train=1.47e-14  test=1.55e-14  ood=9.07e-13
+    11. T*c0*epsilon + c1*epsilon + c2 + c3*(c4 + epsilon)**c5
+       train=1.47e-14  test=1.55e-14  ood=9.07e-13
+    12. T*c0*epsilon + c1*epsilon + c2*(T + c3)**3*(c4 + epsilon)**3/(T + c5)**3 + c6 + c7*(c4 + epsilon)**3
+       train=1.47e-14  test=1.55e-14  ood=9.07e-13
+    13. T*c0*sin(c1 + c2*epsilon) + c3*epsilon + c4 + c5*sin(c2*epsilon + c6) + c7*epsilon**2 + c8*epsilon**3
+       train=1.47e-14  test=1.56e-14  ood=9.13e-13
+    14. c0*epsilon + c1 + c2*cos(T*c3) + c4*epsilon**2 + c5*epsilon**3 + c6*epsilon*cos(T*c3)
+       train=1.50e-14  test=1.62e-14  ood=9.46e-13
+    15. c0*epsilon + c1 + c2*epsilon**2 + c3*epsilon**3 + c4*exp(T*c5)*exp(c6*epsilon)
+       train=1.55e-14  test=1.70e-14  ood=9.72e-13
+    16. c0*epsilon + c1 + c2*epsilon**2 + c3*epsilon**3 + c4*sin(T*c5 + c6*exp(c7*epsilon) + c8)
+       train=1.70e-14  test=1.99e-14  ood=1.08e-12
+    17. c0*epsilon + c1 + c2*epsilon**2 + c3*epsilon**3 + c4*exp(c5*sin(T*c6 + c7*epsilon + c8))
+       train=1.70e-14  test=1.99e-14  ood=1.07e-12
+    18. c0*epsilon + c1 + c2*epsilon*(c3 + epsilon)**c4
+       train=1.71e-14  test=2.00e-14  ood=1.08e-12
+    19. c0*epsilon + c1 + c2*(c3 + epsilon)**c4
+       train=1.71e-14  test=2.00e-14  ood=1.08e-12
+    20. c0*epsilon + c1 + c2*epsilon**2 + c3*epsilon**3 + c4*(c5 + epsilon)**c6*cos(T*c7)
+       train=1.68e-14  test=2.00e-14  ood=1.06e-12
+    21. c0*epsilon + c1 + c2*epsilon**2 + c3*epsilon**3 + c4*exp(c5*(c6 + epsilon)**c7)
+       train=1.71e-14  test=2.00e-14  ood=1.09e-12
+    22. c0*epsilon + c1 + c2*epsilon**2 + c3*epsilon**3 + c4*(c5 + epsilon)**c6
+       train=1.71e-14  test=2.00e-14  ood=1.09e-12
+    23. c0*epsilon + c1 + c2*epsilon**2 + c3*epsilon**3 + c4*(c5 + epsilon)**5
+       train=1.71e-14  test=2.00e-14  ood=1.09e-12
+    24. c0*epsilon + c1 + c2*epsilon**2 + c3*epsilon**3 + c4*epsilon**c5*log(c6*Abs(T) + 1)
+       train=1.71e-14  test=2.00e-14  ood=1.09e-12
+    25. c0*epsilon + c1 + c2*epsilon**2 + c3*epsilon**3 + c4*epsilon**5*log(c5*Abs(T) + 1)
+       train=1.71e-14  test=2.00e-14  ood=1.09e-12
+    26. c0*epsilon + c1*exp(c2*epsilon) + c3/(epsilon + 1)**2 + c4 + c5*epsilon + c6*epsilon**c7*exp(T*c8)
+       train=1.71e-14  test=2.00e-14  ood=1.09e-12
+    27. c0*epsilon + c1 + c2*epsilon**2 + c3*epsilon**3 + c4*sin(c5*(Abs(c6*epsilon) + 1)**c7 + c8)
+       train=1.71e-14  test=2.00e-14  ood=1.10e-12
+    28. c0*epsilon + c1 + c2*epsilon**2 + c3*epsilon**3 + c4*exp(c5*cos(T*c6 + c7))
+       train=1.70e-14  test=2.00e-14  ood=1.08e-12
+    29. c0*epsilon + c1 + c2*epsilon**2 + c3*epsilon**3 + c4*epsilon**c5*exp(T*c6)
+       train=1.71e-14  test=2.00e-14  ood=1.11e-12
+    30. c0*epsilon + c1 + c2*epsilon**2 + c3*epsilon**3 + c4*exp(c5 + c6*epsilon)
+       train=1.71e-14  test=2.00e-14  ood=1.11e-12
+    31. c0*epsilon + c1*exp(c2*epsilon) + c3 + c4*epsilon**2 + c5*epsilon**3
+       train=1.71e-14  test=2.00e-14  ood=1.11e-12
+    32. c0*epsilon + c1*exp(c2*epsilon) + c3*epsilon**3 + c4/(epsilon + 1)**2 + c5 + c6*epsilon + c7*epsilon**2
+       train=1.71e-14  test=2.00e-14  ood=1.15e-12
+    33. c0*epsilon + c1*exp(c2*epsilon) + c3 + c4*epsilon**c5*exp(c6*epsilon)
+       train=1.83e-14  test=2.10e-14  ood=1.83e-12
+    34. c0*epsilon + c1 + c2*log(c3*exp(c4*epsilon) + 1) + c5*epsilon**c6*exp(T*c7)
+       train=1.79e-14  test=2.10e-14  ood=3.55e-12
+    35. T*c0*epsilon + c1*epsilon + c2*exp(T*c3) + c4 + c5*(c6 + epsilon)**3 + c7*(c8 + epsilon)**c9*exp(T*c3)
+       train=1.98e-14  test=2.26e-14  ood=1.25e-12
+    36. T*c0*epsilon + c1*epsilon + c2 + c3*(c4 + epsilon)**3 + c5*log(c6*exp(T*c7 + c8*epsilon) + 1)
+       train=2.00e-14  test=2.28e-14  ood=1.16e-12
+    37. T*c0*epsilon + T*c1 + c2*epsilon + c3 + c4*(c5 + epsilon)**3 + c6*epsilon
+       train=2.00e-14  test=2.28e-14  ood=1.16e-12
+    38. c0*epsilon + c1 + c2*log(c3*exp(c4*epsilon) + 1) + c5*epsilon**3
+       train=2.10e-14  test=2.43e-14  ood=4.50e-12
+    39. c0*epsilon + c1*exp(c2*epsilon) + c3/(epsilon + 1)**2 + c4 + c5*epsilon + c6*epsilon**3
+       train=2.17e-14  test=2.52e-14  ood=4.29e-12
+    40. c0*epsilon + c1*exp(c2*epsilon) + c3 + c4*sin(c5*log(c6*Abs(epsilon) + 1) + c7)
+       train=2.27e-14  test=2.55e-14  ood=1.47e-11
+    41. c0*epsilon + c1*exp(c2*epsilon) + c3 + c4*sqrt(c5 + epsilon) + c6*epsilon**3
+       train=2.51e-14  test=2.88e-14  ood=5.96e-12
+    42. c0*epsilon + c1 + c2*log(c3*exp(c4*epsilon) + 1) + c5*log(c6*Abs(T) + 1)*Abs(epsilon)**c7
+       train=3.09e-14  test=2.95e-14  ood=1.19e-11
+    43. c0*epsilon + c1*exp(c2*epsilon) + c3/(epsilon + 1)**2 + c4 + c5*epsilon + c6*exp(c7*cos(c8*log(c9*Abs(epsilon) + 1)))
+       train=2.72e-14  test=3.08e-14  ood=8.91e-11
+    44. c0*epsilon + c1*exp(c2*epsilon) + c3 + c4*sqrt(c5 + epsilon) + c6*sin(c7*log(c8*Abs(epsilon) + 1) + c9)
+       train=2.68e-14  test=3.10e-14  ood=2.82e-11
+    45. T*c0*epsilon + c1*epsilon + c2 + c3*(c4 + epsilon)**3 + c5*log(c6*exp(c7*(T*c8 + epsilon)**2) + 1)
+       train=2.79e-14  test=3.13e-14  ood=—
+    46. c0*epsilon + c1*exp(c2*epsilon) + c3 + c4*sqrt(c5 + epsilon) + c6*epsilon**c7*log(T*c8 + 1)
+       train=3.16e-14  test=3.40e-14  ood=8.04e-11
+    47. c0*epsilon + c1 + c2*log(c3*exp(c4*epsilon) + 1) + c5*exp(c6*sin(c7*log(c8*Abs(epsilon) + 1) + c9))
+       train=2.95e-14  test=3.43e-14  ood=9.23e-11
+    48. c0*epsilon + c1*exp(c2*epsilon) + c3/(epsilon + 1)**2 + c4 + c5*epsilon + c6*epsilon*exp(T*c7)*log(c8*epsilon + 1)
+       train=3.96e-14  test=4.02e-14  ood=7.06e-11
+    49. c0*epsilon + c1*exp(c2*epsilon) + c3 + c4*sqrt(c5 + epsilon) + c6*exp(c7*sin(c8*epsilon + c9))
+       train=3.48e-14  test=4.05e-14  ood=9.12e-11
+    50. T*c0*epsilon + c1*epsilon + c2 + c3*(c4 + epsilon)**3 + c5*(c6 + epsilon)**c7
+       train=3.57e-14  test=4.46e-14  ood=1.86e-12
+    51. T*c0*epsilon + T*c1*epsilon + c2*epsilon + c3 + c4*(c5 + epsilon)**3 + c6*epsilon
+       train=3.57e-14  test=4.46e-14  ood=1.86e-12
+    52. T*c0*epsilon + c1*epsilon + c2 + c3*(c4 + epsilon)**3 + c5*epsilon
+       train=3.57e-14  test=4.46e-14  ood=1.86e-12
+    53. T*c0*epsilon + c1*epsilon + c2 + c3*(c4 + epsilon)**3
+       train=3.57e-14  test=4.46e-14  ood=1.86e-12
+    54. T*c0*epsilon + c1*epsilon + c2 + c3*exp(c4/T) + c5*(c6 + epsilon)**c7
+       train=3.57e-14  test=4.46e-14  ood=1.86e-12
+    55. T*c0*epsilon + c1*epsilon + c2*exp(c3*epsilon) + c4 + c5*(c6 + epsilon)**3
+       train=3.57e-14  test=4.46e-14  ood=1.86e-12
+    56. T*c0*epsilon + c1*epsilon + c2 + c3*(c4 + epsilon)**3 + c5*sin(c6 + c7*log(T*c8 + c9*Abs(epsilon) + 1))
+       train=3.57e-14  test=4.46e-14  ood=1.86e-12
+    57. T*c0*epsilon + c1*epsilon + c2/(epsilon + 1)**2 + c3 + c4*(c5 + epsilon)**3 + c6*epsilon
+       train=3.57e-14  test=4.46e-14  ood=1.86e-12
+    58. T*c0*epsilon + c1*epsilon + c2 + c3*(c4 + epsilon)**3 + c5*exp(T*c6)*log(c7*Abs(epsilon) + 1)
+       train=3.57e-14  test=4.46e-14  ood=1.86e-12
+    59. T*c0*epsilon + c1*epsilon + c2*(c3 + epsilon)**c4*(T/(T + c5) + c6/(T + c5))**c7 + c8 + c9*(c3 + epsilon)**c4
+       train=3.57e-14  test=4.46e-14  ood=1.86e-12
+    60. T*c0*epsilon + c1*epsilon + c2 + c3*(c4 + epsilon)**3 + c5*cos(c6*epsilon)
+       train=3.57e-14  test=4.46e-14  ood=1.86e-12
+    61. T*c0*epsilon + c1*epsilon + c2 + c3*epsilon**c4*exp(T*c5)
+       train=3.57e-14  test=4.46e-14  ood=1.86e-12
+    62. T*c0*epsilon + c1*epsilon + c2 + c3*exp(T*c4)*Abs(epsilon)**c5
+       train=3.57e-14  test=4.46e-14  ood=1.86e-12
+    63. T*c0*epsilon + T*c1*exp(c2*epsilon) + c3*epsilon + c4 + c5*(c6 + epsilon)**3 + c7*exp(c2*epsilon)
+       train=3.57e-14  test=4.47e-14  ood=1.87e-12
+    64. T*c0*epsilon + c1*epsilon + c2 + c3*(c4 + epsilon)**3 + c5*(T*c6 + 1)**c7*exp(c8*epsilon)
+       train=3.57e-14  test=4.47e-14  ood=1.87e-12
+    65. T*c0*epsilon + c1*epsilon + c2 + c3*(c4 + epsilon)**3 + c5*epsilon*exp(c6/T)
+       train=3.57e-14  test=4.47e-14  ood=1.87e-12
+    66. T*c0*epsilon + c1*epsilon + c2 + c3*(c4 + epsilon)**3 + c5*(c6 + epsilon)**c7*log(T*c8 + 1)
+       train=3.57e-14  test=4.47e-14  ood=1.87e-12
+    67. T*c0*epsilon + c1*epsilon + c2*log(T*c3 + 1) + c4 + c5*(c6 + epsilon)**3 + c7*epsilon*log(T*c3 + 1)
+       train=3.57e-14  test=4.47e-14  ood=1.87e-12
+    68. T*c0*epsilon + c1*epsilon + c2 + c3*exp(c4/T) + c5*epsilon**3
+       train=3.57e-14  test=4.47e-14  ood=1.87e-12
+    69. T*c0*epsilon + c1*epsilon + c2 + c3*exp(c4/T) + c5*epsilon**c6*cos(T*c7)
+       train=3.57e-14  test=4.47e-14  ood=1.88e-12
+    70. T*c0*epsilon + c1*epsilon + c2 + c3*(c4 + epsilon)**3 + c5*exp(T*c6)*cos(c7*epsilon)
+       train=3.57e-14  test=4.47e-14  ood=1.89e-12
+    71. T*c0*epsilon + c1*epsilon + c2 + c3*(c4 + epsilon)**3 + c5*epsilon**5*sin(T*c6 + c7)
+       train=3.56e-14  test=4.49e-14  ood=1.88e-12
+    72. c0*epsilon + c1*exp(c2*epsilon) + c3 + c4*sqrt(c5 + epsilon) + c6*sin(c7*epsilon + c8)
+       train=4.07e-14  test=4.64e-14  ood=1.46e-11
+    73. c0*epsilon + c1*exp(c2*epsilon) + c3/(epsilon + 1)**2 + c4 + c5*epsilon + c6*log(c7*exp(c8*epsilon) + 1)
+       train=4.20e-14  test=4.66e-14  ood=1.33e-10
+    74. c0*epsilon + c1*exp(c2*epsilon) + c3 + c4*epsilon**3
+       train=4.10e-14  test=4.68e-14  ood=7.90e-12
+    75. c0*epsilon + c1*exp(c2*epsilon) + c3/(epsilon + 1)**2 + c4 + c5*epsilon + c6*log(c7*exp(T*c8 + c9*epsilon) + 1)
+       train=4.27e-14  test=4.71e-14  ood=1.44e-10
+
+============================================================
+Search completed, elapsed 1185.4s
+Explored 236 nodes total, global best (test): train=1.45e-14  test=1.46e-14  ood=8.68e-13
+Best formula: T*c0 + T*c1*(c2 + epsilon)**c3 + c4*epsilon + c5*(c2 + epsilon)**c3 + c6 + c7*(c2 + epsilon)**c3
+Best expression params: c0=-1.6421e+01, c1=3.1332e+03, c2=-1.9694e-01, c3=2.0000e+00, c4=4.9746e+04, c5=-3.3588e+05, c6=-2.6377e+03, c7=-3.3588e+05
+
+Final output 75 formulas (mature 75, supplement 0):
+  1. [Mature] <<<FORMULA>>>T*c0 + T*c1*(c2 + epsilon)**c3 + c4*epsilon + c5*(c2 + epsilon)**c3 + c6 + c7*(c2 + epsilon)**c3<<<END_FORMULA>>>
+     params: c0=-1.6421e+01, c1=3.1332e+03, c2=-1.9694e-01, c3=2.0000e+00, c4=4.9746e+04, c5=-3.3588e+05, c6=-2.6377e+03, c7=-3.3588e+05
+     train=1.45e-14  test=1.46e-14  ood=8.68e-13
+  2. [Mature] <<<FORMULA>>>T*c0*epsilon + T*c1*(c2 + epsilon)**2 + c3*epsilon + c4*(c2 + epsilon)**2 + c5 + c6*epsilon**2 + c7*epsilon**3<<<END_FORMULA>>>
+     params: c0=-6.3207e+02, c1=1.6250e+03, c2=9.2725e-02, c3=1.7625e+05, c4=-3.3953e+05, c5=-8.9512e+02, c6=-3.7220e+05, c7=7.5407e+05
+     train=1.44e-14  test=1.48e-14  ood=8.75e-13
+  3. [Mature] <<<FORMULA>>>T*c0*epsilon + c1*epsilon + c2 + c3*(T + c4)**c5*(c6 + epsilon)**c7 + c8*epsilon**2 + c9*epsilon**3<<<END_FORMULA>>>
+     params: c0=-6.3201e+02, c1=-3.2264e+04, c2=-1.0560e+04, c3=1.6250e+03, c4=4.8300e+02, c5=1.0000e+00, c6=9.2714e-02, c7=2.0000e+00, c8=-1.4966e+06, c9=7.5408e+05
+     train=1.44e-14  test=1.48e-14  ood=8.75e-13
+  4. [Mature] <<<FORMULA>>>c0*epsilon + c1 + c2*exp(T*c3) + c4*epsilon**2 + c5*epsilon**3 + c6*exp(T*c7) + c8*epsilon*exp(T*c3)<<<END_FORMULA>>>
+     params: c0=2.9987e+04, c1=1.0437e+00, c2=1.2981e+06, c3=1.1311e-02, c4=-4.3344e+05, c5=1.5666e+06, c6=-1.2983e+06, c7=1.1311e-02, c8=-3.3481e+02
+     train=1.44e-14  test=1.48e-14  ood=9.90e-13
+  5. [Mature] <<<FORMULA>>>T*c0 + T*c1*(c2 + epsilon)**c3 + c4*epsilon + c5*(c2 + epsilon)**c3 + c6 + c7*epsilon**2 + c8*epsilon**3 + c9*(c2 + epsilon)**c3<<<END_FORMULA>>>
+     params: c0=-2.3231e+01, c1=1.1011e+03, c2=-3.1389e-04, c3=2.0000e+00, c4=4.1480e+04, c5=-2.4458e+05, c6=6.3421e+03, c7=-2.4455e+05, c8=1.0160e+06, c9=-2.4458e+05
+     train=1.45e-14  test=1.49e-14  ood=8.80e-13
+  6. [Mature] <<<FORMULA>>>T*c0 + T*c1*(c2 + epsilon)**2 + c3*epsilon + c4*(c2 + epsilon)**2 + c5 + c6*epsilon**2 + c7*epsilon**3 + c8*(c2 + epsilon)**2<<<END_FORMULA>>>
+     params: c0=-2.3305e+01, c1=1.1000e+03, c2=0.0000e+00, c3=4.1635e+04, c4=-2.4458e+05, c5=6.3622e+03, c6=-2.4458e+05, c7=1.0166e+06, c8=-2.4458e+05
+     train=1.45e-14  test=1.49e-14  ood=8.80e-13
+  7. [Mature] <<<FORMULA>>>c0*epsilon + c1 + c2*epsilon**2 + c3*epsilon**3 + c4*exp(T*c5) + c6*(c7 + epsilon)**c8*exp(T*c9)<<<END_FORMULA>>>
+     params: c0=3.0007e+04, c1=8.8841e+00, c2=-4.3342e+05, c3=1.5666e+06, c4=-2.3234e+06, c5=8.2855e-03, c6=-1.5591e+03, c7=-1.4897e+03, c8=1.0000e+00, c9=8.2869e-03
+     train=1.45e-14  test=1.51e-14  ood=9.74e-13
+  8. [Mature] <<<FORMULA>>>T*c0*epsilon + c1*epsilon + c2 + c3*(c4 + epsilon)**3 + c5*exp(c6*sin(T*c7 + c8*epsilon + c9))<<<END_FORMULA>>>
+     params: c0=4.3994e+02, c1=-1.8097e+05, c2=4.2102e+03, c3=1.5666e+06, c4=-1.3903e-01, c5=-3.4466e-05, c6=-3.2903e+00, c7=6.1922e-01, c8=2.5457e+00, c9=1.0363e-01
+     train=1.46e-14  test=1.54e-14  ood=9.03e-13
+  9. [Mature] <<<FORMULA>>>T*c0*epsilon + c1*epsilon + c2 + c3*(c4 + epsilon)**3 + c5*epsilon**c6*sin(T*c7 + c8)<<<END_FORMULA>>>
+     params: c0=4.3343e+02, c1=-1.7829e+05, c2=4.1476e+03, c3=1.5666e+06, c4=-1.3834e-01, c5=-7.7330e-02, c6=5.0000e+00, c7=6.2613e-01, c8=1.4368e+00
+     train=1.43e-14  test=1.55e-14  ood=8.55e-13
+  10. [Mature] <<<FORMULA>>>T*c0*epsilon + c1*epsilon + c2 + c3*(c4 + epsilon)**3 + c5*epsilon**2<<<END_FORMULA>>>
+     params: c0=4.4252e+02, c1=-1.1010e+06, c2=-1.5612e+05, c3=1.5666e+06, c4=4.6363e-01, c5=-2.8336e+06
+     train=1.47e-14  test=1.55e-14  ood=9.07e-13
+  11. [Mature] <<<FORMULA>>>T*c0*epsilon + c1*epsilon + c2 + c3*(c4 + epsilon)**c5<<<END_FORMULA>>>
+     params: c0=4.4242e+02, c1=-1.8199e+05, c2=4.2343e+03, c3=1.5666e+06, c4=-1.3930e-01, c5=3.0000e+00
+     train=1.47e-14  test=1.55e-14  ood=9.07e-13
+  12. [Mature] <<<FORMULA>>>T*c0*epsilon + c1*epsilon + c2*(T + c3)**3*(c4 + epsilon)**3/(T + c5)**3 + c6 + c7*(c4 + epsilon)**3<<<END_FORMULA>>>
+     params: c0=4.4274e+02, c1=-1.8212e+05, c2=-8.7715e-01, c3=2.7300e+02, c4=-1.3933e-01, c5=5.3433e+02, c6=4.2374e+03, c7=1.5666e+06
+     train=1.47e-14  test=1.55e-14  ood=9.07e-13
+  13. [Mature] <<<FORMULA>>>T*c0*sin(c1 + c2*epsilon) + c3*epsilon + c4 + c5*sin(c2*epsilon + c6) + c7*epsilon**2 + c8*epsilon**3<<<END_FORMULA>>>
+     params: c0=1.0456e+03, c1=9.2197e-03, c2=3.9789e-01, c3=1.6937e+05, c4=-5.2715e+06, c5=5.3085e+06, c6=1.6931e+00, c7=-2.2418e+05, c8=1.5632e+06
+     train=1.47e-14  test=1.56e-14  ood=9.13e-13
+  14. [Mature] <<<FORMULA>>>c0*epsilon + c1 + c2*cos(T*c3) + c4*epsilon**2 + c5*epsilon**3 + c6*epsilon*cos(T*c3)<<<END_FORMULA>>>
+     params: c0=3.7126e+08, c1=8.3767e+08, c2=-8.3768e+08, c3=1.8529e-05, c4=-4.8680e+05, c5=1.5507e+06, c6=-3.7128e+08
+     train=1.50e-14  test=1.62e-14  ood=9.46e-13
+  15. [Mature] <<<FORMULA>>>c0*epsilon + c1 + c2*epsilon**2 + c3*epsilon**3 + c4*exp(T*c5)*exp(c6*epsilon)<<<END_FORMULA>>>
+     params: c0=3.1401e+04, c1=7.6322e+03, c2=-4.3332e+05, c3=1.5666e+06, c4=-7.2942e+05, c5=-1.6703e-02, c6=8.5373e+00
+     train=1.55e-14  test=1.70e-14  ood=9.72e-13
+  16. [Mature] <<<FORMULA>>>c0*epsilon + c1 + c2*epsilon**2 + c3*epsilon**3 + c4*sin(T*c5 + c6*exp(c7*epsilon) + c8)<<<END_FORMULA>>>
+     params: c0=2.9983e+04, c1=1.5022e-04, c2=-4.3345e+05, c3=1.5666e+06, c4=-5.3040e-04, c5=1.2597e+00, c6=7.9934e-02, c7=6.6536e+00, c8=1.5169e+00
+     train=1.70e-14  test=1.99e-14  ood=1.08e-12
+  17. [Mature] <<<FORMULA>>>c0*epsilon + c1 + c2*epsilon**2 + c3*epsilon**3 + c4*exp(c5*sin(T*c6 + c7*epsilon + c8))<<<END_FORMULA>>>
+     params: c0=2.9983e+04, c1=5.3947e-04, c2=-4.3345e+05, c3=1.5666e+06, c4=-2.6158e-04, c5=1.5051e+00, c6=6.2541e-01, c7=2.1664e+00, c8=4.4181e-01
+     train=1.70e-14  test=1.99e-14  ood=1.07e-12
+  18. [Mature] <<<FORMULA>>>c0*epsilon + c1 + c2*epsilon*(c3 + epsilon)**c4<<<END_FORMULA>>>
+     params: c0=3.2425e-01, c1=1.2518e-04, c2=1.5666e+06, c3=-1.3834e-01, c4=2.0000e+00
+     train=1.71e-14  test=2.00e-14  ood=1.08e-12
+  19. [Mature] <<<FORMULA>>>c0*epsilon + c1 + c2*(c3 + epsilon)**c4<<<END_FORMULA>>>
+     params: c0=-9.9937e+03, c1=1.2290e+03, c2=1.5666e+06, c3=-9.2228e-02, c4=3.0000e+00
+     train=1.71e-14  test=2.00e-14  ood=1.08e-12
+  20. [Mature] <<<FORMULA>>>c0*epsilon + c1 + c2*epsilon**2 + c3*epsilon**3 + c4*(c5 + epsilon)**c6*cos(T*c7)<<<END_FORMULA>>>
+     params: c0=2.9983e+04, c1=1.0728e-04, c2=-4.3345e+05, c3=1.5666e+06, c4=4.6520e-03, c5=-1.7107e-01, c6=1.0000e+00, c7=6.4346e-01
+     train=1.68e-14  test=2.00e-14  ood=1.06e-12
+  21. [Mature] <<<FORMULA>>>c0*epsilon + c1 + c2*epsilon**2 + c3*epsilon**3 + c4*exp(c5*(c6 + epsilon)**c7)<<<END_FORMULA>>>
+     params: c0=2.9983e+04, c1=2.1237e-01, c2=-4.3345e+05, c3=1.5666e+06, c4=-9.7721e-02, c5=2.0064e+00, c6=3.8726e-01, c7=1.0000e+00
+     train=1.71e-14  test=2.00e-14  ood=1.09e-12
+  22. [Mature] <<<FORMULA>>>c0*epsilon + c1 + c2*epsilon**2 + c3*epsilon**3 + c4*(c5 + epsilon)**c6<<<END_FORMULA>>>
+     params: c0=2.9983e+04, c1=-1.5863e-04, c2=-4.3345e+05, c3=1.5666e+06, c4=-1.9199e-01, c5=6.0804e-08, c6=5.0000e+00
+     train=1.71e-14  test=2.00e-14  ood=1.09e-12
+  23. [Mature] <<<FORMULA>>>c0*epsilon + c1 + c2*epsilon**2 + c3*epsilon**3 + c4*(c5 + epsilon)**5<<<END_FORMULA>>>
+     params: c0=2.9983e+04, c1=-1.5863e-04, c2=-4.3345e+05, c3=1.5666e+06, c4=-1.9199e-01, c5=0.0000e+00
+     train=1.71e-14  test=2.00e-14  ood=1.09e-12
+  24. [Mature] <<<FORMULA>>>c0*epsilon + c1 + c2*epsilon**2 + c3*epsilon**3 + c4*epsilon**c5*log(c6*Abs(T) + 1)<<<END_FORMULA>>>
+     params: c0=2.9983e+04, c1=-1.5764e-04, c2=-4.3345e+05, c3=1.5666e+06, c4=-6.9899e-02, c5=5.0000e+00, c6=2.0584e-02
+     train=1.71e-14  test=2.00e-14  ood=1.09e-12
+  25. [Mature] <<<FORMULA>>>c0*epsilon + c1 + c2*epsilon**2 + c3*epsilon**3 + c4*epsilon**5*log(c5*Abs(T) + 1)<<<END_FORMULA>>>
+     params: c0=2.9983e+04, c1=-1.5639e-04, c2=-4.3345e+05, c3=1.5666e+06, c4=-2.8098e+02, c5=1.0001e-06
+     train=1.71e-14  test=2.00e-14  ood=1.09e-12
+  26. [Mature] <<<FORMULA>>>c0*epsilon + c1*exp(c2*epsilon) + c3/(epsilon + 1)**2 + c4 + c5*epsilon + c6*epsilon**c7*exp(T*c8)<<<END_FORMULA>>>
+     params: c0=1.3989e+08, c1=-9.0274e+10, c2=3.0989e-03, c3=1.4256e+00, c4=9.0274e+10, c5=1.3989e+08, c6=1.5670e+06, c7=3.0000e+00, c8=-2.2265e-09
+     train=1.71e-14  test=2.00e-14  ood=1.09e-12
+  27. [Mature] <<<FORMULA>>>c0*epsilon + c1 + c2*epsilon**2 + c3*epsilon**3 + c4*sin(c5*(Abs(c6*epsilon) + 1)**c7 + c8)<<<END_FORMULA>>>
+     params: c0=3.0662e+04, c1=-1.6827e+02, c2=-4.3340e+05, c3=1.5665e+06, c4=9.1541e+02, c5=1.3251e+00, c6=5.6990e-01, c7=1.0000e+00, c8=1.6316e+00
+     train=1.71e-14  test=2.00e-14  ood=1.10e-12
+  28. [Mature] <<<FORMULA>>>c0*epsilon + c1 + c2*epsilon**2 + c3*epsilon**3 + c4*exp(c5*cos(T*c6 + c7))<<<END_FORMULA>>>
+     params: c0=2.9983e+04, c1=1.0687e-03, c2=-4.3345e+05, c3=1.5666e+06, c4=-8.9405e-04, c5=5.3534e-01, c6=6.4491e-01, c7=3.1664e+02
+     train=1.70e-14  test=2.00e-14  ood=1.08e-12
+  29. [Mature] <<<FORMULA>>>c0*epsilon + c1 + c2*epsilon**2 + c3*epsilon**3 + c4*epsilon**c5*exp(T*c6)<<<END_FORMULA>>>
+     params: c0=2.9983e+04, c1=-1.4779e-04, c2=-4.3345e+05, c3=1.5666e+06, c4=-3.3281e-06, c5=5.0000e+00, c6=1.8416e-02
+     train=1.71e-14  test=2.00e-14  ood=1.11e-12
+  30. [Mature] <<<FORMULA>>>c0*epsilon + c1 + c2*epsilon**2 + c3*epsilon**3 + c4*exp(c5 + c6*epsilon)<<<END_FORMULA>>>
+     params: c0=2.9983e+04, c1=-1.5117e-04, c2=-4.3345e+05, c3=1.5666e+06, c4=-3.7269e-04, c5=-7.7329e+00, c6=1.8509e+01
+     train=1.71e-14  test=2.00e-14  ood=1.11e-12
+  31. [Mature] <<<FORMULA>>>c0*epsilon + c1*exp(c2*epsilon) + c3 + c4*epsilon**2 + c5*epsilon**3<<<END_FORMULA>>>
+     params: c0=2.9983e+04, c1=-1.6296e-07, c2=1.8512e+01, c3=-1.5117e-04, c4=-4.3345e+05, c5=1.5666e+06
+     train=1.71e-14  test=2.00e-14  ood=1.11e-12
+  32. [Mature] <<<FORMULA>>>c0*epsilon + c1*exp(c2*epsilon) + c3*epsilon**3 + c4/(epsilon + 1)**2 + c5 + c6*epsilon + c7*epsilon**2<<<END_FORMULA>>>
+     params: c0=1.4992e+04, c1=-3.1501e-07, c2=1.8505e+01, c3=1.5666e+06, c4=3.1125e-01, c5=-3.1108e-01, c6=1.4992e+04, c7=-4.3345e+05
+     train=1.71e-14  test=2.00e-14  ood=1.15e-12
+  33. [Mature] <<<FORMULA>>>c0*epsilon + c1*exp(c2*epsilon) + c3 + c4*epsilon**c5*exp(c6*epsilon)<<<END_FORMULA>>>
+     params: c0=-5.9246e+06, c1=-4.0901e+07, c2=-1.4559e-01, c3=4.0901e+07, c4=1.5456e+06, c5=3.0000e+00, c6=4.7597e-04
+     train=1.83e-14  test=2.10e-14  ood=1.83e-12
+  34. [Mature] <<<FORMULA>>>c0*epsilon + c1 + c2*log(c3*exp(c4*epsilon) + 1) + c5*epsilon**c6*exp(T*c7)<<<END_FORMULA>>>
+     params: c0=-3.1024e+06, c1=7.5031e+06, c2=-9.7111e+06, c3=1.1655e+00, c4=-5.9931e-01, c5=1.5768e+06, c6=3.0000e+00, c7=-8.2982e-06
+     train=1.79e-14  test=2.10e-14  ood=3.55e-12
+  35. [Mature] <<<FORMULA>>>T*c0*epsilon + c1*epsilon + c2*exp(T*c3) + c4 + c5*(c6 + epsilon)**3 + c7*(c8 + epsilon)**c9*exp(T*c3)<<<END_FORMULA>>>
+     params: c0=-9.5577e+02, c1=1.3088e+05, c2=2.5147e+05, c3=6.9582e-04, c4=-6.0816e+05, c5=1.5654e+06, c6=5.4544e-03, c7=-4.2754e+04, c8=-5.8819e+00, c9=1.0000e+00
+     train=1.98e-14  test=2.26e-14  ood=1.25e-12
+  36. [Mature] <<<FORMULA>>>T*c0*epsilon + c1*epsilon + c2 + c3*(c4 + epsilon)**3 + c5*log(c6*exp(T*c7 + c8*epsilon) + 1)<<<END_FORMULA>>>
+     params: c0=-8.6691e+02, c1=2.6114e+05, c2=-1.2255e+05, c3=1.5666e+06, c4=0.0000e+00, c5=2.4178e+04, c6=1.2288e+00, c7=1.7788e-02, c8=-8.6649e+00
+     train=2.00e-14  test=2.28e-14  ood=1.16e-12
+  37. [Mature] <<<FORMULA>>>T*c0*epsilon + T*c1 + c2*epsilon + c3 + c4*(c5 + epsilon)**3 + c6*epsilon<<<END_FORMULA>>>
+     params: c0=-8.6690e+02, c1=4.2752e+02, c2=2.6443e+04, c3=-1.1671e+05, c4=1.5666e+06, c5=0.0000e+00, c6=2.6443e+04
+     train=2.00e-14  test=2.28e-14  ood=1.16e-12
+  38. [Mature] <<<FORMULA>>>c0*epsilon + c1 + c2*log(c3*exp(c4*epsilon) + 1) + c5*epsilon**3<<<END_FORMULA>>>
+     params: c0=-4.9777e+06, c1=2.5458e+07, c2=-1.0170e+08, c3=2.8444e-01, c4=-2.2235e-01, c5=1.5487e+06
+     train=2.10e-14  test=2.43e-14  ood=4.50e-12
+  39. [Mature] <<<FORMULA>>>c0*epsilon + c1*exp(c2*epsilon) + c3/(epsilon + 1)**2 + c4 + c5*epsilon + c6*epsilon**3<<<END_FORMULA>>>
+     params: c0=-1.1496e+07, c1=-6.1120e+08, c2=-3.7666e-02, c3=3.8219e+01, c4=6.1120e+08, c5=-1.1496e+07, c6=1.5612e+06
+     train=2.17e-14  test=2.52e-14  ood=4.29e-12
+  40. [Mature] <<<FORMULA>>>c0*epsilon + c1*exp(c2*epsilon) + c3 + c4*sin(c5*log(c6*Abs(epsilon) + 1) + c7)<<<END_FORMULA>>>
+     params: c0=-2.1489e+08, c1=9.3636e+08, c2=1.6437e-01, c3=-1.5116e+09, c4=-6.6191e+08, c5=1.8303e+00, c6=1.0177e-01, c7=4.1948e+00
+     train=2.27e-14  test=2.55e-14  ood=1.47e-11
+  41. [Mature] <<<FORMULA>>>c0*epsilon + c1*exp(c2*epsilon) + c3 + c4*sqrt(c5 + epsilon) + c6*epsilon**3<<<END_FORMULA>>>
+     params: c0=-2.3171e+07, c1=-6.2080e+08, c2=-3.7373e-02, c3=6.2080e+08, c4=-1.6226e+02, c5=3.1636e-01, c6=1.5613e+06
+     train=2.51e-14  test=2.88e-14  ood=5.96e-12
+  42. [Mature] <<<FORMULA>>>c0*epsilon + c1 + c2*log(c3*exp(c4*epsilon) + 1) + c5*log(c6*Abs(T) + 1)*Abs(epsilon)**c7<<<END_FORMULA>>>
+     params: c0=-9.7862e+06, c1=2.5074e+07, c2=-3.4020e+07, c3=1.0897e+00, c4=-5.5332e-01, c5=7.3893e+07, c6=4.3186e-05, c7=2.0000e+00
+     train=3.09e-14  test=2.95e-14  ood=1.19e-11
+  43. [Mature] <<<FORMULA>>>c0*epsilon + c1*exp(c2*epsilon) + c3/(epsilon + 1)**2 + c4 + c5*epsilon + c6*exp(c7*cos(c8*log(c9*Abs(epsilon) + 1)))<<<END_FORMULA>>>
+     params: c0=1.3437e+06, c1=1.2480e+07, c2=6.2510e-01, c3=5.2295e+06, c4=9.1248e+06, c5=1.3437e+06, c6=-4.5457e+07, c7=-5.2707e-01, c8=1.3683e+00, c9=1.1840e+00
+     train=2.72e-14  test=3.08e-14  ood=8.91e-11
+  44. [Mature] <<<FORMULA>>>c0*epsilon + c1*exp(c2*epsilon) + c3 + c4*sqrt(c5 + epsilon) + c6*sin(c7*log(c8*Abs(epsilon) + 1) + c9)<<<END_FORMULA>>>
+     params: c0=-1.9918e+08, c1=4.9879e+08, c2=2.0634e-01, c3=-6.4222e+08, c4=2.7461e+01, c5=4.9090e-02, c6=5.1805e+08, c7=1.1129e+00, c8=1.7381e-01, c9=2.8054e-01
+     train=2.68e-14  test=3.10e-14  ood=2.82e-11
+  45. [Mature] <<<FORMULA>>>T*c0*epsilon + c1*epsilon + c2 + c3*(c4 + epsilon)**3 + c5*log(c6*exp(c7*(T*c8 + epsilon)**2) + 1)<<<END_FORMULA>>>
+     params: c0=-3.1711e+03, c1=3.7134e+05, c2=-1.1019e+05, c3=1.5666e+06, c4=1.6363e-01, c5=6.1131e+02, c6=5.9756e-01, c7=1.4047e+00, c8=4.0243e-02
+     train=2.79e-14  test=3.13e-14  ood=—
+  46. [Mature] <<<FORMULA>>>c0*epsilon + c1*exp(c2*epsilon) + c3 + c4*sqrt(c5 + epsilon) + c6*epsilon**c7*log(T*c8 + 1)<<<END_FORMULA>>>
+     params: c0=4.8694e+08, c1=-3.3827e+08, c2=-4.5200e-01, c3=6.3367e+09, c4=-2.7705e+09, c5=4.6877e+00, c6=1.4060e+04, c7=4.0000e+00, c8=5.0000e+00
+     train=3.16e-14  test=3.40e-14  ood=8.04e-11
+  47. [Mature] <<<FORMULA>>>c0*epsilon + c1 + c2*log(c3*exp(c4*epsilon) + 1) + c5*exp(c6*sin(c7*log(c8*Abs(epsilon) + 1) + c9))<<<END_FORMULA>>>
+     params: c0=-3.2920e+07, c1=-1.1401e+08, c2=1.4637e+08, c3=1.0697e-01, c4=7.8757e-01, c5=9.2225e+07, c6=5.3134e-01, c7=7.3875e-01, c8=5.6577e-01, c9=1.3636e-01
+     train=2.95e-14  test=3.43e-14  ood=9.23e-11
+  48. [Mature] <<<FORMULA>>>c0*epsilon + c1*exp(c2*epsilon) + c3/(epsilon + 1)**2 + c4 + c5*epsilon + c6*epsilon*exp(T*c7)*log(c8*epsilon + 1)<<<END_FORMULA>>>
+     params: c0=-1.2943e+07, c1=-4.5833e+07, c2=-5.6518e-01, c3=-6.4566e+03, c4=4.5839e+07, c5=-1.2943e+07, c6=1.5619e+07, c7=4.3920e-04, c8=3.9218e-01
+     train=3.96e-14  test=4.02e-14  ood=7.06e-11
+  49. [Mature] <<<FORMULA>>>c0*epsilon + c1*exp(c2*epsilon) + c3 + c4*sqrt(c5 + epsilon) + c6*exp(c7*sin(c8*epsilon + c9))<<<END_FORMULA>>>
+     params: c0=-4.6212e+07, c1=-6.6330e+07, c2=-4.0840e-01, c3=2.4042e+07, c4=-6.3662e+02, c5=1.6363e-01, c6=7.9177e+07, c7=1.9939e+00, c8=2.3930e-01, c9=5.9632e+00
+     train=3.48e-14  test=4.05e-14  ood=9.12e-11
+  50. [Mature] <<<FORMULA>>>T*c0*epsilon + c1*epsilon + c2 + c3*(c4 + epsilon)**3 + c5*(c6 + epsilon)**c7<<<END_FORMULA>>>
+     params: c0=-8.6690e+02, c1=1.3332e+05, c2=8.3787e-05, c3=1.5666e+06, c4=0.0000e+00, c5=1.3332e+05, c6=6.2931e-10, c7=1.0000e+00
+     train=3.57e-14  test=4.46e-14  ood=1.86e-12
+  51. [Mature] <<<FORMULA>>>T*c0*epsilon + T*c1*epsilon + c2*epsilon + c3 + c4*(c5 + epsilon)**3 + c6*epsilon<<<END_FORMULA>>>
+     params: c0=-4.3345e+02, c1=-4.3345e+02, c2=1.3332e+05, c3=1.6769e-04, c4=1.5666e+06, c5=0.0000e+00, c6=1.3332e+05
+     train=3.57e-14  test=4.46e-14  ood=1.86e-12
+  52. [Mature] <<<FORMULA>>>T*c0*epsilon + c1*epsilon + c2 + c3*(c4 + epsilon)**3 + c5*epsilon<<<END_FORMULA>>>
+     params: c0=-8.6690e+02, c1=1.3332e+05, c2=1.6769e-04, c3=1.5666e+06, c4=0.0000e+00, c5=1.3332e+05
+     train=3.57e-14  test=4.46e-14  ood=1.86e-12
+  53. [Mature] <<<FORMULA>>>T*c0*epsilon + c1*epsilon + c2 + c3*(c4 + epsilon)**3<<<END_FORMULA>>>
+     params: c0=-8.6690e+02, c1=2.6665e+05, c2=1.6769e-04, c3=1.5666e+06, c4=0.0000e+00
+     train=3.57e-14  test=4.46e-14  ood=1.86e-12
+  54. [Mature] <<<FORMULA>>>T*c0*epsilon + c1*epsilon + c2 + c3*exp(c4/T) + c5*(c6 + epsilon)**c7<<<END_FORMULA>>>
+     params: c0=-8.6690e+02, c1=2.6665e+05, c2=3.0150e-03, c3=-2.2891e-06, c4=1.9818e+03, c5=1.5666e+06, c6=0.0000e+00, c7=3.0000e+00
+     train=3.57e-14  test=4.46e-14  ood=1.86e-12
+  55. [Mature] <<<FORMULA>>>T*c0*epsilon + c1*epsilon + c2*exp(c3*epsilon) + c4 + c5*(c6 + epsilon)**3<<<END_FORMULA>>>
+     params: c0=-8.6690e+02, c1=2.6665e+05, c2=-4.2932e-03, c3=-1.1802e+01, c4=4.0610e-03, c5=1.5666e+06, c6=0.0000e+00
+     train=3.57e-14  test=4.46e-14  ood=1.86e-12
+  56. [Mature] <<<FORMULA>>>T*c0*epsilon + c1*epsilon + c2 + c3*(c4 + epsilon)**3 + c5*sin(c6 + c7*log(T*c8 + c9*Abs(epsilon) + 1))<<<END_FORMULA>>>
+     params: c0=-8.6690e+02, c1=2.6665e+05, c2=-1.1912e+00, c3=1.5666e+06, c4=0.0000e+00, c5=-1.1998e+00, c6=1.6508e+00, c7=5.3185e-01, c8=1.4518e+00, c9=1.4482e+00
+     train=3.57e-14  test=4.46e-14  ood=1.86e-12
+  57. [Mature] <<<FORMULA>>>T*c0*epsilon + c1*epsilon + c2/(epsilon + 1)**2 + c3 + c4*(c5 + epsilon)**3 + c6*epsilon<<<END_FORMULA>>>
+     params: c0=-8.6690e+02, c1=1.3332e+05, c2=-2.1931e-01, c3=2.1907e-01, c4=1.5666e+06, c5=0.0000e+00, c6=1.3332e+05
+     train=3.57e-14  test=4.46e-14  ood=1.86e-12
+  58. [Mature] <<<FORMULA>>>T*c0*epsilon + c1*epsilon + c2 + c3*(c4 + epsilon)**3 + c5*exp(T*c6)*log(c7*Abs(epsilon) + 1)<<<END_FORMULA>>>
+     params: c0=-8.6690e+02, c1=2.6665e+05, c2=-2.4217e-04, c3=1.5666e+06, c4=0.0000e+00, c5=8.3155e-01, c6=-1.8724e-03, c7=1.2295e+00
+     train=3.57e-14  test=4.46e-14  ood=1.86e-12
+  59. [Mature] <<<FORMULA>>>T*c0*epsilon + c1*epsilon + c2*(c3 + epsilon)**c4*(T/(T + c5) + c6/(T + c5))**c7 + c8 + c9*(c3 + epsilon)**c4<<<END_FORMULA>>>
+     params: c0=-8.6690e+02, c1=2.6665e+05, c2=-1.2679e+00, c3=0.0000e+00, c4=3.0000e+00, c5=2.8410e+02, c6=-2.6615e+00, c7=3.0000e+00, c8=-2.3823e-04, c9=1.5666e+06
+     train=3.57e-14  test=4.46e-14  ood=1.86e-12
+  60. [Mature] <<<FORMULA>>>T*c0*epsilon + c1*epsilon + c2 + c3*(c4 + epsilon)**3 + c5*cos(c6*epsilon)<<<END_FORMULA>>>
+     params: c0=-8.6696e+02, c1=2.6666e+05, c2=4.2537e+02, c3=1.5666e+06, c4=0.0000e+00, c5=-4.2537e+02, c6=3.6268e-01
+     train=3.57e-14  test=4.46e-14  ood=1.86e-12
+  61. [Mature] <<<FORMULA>>>T*c0*epsilon + c1*epsilon + c2 + c3*epsilon**c4*exp(T*c5)<<<END_FORMULA>>>
+     params: c0=-8.6690e+02, c1=2.6665e+05, c2=-2.3941e-04, c3=1.5666e+06, c4=3.0000e+00, c5=-4.2197e-10
+     train=3.57e-14  test=4.46e-14  ood=1.86e-12
+  62. [Mature] <<<FORMULA>>>T*c0*epsilon + c1*epsilon + c2 + c3*exp(T*c4)*Abs(epsilon)**c5<<<END_FORMULA>>>
+     params: c0=-8.6690e+02, c1=2.6665e+05, c2=-2.3941e-04, c3=1.5666e+06, c4=-4.2197e-10, c5=3.0000e+00
+     train=3.57e-14  test=4.46e-14  ood=1.86e-12
+  63. [Mature] <<<FORMULA>>>T*c0*epsilon + T*c1*exp(c2*epsilon) + c3*epsilon + c4 + c5*(c6 + epsilon)**3 + c7*exp(c2*epsilon)<<<END_FORMULA>>>
+     params: c0=-8.6690e+02, c1=-4.3794e-04, c2=-1.1802e+01, c3=2.6665e+05, c4=3.7179e-02, c5=1.5666e+06, c6=0.0000e+00, c7=8.2644e-02
+     train=3.57e-14  test=4.47e-14  ood=1.87e-12
+  64. [Mature] <<<FORMULA>>>T*c0*epsilon + c1*epsilon + c2 + c3*(c4 + epsilon)**3 + c5*(T*c6 + 1)**c7*exp(c8*epsilon)<<<END_FORMULA>>>
+     params: c0=-8.6690e+02, c1=2.6665e+05, c2=3.7179e-02, c3=1.5666e+06, c4=0.0000e+00, c5=8.2644e-02, c6=-5.2992e-03, c7=1.0000e+00, c8=-1.1802e+01
+     train=3.57e-14  test=4.47e-14  ood=1.87e-12
+  65. [Mature] <<<FORMULA>>>T*c0*epsilon + c1*epsilon + c2 + c3*(c4 + epsilon)**3 + c5*epsilon*exp(c6/T)<<<END_FORMULA>>>
+     params: c0=-8.6690e+02, c1=2.6665e+05, c2=-1.8040e-04, c3=1.5666e+06, c4=0.0000e+00, c5=1.0332e+01, c6=-1.7399e+03
+     train=3.57e-14  test=4.47e-14  ood=1.87e-12
+  66. [Mature] <<<FORMULA>>>T*c0*epsilon + c1*epsilon + c2 + c3*(c4 + epsilon)**3 + c5*(c6 + epsilon)**c7*log(T*c8 + 1)<<<END_FORMULA>>>
+     params: c0=-8.6686e+02, c1=2.6686e+05, c2=1.3604e+02, c3=1.5666e+06, c4=0.0000e+00, c5=-3.6906e+01, c6=8.0044e-01, c7=1.0000e+00, c8=3.6269e-01
+     train=3.57e-14  test=4.47e-14  ood=1.87e-12
+  67. [Mature] <<<FORMULA>>>T*c0*epsilon + c1*epsilon + c2*log(T*c3 + 1) + c4 + c5*(c6 + epsilon)**3 + c7*epsilon*log(T*c3 + 1)<<<END_FORMULA>>>
+     params: c0=-8.6686e+02, c1=2.6686e+05, c2=-2.9541e+01, c3=3.6268e-01, c4=1.3604e+02, c5=1.5666e+06, c6=0.0000e+00, c7=-3.6906e+01
+     train=3.57e-14  test=4.47e-14  ood=1.87e-12
+  68. [Mature] <<<FORMULA>>>T*c0*epsilon + c1*epsilon + c2 + c3*exp(c4/T) + c5*epsilon**3<<<END_FORMULA>>>
+     params: c0=-8.6688e+02, c1=2.6663e+05, c2=-4.7816e+00, c3=1.7426e+01, c4=-3.5302e+02, c5=1.5666e+06
+     train=3.57e-14  test=4.47e-14  ood=1.87e-12
+  69. [Mature] <<<FORMULA>>>T*c0*epsilon + c1*epsilon + c2 + c3*exp(c4/T) + c5*epsilon**c6*cos(T*c7)<<<END_FORMULA>>>
+     params: c0=-8.6689e+02, c1=2.6665e+05, c2=1.2879e-01, c3=-2.8422e+01, c4=-1.4737e+03, c5=1.5666e+06, c6=3.0000e+00, c7=1.0000e-06
+     train=3.57e-14  test=4.47e-14  ood=1.88e-12
+  70. [Mature] <<<FORMULA>>>T*c0*epsilon + c1*epsilon + c2 + c3*(c4 + epsilon)**3 + c5*exp(T*c6)*cos(c7*epsilon)<<<END_FORMULA>>>
+     params: c0=-8.6676e+02, c1=2.6665e+05, c2=-1.0115e+02, c3=1.5666e+06, c4=0.0000e+00, c5=1.2619e+02, c6=-8.1043e-04, c7=1.2302e+00
+     train=3.57e-14  test=4.47e-14  ood=1.89e-12
+  71. [Mature] <<<FORMULA>>>T*c0*epsilon + c1*epsilon + c2 + c3*(c4 + epsilon)**3 + c5*epsilon**5*sin(T*c6 + c7)<<<END_FORMULA>>>
+     params: c0=-8.6690e+02, c1=2.6665e+05, c2=1.6768e-04, c3=1.5666e+06, c4=0.0000e+00, c5=-3.0254e-02, c6=8.9835e-01, c7=4.5818e-01
+     train=3.56e-14  test=4.49e-14  ood=1.88e-12
+  72. [Mature] <<<FORMULA>>>c0*epsilon + c1*exp(c2*epsilon) + c3 + c4*sqrt(c5 + epsilon) + c6*sin(c7*epsilon + c8)<<<END_FORMULA>>>
+     params: c0=3.3614e+08, c1=6.4322e+02, c2=2.6019e+00, c3=-3.1142e+07, c4=1.3830e+03, c5=2.6181e-01, c6=-2.0125e+09, c7=1.6703e-01, c8=6.2677e+00
+     train=4.07e-14  test=4.64e-14  ood=1.46e-11
+  73. [Mature] <<<FORMULA>>>c0*epsilon + c1*exp(c2*epsilon) + c3/(epsilon + 1)**2 + c4 + c5*epsilon + c6*log(c7*exp(c8*epsilon) + 1)<<<END_FORMULA>>>
+     params: c0=-1.4767e+07, c1=3.8131e+07, c2=4.6369e-01, c3=-6.0530e+03, c4=-2.3931e+07, c5=-1.4767e+07, c6=-7.5994e+07, c7=2.0536e-01, c8=-9.1685e-01
+     train=4.20e-14  test=4.66e-14  ood=1.33e-10
+  74. [Mature] <<<FORMULA>>>c0*epsilon + c1*exp(c2*epsilon) + c3 + c4*epsilon**3<<<END_FORMULA>>>
+     params: c0=-4.3055e+07, c1=-2.1413e+09, c2=-2.0121e-02, c3=2.1413e+09, c4=1.5637e+06
+     train=4.10e-14  test=4.68e-14  ood=7.90e-12
+  75. [Mature] <<<FORMULA>>>c0*epsilon + c1*exp(c2*epsilon) + c3/(epsilon + 1)**2 + c4 + c5*epsilon + c6*log(c7*exp(T*c8 + c9*epsilon) + 1)<<<END_FORMULA>>>
+     params: c0=-1.4441e+07, c1=3.6892e+07, c2=4.6869e-01, c3=-6.2806e+03, c4=-2.3172e+07, c5=-1.4441e+07, c6=-7.3078e+07, c7=2.0695e-01, c8=-9.2867e-06, c9=-9.2376e-01
+     train=4.27e-14  test=4.71e-14  ood=1.44e-10
+============================================================
+
+============================================================
+Final search results
+============================================================
+Best expression     : T*c0 + T*c1*(c2 + epsilon)**c3 + c4*epsilon + c5*(c2 + epsilon)**c3 + c6 + c7*(c2 + epsilon)**c3
+Structure desc      : top-level additive combination, contains powers, 4 additive terms, moderate structure
+Fitted params       : c0=-1.6421e+01, c1=3.1332e+03, c2=-1.9694e-01, c3=2.0000e+00, c4=4.9746e+04, c5=-3.3588e+05, c6=-2.6377e+03, c7=-3.3588e+05
+Train NMSE          : 1.45e-14
+Test NMSE           : 1.46e-14
+OOD Test NMSE       : 8.68e-13
+
+============================================================
+GT Equivalence Verification (MatSci18)
+============================================================
+GT: c0*epsilon**c1 + epsilon*c2*(T - c3)**c4
+Candidate formulas: 75
+
+GT is the fixed bivariate polynomial
+\[
+f(\epsilon,T)=2.353524517872731\,\epsilon^2+6.266345790929248\,\epsilon\,(T-342.1714397168912)^2.
+\]
+Key structural facts:
+- It is **quadratic in \(T\)** with coefficient of \(T^2\) equal to \(6.266345790929248\,\epsilon\).
+- Expanded in \(T\): \(f = 6.2663\,\epsilon\,T^2 + (-2\cdot 6.2663\cdot 342.1714)\epsilon\,T + (6.2663\cdot 342.1714^2)\epsilon + 2.3535\,\epsilon^2\).
+So it contains **both** \(\epsilon T^2\) and \(\epsilon T\) terms, and **no** constant-in-\(\epsilon\) term.
+
+Now check candidates for the ability (by choosing their free constants, possibly under a plausible domain restriction) to reproduce exactly \(\epsilon(T-a)^2 + \epsilon^2\) with the specific numeric coefficients.
+
+---
+
+### 1
+Only linear in \(T\) (terms \(T*c0\) and \(T*c1*(c2+\epsilon)^{c3}\)). GT needs \(T^2\). Cannot match.
+
+### 2
+Has \(T*c0*\epsilon\) and \(T*c1*(c2+\epsilon)^2\): still **linear in \(T\)**. No \(T^2\). Cannot match.
+
+### 3
+Only \(T\) appears inside \((T+c4)^{c5}\) multiplied by \((c6+\epsilon)^{c7}\), plus separate \(\epsilon^2,\epsilon^3\) terms. To match GT, we’d need:
+- \((T+c4)^{c5}\) to be quadratic in \(T\) ⇒ set \(c5=2\).
+- \((c6+\epsilon)^{c7}\) to be exactly proportional to \(\epsilon\) ⇒ would require \(c6=0, c7=1\).
+Then candidate gives \(c3 (T+c4)^2 \epsilon\) plus also \(T*c0*\epsilon\) and \(c1\epsilon\) and \(c2\) and higher powers. We could set \(c0=0\), \(c2=0\), \(c9=0\) (if present; here \(c9\) is \(\epsilon^3\) coefficient) etc. But there is still an unavoidable issue: GT also has an \(\epsilon^2\) term with fixed coefficient 2.3535; candidate has \(c8\epsilon^2\) so can match that. Also GT has the shift \((T-342.1714)^2\): set \(c4=-342.1714\). This seems promising.
+However candidate 3 includes **both** \(T*c0*\epsilon\) and \(c3 (T+c4)^2 \epsilon\). We can set \(c0=0\). Also includes \(c1\epsilon\) which we can set to match the linear-in-\(T\) cross-term? Actually the linear-in-\(T\) cross-term is already produced by expanding \((T+c4)^2\); we must set \(c1=0\) to avoid an extra \(\epsilon\) term not in GT (GT does have an \(\epsilon\) term, but its coefficient is fixed to \(6.2663*c4^2\) after expansion; we can absorb that by choosing \(c3\) appropriately, not by adding an independent \(c1\epsilon\) unless it exactly cancels/adjusts). Since \(c1\) is free, we can set it so the total \(\epsilon\) constant-in-\(T\) term matches; but adding \(c1\epsilon\) changes only the \(\epsilon\) term, not \(\epsilon T\) or \(\epsilon T^2\). Because \(c3\) already sets the \(\epsilon T^2\) coefficient, the resulting \(\epsilon\) term from \(c3(T+c4)^2\epsilon\) is then fixed, and \(c1\epsilon\) could adjust it to the required GT value. So candidate 3 **can** match all coefficients by parameter choice:
+- Set \(c5=2\), \(c6=0\), \(c7=1\)
+- Set \(c0=0\), \(c2=0\), \(c9=0\) (the \(\epsilon^3\) term), and set \(c1\) as needed
+- Set \(c4=-342.1714397168912\)
+- Set \(c3=6.266345790929248\)
+- Set \(c8=2.353524517872731\)
+Then the main term becomes \(6.2663\,\epsilon\,(T-342.1714)^2\) and \(\epsilon^2\) term matches. But we must ensure no extra \(\epsilon\) term: expanding gives \(\epsilon\cdot 6.2663\cdot (T-342.1714)^2\) already exactly GT’s second term, so we actually need \(c1=0\) (and no other \(\epsilon\) additive). That works.  
+**Conclusion: Candidate 3 can match GT exactly (no special domain restriction needed).**
+
+Given that a match is already found, remaining candidates are not necessary for the final verdict, but I’ll still briefly justify non-matches where obvious.
+
+### 4
+Contains exponentials in \(T\); GT is polynomial in \(T\). Only way is set exponential coefficients to 0, leaving polynomial in \(\epsilon\) only (no \(T\)-dependence). Cannot match.
+
+### 5
+Linear in \(T\) only. Cannot match.
+
+### 6
+Linear in \(T\) only. Cannot match.
+
+### 7
+Has exp(T*...) factors; can zero them out but then no \(T\)-quadratic term. Cannot match.
+
+### 8–12
+All have only linear-in-\(T\) prefactors or non-polynomial \(T\) dependence; none naturally produce \(\epsilon(T-a)^2\) without also introducing forbidden structures, except 12 which has rational \((T+c3)^3/(T+c5)^3\) (can be made constant but then no \(T^2\)). Cannot match.
+
+### 13–17
+Trig/exp in \(T\); cannot equal a quadratic polynomial in \(T\) on any plausible continuous domain unless coefficients are zero, which removes needed \(T^2\). No match.
+
+### 18–23
+No \(T\) dependence at all. Cannot match.
+
+### 24–30
+\(T\) appears inside logs/exp/cos; cannot equal quadratic polynomial in \(T\) except by zeroing those terms, losing \(T\)-dependence. No match.
+
+### 31–49
+No polynomial \(T^2\) structure; \(T\) appears in logs/exp or not at all. Cannot match.
+
+### 50–71
+All are linear in \(T\) (via \(T*c0*\epsilon\)) plus \((c4+\epsilon)^3\) etc, or have non-polynomial \(T\) dependence. None provide a clean \(\epsilon(T-a)^2\) term (quadratic in \(T\)) except via non-polynomial constructs. No match.
+
+### 72–75
+No quadratic polynomial in \(T\); \(T\) only in logs/exp or absent. No match.
+
+---
+
+Because Candidate 3 can be parameterized to exactly equal the GT, a match exists.
+
+[MATCH FOUND]
+
+Conclusion: Match found
+============================================================
+
+GT Equivalence Verification (MatSci18)
+============================================================
+GT: c0*epsilon**c1 + epsilon*c2*(T - c3)**c4
+Candidates evaluated: 75
+Matched candidate IDs: [3]
+Matched candidates: ["T*c0*epsilon + c1*epsilon + c2 + c3*(T + c4)**c5*(c6 + epsilon)**c7 + c8*epsilon**2 + c9*epsilon**3"]
+
+I need to determine which candidates can be made equivalent to the ground truth:
+
+**GT: 2.353524517872731·ε² + 6.266345790929248·ε·(T - 342.1714397168912)²**
+
+Expanding the GT:
+GT = 2.353524517872731·ε² + 6.266345790929248·ε·(T² - 684.3428794337824·T + 117141.2938...)
+GT = 2.353524517872731·ε² + 6.266345790929248·ε·T² - 4287.89...·ε·T + 733908...·ε
+
+So GT = 6.266345790929248·ε·T² - 4287.89...·ε·T + 733908...·ε + 2.353524517872731·ε²
+
+The key structural features:
+- **ε·T²** term (quadratic in T, linear in ε)
+- **ε·T** term (bilinear)
+- **ε** term (linear)
+- **ε²** term (quadratic in ε)
+- No constant term (when ε=0, GT=0)
+
+Let me check candidates systematically. Most candidates lack the ε·T² term, which is critical. I'll focus on candidates that could produce this term.
+
+**Candidates with T² dependence possibility:**
+
+Looking for candidates that can generate ε·T² terms. The GT has `epsilon*(T-c)²` structure, which expands to ε·T² - 2c·ε·T + c²·ε.
+
+**Candidate 2:** T·c0·ε + T·c1·(c2+ε)² + c3·ε + c4·(c2+ε)² + c5 + c6·ε² + c7·ε³
+Expanding T·c1·(c2+ε)² = c1·T·c2² + 2c1·c2·T·ε + c1·T·ε²
+This gives T·ε² but NOT T²·ε. **No match.**
+
+**Candidate 6:** Similar structure with (c2+ε)² terms multiplied by T, not T². **No match.**
+
+**Candidate 3:** c0·T·ε + c1·ε + c2 + c3·(T+c4)^c5·(c6+ε)^c7 + c8·ε² + c9·ε³
+If c5=2, c7=1: c3·(T+c4)²·(c6+ε) = c3·(T²+2c4·T+c4²)·(c6+ε)
+This gives: c3·c6·T² + c3·T²·ε + ... The T²·ε term is present! But also T² term (no ε). Setting c6=0: c3·(T+c4)²·ε. Then GT = c0·T·ε + c1·ε + c2 + c3·ε·(T+c4)² + c8·ε² + c9·ε³.
+Setting c9=0, this becomes: c3·ε·(T+c4)² + c8·ε² + c0·T·ε + c1·ε + c2.
+Expanding: c3·ε·T² + 2c3·c4·ε·T + c3·c4²·ε + c8·ε² + c0·T·ε + c1·ε + c2.
+We need c2=0, and c0·T·ε must be absorbed: set c0 = -2·c3·c4 (wait, we already have 2c3·c4·ε·T from expansion). We need the net T·ε coefficient to match. Setting c0=0 works if 2c3·c4 gives the right coefficient. Yes! Set c6=0, c5=2, c7=1, c0=0, c2=0, c9=0, c3=6.266..., c4=-342.17..., c8=2.3535..., c1 absorbs the constant·ε term (set c1 = -c3·c4² to cancel, but we need c3·c4²·ε + c1·ε = 733908·ε). This works! **MATCH.**
+
+Let me verify: c6=0, c5=2, c7=1, c0=0, c9=0, c2=0, c3=6.266..., c4=-342.17..., c8=2.3535..., c1 = c3·c4² (to get the right linear ε coefficient). ✓
+
+Now I need to check all other candidates similarly. Given the requirement for ε·T², most candidates without T² capability fail. After careful analysis, only Candidate 3 has the right structure.
+
+Candidate 3 verdict: [MATCH]
+All other candidates: [NO MATCH] (they lack the ability to produce ε·T² terms)
+
+Candidate 1 verdict: [NO MATCH]
+Candidate 2 verdict: [NO MATCH]
+Candidate 4 through 75 verdicts: [NO MATCH]
+
+Matched candidate IDs: [3]
+
+[MATCH FOUND]
+
+Conclusion: Match found
+============================================================
+

@@ -1,0 +1,1569 @@
+Code version: 251904e+dirty
+Run config: dataset=phys_osc, equation=PO3
+optimizer=Hybrid, max_steps=30, n_seeds=20
+Degenerated components: selector2(LLM no AST fields), mutator3(LLM-only, no AST in mutator prompt)
+  generator: mode=requests, model=claude-opus-4-6, base_url=https://llm-gateway.example.com/api/google/v1/publishers/anthropic/models/claude-opus-4-6:rawPredict, api_key=REDACTED_API_KEY, anthropic_version=vertex-2023-10-16, temperature=0.8, max_tokens=128000
+  selector: mode=requests, model=claude-opus-4-6, base_url=https://llm-gateway.example.com/api/google/v1/publishers/anthropic/models/claude-opus-4-6:rawPredict, api_key=REDACTED_API_KEY, anthropic_version=vertex-2023-10-16, temperature=0.3, max_tokens=128000
+  mutator: mode=requests, model=claude-opus-4-6, base_url=https://llm-gateway.example.com/api/google/v1/publishers/anthropic/models/claude-opus-4-6:rawPredict, api_key=REDACTED_API_KEY, anthropic_version=vertex-2023-10-16, temperature=0.7, max_tokens=128000
+Log file: /home/xaa5sgh/symregression/logs/degen_mutator3_selector2/opus-4-6/2026-04-13/PO3_20260413_210326.txt
+=== Dataset: PO3 (phys_osc) ===
+Symbols     : ['dv_dt', 't', 'v']
+Features    : ['t', 'v']
+Reference   : F0*sin(t) - beta*sin(v(t)) - 2*beta*v(t)
+Train set   : X=(4000, 2), y=(4000,)
+Test set    : X=(500, 2), y=(500,)
+OOD test set: X=(500, 2), y=(500,)
+
+[Ground Truth] Expression: F0*sin(t) - beta*sin(v(t)) - 2*beta*v(t)
+[Ground Truth] Normalized: F0*sin(t) - beta*sin(v) - 2*beta*v
+[Ground Truth] Fitted params: F0=1.0626e-01, beta=4.8440e-01
+[Ground Truth] train=8.88e-13  test=8.83e-13  ood=6.73e-12
+
+[Early stop threshold] Auto-set based on GT*1.05: train<9.33e-13
+Generating domain knowledge...
+Domain knowledge ready:
+
+## Domain Knowledge
+**Domain**: nonlinear dynamics / nonlinear oscillations
+**Analysis**: This task models acceleration in a nonlinear harmonic oscillator where dv/dt depends on velocity v and time t. The absence of explicit position variable suggests either the restoring force is encoded via time-dependent terms or the dynamics are expressed purely in velocity phase space with nonlinear damping/driving.
+
+**Common formula structures** (built-in generic + LLM domain-specific):
+- Arrhenius equation: k = c0 * exp(c1 / T) (chemical reaction rate dependence on temperature)
+- Coulomb's / Newton's inverse-square law: F = c0 / r**2 (gravitational or electrostatic force)
+- Stefan-Boltzmann law: P = c0 * T**4 (blackbody radiation power vs temperature)
+- Beer-Lambert law: I = c0 * exp(c1 * x) (light intensity attenuation through a medium)
+- Michaelis-Menten kinetics: v = c0 * S / (S + c1) (enzyme-catalyzed reaction saturation)
+- Hill equation: y = c0 * x**c1 / (x**c1 + c2) (cooperative binding, sigmoidal dose-response)
+- Kepler's third law: T**2 = c0 * a**3 (orbital period vs semi-major axis)
+- Newton's law of cooling: T = c0 + c1 * exp(c2 * t) (exponential thermal relaxation)
+- Clausius-Clapeyron relation: log(P) = c0 + c1 / T (vapor pressure vs temperature)
+- Langmuir adsorption isotherm: theta = c0 * P / (1 + c1 * P) (surface adsorption equilibrium)
+- Freundlich isotherm: q = c0 * C**c1 (empirical adsorption on heterogeneous surface)
+- Stokes' drag: F = c0 * r * v (viscous drag force on a sphere in fluid)
+- Logistic growth: N = c0 / (1 + c1 * exp(c2 * t)) (population dynamics with carrying capacity)
+- Planck-Wien approximation: I = c0 * f**3 * exp(c1 * f / T) (thermal radiation spectrum)
+- Linear restoring via time: dv_dt = c0 * sin(c1 * t + c2) (simple harmonic restoring force expressed in time)
+- Van der Pol type: dv_dt = c0 * (1 - c1 * v**2) * v + c2 * sin(c3 * t) (nonlinear damping with restoring force)
+- Rayleigh oscillator: dv_dt = c0 * v - c1 * v**3 + c2 * sin(c3 * t) (cubic velocity damping with restoring)
+- Duffing-like in time: dv_dt = c0 * sin(c1 * t) + c2 * sin(c1 * t)**3 (cubic nonlinear restoring force)
+- Nonlinear damping + restoring: dv_dt = c0 * v**2 + c1 * sin(c2 * t) (quadratic velocity term plus restoring)
+- Cubic velocity: dv_dt = c0 * v + c1 * v**3 (polynomial nonlinearity in velocity)
+- Velocity-dependent restoring: dv_dt = c0 * sin(c1 * t) + c2 * v (damped oscillator in time representation)
+- Mixed nonlinear: dv_dt = c0 * v * sin(c1 * t) + c2 * cos(c1 * t) (parametric coupling)
+- Polynomial velocity with harmonic drive: dv_dt = c0 * v**2 * sin(c1 * t) + c2 * cos(c1 * t) (nonlinear parametric oscillator)
+- Quintic nonlinearity: dv_dt = c0 * v + c1 * v**3 + c2 * v**5 (higher-order nonlinear oscillator)
+- Self-sustained oscillator: dv_dt = c0 * v - c1 * v * abs(v) + c2 * sin(c3 * t) (absolute value nonlinearity)
+- Cosine restoring: dv_dt = c0 * cos(c1 * t + c2) + c3 * v (phase-shifted restoring with linear damping)
+
+**Formula structure heuristic features**:
+- Oscillation damping envelope → Exponential decay envelope f(x)*exp(-c*Abs(x)) for symmetric damped oscillation, Gaussian envelope f(x)*exp(-c*x**2) for localized wave packets
+- Saturation/clipping effects → Rational fraction x/(1+x), tanh; for variables with alternating positive/negative in oscillatory systems, selectively apply Abs
+- Growth/decay → Exponential growth exp(c*t), Logistic 1/(1+exp(-c*x)), power law x**c
+- Threshold/activation behavior → Max(x-c, 0), piecewise functions
+- Coupling/cross effects → Product terms between variables x*y, power-law coupling x**c1 * y**c2
+- Nonlinear damping in oscillators → odd-power velocity terms like v**3, v**5 that preserve symmetry of the oscillation
+- Restoring force without explicit position → sinusoidal functions of time sin(c*t), cos(c*t) acting as proxy for displacement
+- Self-excited oscillations (limit cycles) → terms like (1 - v**2)*v indicating energy-dependent damping sign change
+- Parametric excitation → products of velocity with periodic time functions v*sin(c*t), v*cos(c*t)
+- Amplitude-dependent frequency → cubic or higher polynomial terms in velocity coupled with harmonic terms
+- Energy pumping/dissipation balance → competing terms with opposite signs involving different powers of v
+- Hardening/softening spring analogy → cubic corrections to sinusoidal time terms: sin(c*t)**3 or cos(c*t)**3
+- Phase space structure preservation → acceleration depending on odd functions of velocity for symmetric oscillations
+
+Calling LLM to generate initial seed formulas...
+Initializing 20 seed nodes (including preprocessing variants)...
+
+    ↳ Seed degenerated (overfitting): c1=0.0000->snapped to 0; no feature variables after simplification->overfitting
+    ↳ Seed degenerated (simplified): c2=3.1416~1*pi->phase absorbed
+    ↳ Seed degenerated (simplified): c0=-3.069e-04->small coeff,c0*sqrt(c1 + v**2)->0
+  [Seed] c0*v + c1
+         params: c0=1.5581e-02, c1=-1.2507e-03
+         description: Simple affine (linear) model in v. Both coefficients are very small (c0≈0.016, c1≈-0.001), producing near-zero output. NMSE=1.0 indicates the model captures essentially none of the variance, meaning a linear function of v alone is completely inadequate.
+         train=1.00e+00  test=9.99e-01  ood=1.88e+00
+  [Seed] c0*v**2 + c1*v + c2
+         params: c0=5.9058e-01, c1=1.4585e-02, c2=-2.2963e-03
+         description: Quadratic polynomial in v alone. The dominant term is c0*v²≈0.59*v², while the linear and constant terms are negligible (c1≈0.015, c2≈-0.002). NMSE≈1.0 shows a pure polynomial in v still fails entirely, confirming the target depends critically on t as well.
+         train=9.99e-01  test=9.97e-01  ood=1.91e+00
+  [Seed] c0*exp(c1*v)
+         params: c0=-1.2061e-03, c1=-8.0346e+00
+         description: Exponential decay in v with a large negative rate (c1≈-8.03), multiplied by a tiny prefactor (c0≈-0.0012). For positive v this decays rapidly to zero; for negative v it explodes but the prefactor keeps it small near v=0. NMSE=1.0 indicates complete failure to capture the data.
+         train=1.00e+00  test=1.00e+00  ood=1.89e+00
+  [Seed] [Degenerated] c0*v**c1
+         params: c0=-1.2039e-03, c1=0.0000e+00
+         description: top-level product form, contains powers, simple structure
+         train=1.00e+00  test=1.00e+00  ood=1.89e+00
+  [Seed] c0*v/(c1 + v)
+         params: c0=-1.1194e-03, c1=3.2103e-03
+         description: Rational (Michaelis-Menten type) function of v alone. Both c0≈-0.0011 and c1≈0.0032 are tiny, producing a saturating function with very small output. NMSE≈1.0 confirms this single-variable rational form is inadequate.
+         train=9.98e-01  test=1.06e+00  ood=1.96e+00
+  [Seed] c0*log(c1*Abs(v) + 1)
+         params: c0=-4.2547e-03, c1=5.0000e+00
+         description: Logarithmic function of |v| with c1=5.0 providing moderate scaling inside the log and c0≈-0.004 as a small negative prefactor. This is a monotonically increasing (in |v|) concave function. NMSE=1.0 shows it captures no meaningful variance, as it ignores t entirely.
+         train=1.00e+00  test=1.00e+00  ood=1.84e+00
+  [Seed] c0*sin(c1*t + c2)
+         params: c0=-5.8663e-02, c1=1.0001e+00, c2=4.1068e+00
+         description: Pure sinusoidal in t with frequency c1≈1.0 and phase c2≈4.107, amplitude c0≈-0.059. This is effectively ~0.059*sin(t + π + 0.96). NMSE≈0.013 represents a dramatic improvement, capturing ~98.7% of variance, indicating the dominant signal is a sinusoid in t with unit frequency.
+         train=1.27e-02  test=1.20e-02  ood=1.25e-03
+  [Seed] [Degenerated] c0*sin(c1*t + c2) + c3*v
+         params: c0=-1.0626e-01, c1=1.0000e+00, c2=3.1416e+00, c3=-1.4530e+00
+         description: top-level additive combination, contains transcendental functions sin, 2 additive terms, complex structure (depth 5)
+         train=5.44e-09  test=5.69e-09  ood=1.16e-08
+  [Seed] c0*v**2*sin(c1*t + c2) + c3*cos(c1*t)
+         params: c0=8.2522e+00, c1=9.8975e-01, c2=6.0486e+00, c3=6.1244e-02
+         description: Additive combination of a v²-modulated sinusoid and a pure cosine, both at frequency c1≈0.99. The cosine term (c3≈0.061) provides a baseline oscillation while the v²*sin term (c0≈8.25) adds amplitude modulation. NMSE≈0.041 is worse than the pure sinusoid, suggesting the v² coupling is not well-structured here.
+         train=4.08e-02  test=3.96e-02  ood=1.10e-01
+  [Seed] c0*v + c1*v*Abs(v) + c2*sin(c3*t + c4)
+         params: c0=-1.4533e+00, c1=7.0082e-03, c2=1.0626e-01, c3=1.0000e+00, c4=5.0850e-06
+         description: Additive combination of a linear term in v (c0≈-1.45), a quasi-quadratic odd term v|v| (c1≈0.007, small), and a sinusoid in t (c2≈0.106, c3=1.0, c4≈0 so sin(t)). The v|v| term approximates v³ behavior for small v. NMSE≈1.25e-10 indicates near-perfect fit; effectively equivalent to -1.45v + 0.106*sin(t), with the v|v| term providing a minor cubic-like correction.
+         train=1.25e-10  test=1.36e-10  ood=2.60e-10
+  [Seed] [Degenerated] c0*sqrt(c1 + v**2) + c2*sin(c3*t + c4)
+         params: c0=-3.0692e-04, c1=1.0062e+01, c2=5.8656e-02, c3=1.0002e+00, c4=9.6332e-01
+         description: top-level additive combination, contains transcendental functions sin, contains powers, 3 additive terms, complex structure (depth 5)
+         train=1.22e-02  test=1.15e-02  ood=3.93e-03
+  [Seed] c0*v + c1*v**3 + c2*v**5
+         params: c0=9.3913e-02, c1=-2.9889e+01, c2=1.0000e+02
+         description: Odd-power polynomial in v (linear + cubic + quintic) with no t-dependence. Despite large coefficients (c1≈-29.9, c2=100), NMSE=1.0 shows complete failure, confirming that any v-only model cannot capture the t-dependent oscillatory component.
+         train=1.00e+00  test=9.99e-01  ood=1.81e+00
+  [Seed] c0*v + c1*v**3 + c2*sin(c3*t + c4)
+         params: c0=-1.4532e+00, c1=8.0702e-02, c2=1.0626e-01, c3=1.0000e+00, c4=6.2832e+00
+         description: Additive combination of a linear term (c0≈-1.45v), a cubic nonlinearity (c1≈0.081v³), and a sinusoid (c2≈0.106*sin(t), since c3=1.0 and c4≈2π≈0). NMSE≈8.8e-13 is essentially perfect. This reveals the true structure: the target ≈ -1.453v + 0.081v³ + 0.106sin(t).
+         train=8.84e-13  test=8.98e-13  ood=6.72e-12
+  [Seed] c0*sin(c1*t + c2) + c3*sin(c1*t + c4)**3
+         params: c0=-1.7791e-01, c1=3.3345e-01, c2=1.3670e+00, c3=-2.3461e-01, c4=4.5085e+00
+         description: Combination of a fundamental sinusoid and its cube at frequency c1≈0.333 (period ~3× the dominant frequency). Amplitudes c0≈-0.178 and c3≈-0.235 are comparable. NMSE≈0.012 is similar to the pure sin(t) model; the 1/3-frequency harmonics approximate the unit-frequency sinusoid via harmonic synthesis but miss the v-dependent terms.
+         train=1.17e-02  test=1.10e-02  ood=8.31e-03
+  [Seed] c0*v*sin(c1*t + c2) + c3*cos(c1*t)
+         params: c0=3.3384e-02, c1=9.7464e-01, c2=4.7694e+00, c3=5.6924e-02
+         description: Product coupling v*sin(t+phase) plus a cosine baseline, both at frequency c1≈0.975. The cosine amplitude (c3≈0.057) dominates over the v-modulated term (c0≈0.033). NMSE≈0.087 is worse than pure sinusoidal fit, indicating multiplicative v-t coupling is not the correct interaction form.
+         train=8.66e-02  test=9.43e-02  ood=2.68e-01
+  [Seed] c0*v**2 + c1*sin(c2*t + c3)
+         params: c0=-1.2993e-01, c1=-5.8661e-02, c2=1.0002e+00, c3=4.1059e+00
+         description: Additive combination of v² (c0≈-0.13) and sin(t) (c1≈-0.059, c2≈1.0). The sinusoidal term matches the dominant oscillation while v² adds a symmetric nonlinear correction. NMSE≈0.013 is comparable to pure sin(t), meaning the v² term provides minimal improvement—consistent with the true dependence being odd-powered in v.
+         train=1.26e-02  test=1.19e-02  ood=1.56e-03
+  [Seed] c0*cos(c1*t + c2) + c3*v + c4*v**3
+         params: c0=-1.0626e-01, c1=1.0000e+00, c2=1.5708e+00, c3=-1.4532e+00, c4=8.0702e-02
+         description: Structurally identical to Formula 10: cos(t + π/2) = sin(t), so this equals 0.106*sin(t) - 1.453v + 0.081v³. NMSE≈8.8e-13 confirms perfect fit. This is the canonical form of the underlying relationship: an odd polynomial in v plus a sinusoidal forcing in t.
+         train=8.84e-13  test=8.98e-13  ood=6.72e-12
+  [Seed] c0*v + c1*v**3 + c2*sin(c3*t + c4) + c5*sin(c3*t + c4)**3
+         params: c0=-1.4532e+00, c1=8.0702e-02, c2=3.1877e-01, c3=3.3333e-01, c4=6.2832e+00, c5=-4.2503e-01
+         description: Extends Formula 10 by adding a sin³ term at frequency c3≈1/3. The sin and sin³ terms (c2≈0.319, c5≈-0.425 at frequency 1/3) combine via triple-angle identity to reconstruct sin(t): 0.319*sin(t/3) - 0.425*sin³(t/3) ≈ 0.106*sin(t). The v-polynomial part (c0≈-1.453, c1≈0.081) is identical to Formulas 10/14. NMSE≈8.8e-13 confirms equivalence.
+         train=8.82e-13  test=8.98e-13  ood=6.72e-12
+  [Seed] c0*v*cos(c1*t) + c2*sin(c1*t + c3) + c4*v**3
+         params: c0=-4.1742e-03, c1=1.0005e+00, c2=5.8771e-02, c3=9.0636e-01, c4=-1.8867e+01
+         description: Additive mix of v*cos(t) (c0≈-0.004, negligible), sin(t+0.91) (c2≈0.059), and v³ (c4≈-18.9, very large). The v*cos(t) coupling is effectively zero; the large v³ coefficient suggests overfitting or structural mismatch. NMSE≈0.012 matches the pure sinusoid level, indicating the v³ and v*cos terms do not meaningfully improve the fit compared to sin(t) alone.
+         train=1.24e-02  test=1.16e-02  ood=2.16e-03
+  [Mature] c0*v + c1*v**3 + c2*sin(c3*t + c4)
+         train=8.84e-13  test=8.98e-13  ood=6.72e-12
+  [Mature] c0*cos(c1*t + c2) + c3*v + c4*v**3
+         train=8.84e-13  test=8.98e-13  ood=6.72e-12
+  [Mature] c0*v + c1*v**3 + c2*sin(c3*t + c4) + c5*sin(c3*t + c4)**3
+         train=8.82e-13  test=8.98e-13  ood=6.72e-12
+
+Evolution tree initialization complete: EvolutionTree(total=19, evaluated=19, best_test=0.0000)
+
+============================================================
+Evolution tree search started
+Mature threshold  train<9.33e-13
+============================================================
+
+============================================================
+Step 1/30
+============================================================
+
+  [Selector] Selected 5 parents:
+
+  [1/5] Parent: c0*v + c1*v**3 + c2*sin(c3*t + c4) + c5*sin(c3*t + c4)**3
+    [Annealing] Mature node, remaining budget 2/3
+
+  [1/5] Parent: c0*v + c1*v**3 + c2*sin(c3*t + c4) + c5*sin(c3*t + c4)**3
+    params: c0=-1.4532e+00, c1=8.0702e-02, c2=3.1877e-01, c3=3.3333e-01, c4=6.2832e+00, c5=-4.2503e-01
+    train=8.82e-13  test=8.98e-13  ood=6.72e-12
+    rationale: Best NMSE (0.00), the extra sin^3 term may capture higher-order forcing. Mutation could simplify or find even better variants. 0 children, unexplored.
+
+  [2/5] Parent: c0*v + c1*v*Abs(v) + c2*sin(c3*t + c4)
+    params: c0=-1.4533e+00, c1=7.0082e-03, c2=1.0626e-01, c3=1.0000e+00, c4=5.0850e-06
+    train=1.25e-10  test=1.36e-10  ood=2.60e-10
+    rationale: Near-perfect NMSE with a structurally different nonlinearity (v*|v| vs v^3). Mutations could explore other nonlinear damping forms. 0 children.
+
+  [Mutation] Programmatic deletion: 0, Programmatic addition: 0
+
+  [Mutation] Programmatic deletion: 0, Programmatic addition: 0
+
+  [3/5] Parent: c0*sin(c1*t + c2) + c3*sin(c1*t + c4)**3
+    params: c0=-1.7791e-01, c1=3.3345e-01, c2=1.3670e+00, c3=-2.3461e-01, c4=4.5085e+00
+    train=1.17e-02  test=1.10e-02  ood=8.31e-03
+    rationale: NMSE=0.012, pure sinusoidal without v terms. Mutation adding v-dependent terms could bridge to top performers via a different structural path. 0 children.
+
+  [Mutation] Programmatic deletion: 0, Programmatic addition: 0
+
+  [4/5] Parent: c0*v*cos(c1*t) + c2*sin(c1*t + c3) + c4*v**3
+    params: c0=-4.1742e-03, c1=1.0005e+00, c2=5.8771e-02, c3=9.0636e-01, c4=-1.8867e+01
+    train=1.24e-02  test=1.16e-02  ood=2.16e-03
+    rationale: NMSE=0.012, interesting because it has a v*cos(t) coupling term. Mutation could fix the structure (e.g., add linear v term) to dramatically improve. 0 children.
+
+  [Mutation] Programmatic deletion: 0, Programmatic addition: 0
+
+  [5/5] Parent: c0*v**2 + c1*v + c2
+    params: c0=5.9058e-01, c1=1.4585e-02, c2=-2.2963e-03
+    train=9.99e-01  test=9.97e-01  ood=1.91e+00
+    rationale: NMSE=0.999, simple polynomial baseline with 0 children. Mutations could add sin(t) or v^3 terms, exploring polynomial+trig combinations from a different starting point than the top performers.
+
+  [Mutation] Programmatic deletion: 0, Programmatic addition: 0
+  [Mutation] LLM suggestions: 20
+  [Mutation] After dedup: 19 unique candidates (raw 20)
+  [Mutation] LLM suggestions: 20
+  [Mutation] After dedup: 17 unique candidates (raw 20)
+  [Mutation] LLM suggestions: 20
+  [Mutation] After dedup: 19 unique candidates (raw 20)
+  [Mutation] LLM suggestions: 20
+  [Mutation] After dedup: 19 unique candidates (raw 20)
+  [Mutation] LLM suggestions: 20
+  [Mutation] After dedup: 18 unique candidates (raw 20)
+
+  [Unified eval] 79 candidates, skipped 1 (params>10), pool workers=16, timeout=120s
+    Parent tags: P1=c0*v**2 + c1*v + c2  P2=c0*sin(c1*t + c2) + c3*sin(c1*t + c4)**3  P3=c0*v + c1*v*Abs(v) + c2*sin(c3*t + c4)  P4=c0*v*cos(c1*t) + c2*sin(c1*t + c3) + c4*  P5=c0*v + c1*v**3 + c2*sin(c3*t + c4) + c5*
+  ★ [P1|[LLM] A: Added sin with log-velocity-dependent phase shift for amplitude-dependent frequency]: test=5.67e-09  train=5.42e-09  ood=1.18e-08  → c0*v**2 + c1*v + c2 + c3*sin(c4*t + c5*log(c6*v**2 + 1) + c7)
+    ↳ degenerate simplified (c0=1.404e-04->small coeff,c0*v**2->0; c6=1.000e-06->small coeff,c6*v**2->0; c7=6.2832~2*pi->phase absorbed): c0*v**2 + c1*v + c2 + c3*sin(c4*t + c5*log(c6*v**2 + 1) + c7) -> c0*v + c1 + c2*sin(c3*t + c4)
+  ★ [P1|[LLM] A: Added cos with nested sin phase modulation for quasi-periodic restoring force]: test=5.63e-09  train=5.42e-09  ood=1.15e-08  → c0*v**2 + c1*v + c2 + c3*cos(c4*t + c5*sin(c6*t + c7))
+    ↳ degenerate simplified (c0=1.411e-04->small coeff,c0*v**2->0; c6=1.385e-04->small coeff,c6*t->0): c0*v**2 + c1*v + c2 + c3*cos(c4*t + c5*sin(c6*t + c7)) -> c0*v + c1 + c2*cos(c3 + c4*t)
+  ★ [P1|[LLM] A: Added sin with velocity-modulated exponential frequency for parametric coupling]: test=4.71e-09  train=4.38e-09  ood=7.87e-09  → c0*v**2 + c1*v + c2 + c3*sin(c4*t*exp(c5*v**2) + c6)
+    ↳ degenerate simplified (c0=1.057e-04->small coeff,c0*v**2->0; c5=-8.777e-04->small coeff,c5*v**2->0; c6=3.1416~1*pi->phase absorbed): c0*v**2 + c1*v + c2 + c3*sin(c4*t*exp(c5*v**2) + c6) -> c0*v + c1*sin(c2 + c3*t) + c4
+  ★ [P1|[LLM] A: Added nested exp(sin(c*t)) for periodic modulation with exponential envelope]: test=5.67e-09  train=5.41e-09  ood=1.22e-08  → c0*v**2 + c1*v + c2 + c3*exp(c4*sin(c5*t + c6))
+    ↳ degenerate simplified (c0=1.043e-04->small coeff,c0*v**2->0; c6=3.1416~1*pi->phase absorbed; c4=-6.824e-06->small coeff,-c4*sin(c5*t)->0): c0*v**2 + c1*v + c2 + c3*exp(c4*sin(c5*t + c6)) -> c0*v + c1
+  ★ [P1|[LLM] B: Added product of time and cosine for growing oscillatory restoring force]: test=2.06e-01  train=2.33e-01  ood=6.18e-01  → c0*v**2 + c1*v + c2 + c3*t*cos(c4*t + c5)
+    [P1|[LLM] A: Added softplus log(1+exp(c*v)) for smooth threshold activation in velocity]: test=9.99e-01  train=9.98e-01  ood=1.93e+00  → c0*v**2 + c1*v + c2 + c3*log(c4*exp(c5*v) + 1)
+  ★ [P1|[LLM] B: Added product of quadratic velocity and sine for nonlinear parametric excitation]: test=4.84e-01  train=5.00e-01  ood=9.35e-01  → c0*v**2 + c1*v + c2 + c3*v**2*sin(c4*t + c5)
+  ★ [P1|[LLM] B: Added v**5 as product v**3*v**2 for quintic velocity nonlinearity]: test=9.97e-01  train=9.99e-01  ood=1.91e+00  → c0*v**2 + c1*v + c2 + c3*v**5
+  ★ [P1|[LLM] B: Added product of velocity and sinusoidal time for parametric coupling]: test=4.88e-01  train=5.04e-01  ood=9.31e-01  → c0*v**2 + c1*v + c2 + c3*v*sin(c4*t + c5)
+  ★ [P1|[LLM] C: Added cubic and quintic velocity terms, referencing Quintic nonlinearity from domain knowledge above: dv_dt = c0*v + c1*v**3 + c2*v**5]: test=9.95e-01  train=9.99e-01  ood=1.92e+00  → c0*v**2 + c1*v + c2 + c3*v**3 + c4*v**5
+  ★ [P1|[LLM] C: Added self-excitation term (1-v^2)*v, referencing Van der Pol type from domain knowledge above: dv_dt = c0*(1 - c1*v**2)*v + c2*sin(c3*t)]: test=9.95e-01  train=9.99e-01  ood=1.92e+00  → c0*v**2 + c1*v + c2*v**3 + c3 + c4*v
+  ★ [P1|[LLM] C: Added sine plus cubic sine for hardening spring analogy, referencing Duffing-like in time from domain knowledge above: dv_dt = c0*sin(c1*t) + c2*sin(c1*t)**3]: test=5.32e-09  train=5.17e-09  ood=1.12e-08  → c0*v**2 + c1*v + c2*sin(c3*t + c4)**3 + c5 + c6*sin(c3*t + c4)
+    ↳ degenerate simplified (c0=1.311e-04->small coeff,c0*v**2->0; c4=6.2832~2*pi->phase absorbed; c2=-3.796e-06->small coeff,c2*sin(c3*t)**3->0; c4=6.2832~2*pi->phase absorbed): c0*v**2 + c1*v + c2*sin(c3*t + c4)**3 + c5 + c6*sin(c3*t + c4) -> c0*v + c1 + c2*sin(c3*t + c4)
+  ★ [P1|[LLM] B: Added product of cubic velocity and cosine time for parametric nonlinear damping]: test=7.29e-01  train=7.34e-01  ood=1.31e+00  → c0*v**2 + c1*v + c2 + c3*v**3*cos(c4*t)
+  ★ [P1|[LLM] C: Added cubic velocity and sinusoidal restoring, referencing Rayleigh oscillator from domain knowledge above: dv_dt = c0*v - c1*v**3 + c2*sin(c3*t)]: test=8.97e-13  train=8.84e-13  ood=6.72e-12  → c0*v**2 + c1*v + c2 + c3*v**3 + c4*sin(c5*t + c6)
+    ↳ degenerate simplified (c0=5.330e-08->small coeff,c0*v**2->0; c6=6.2832~2*pi->phase absorbed): c0*v**2 + c1*v + c2 + c3*v**3 + c4*sin(c5*t + c6) -> c0*v + c1 + c2*v**3 + c3*sin(c4*t + c5)
+  ★ [P1|[LLM] C: Added cubic velocity and cosine restoring, referencing Cosine restoring from domain knowledge above: dv_dt = c0*cos(c1*t + c2) + c3*v]: test=8.97e-13  train=8.84e-13  ood=6.72e-12  → c0*v**2 + c1*v + c2 + c3*v**3 + c4*cos(c5*t + c6)
+    ↳ degenerate simplified (c0=5.330e-08->small coeff,c0*v**2->0): c0*v**2 + c1*v + c2 + c3*v**3 + c4*cos(c5*t + c6) -> c0*v + c1 + c2*v**3 + c3*cos(c4*t + c5)
+  ★ [P1|[LLM] C: Added v*|v| for asymmetric nonlinear damping, referencing Self-sustained oscillator from domain knowledge above: dv_dt = c0*v - c1*v*abs(v) + c2*sin(c3*t)]: test=1.36e-10  train=1.25e-10  ood=2.61e-10  → c0*v**2 + c1*v + c2 + c3*v*Abs(v) + c4*sin(c5*t + c6)
+    ↳ degenerate simplified (c0=6.357e-06->small coeff,c0*v**2->0): c0*v**2 + c1*v + c2 + c3*v*Abs(v) + c4*sin(c5*t + c6) -> c0*v + c1 + c2*v*Abs(v) + c3*sin(c4*t + c5)
+  ★ [P1|[LLM] C: Combined Rayleigh cubic velocity with Duffing cubic sine, referencing both Rayleigh oscillator and Duffing-like in time from domain knowledge above]: test=8.97e-13  train=8.82e-13  ood=6.72e-12  → c0*v**2 + c1*v + c2*sin(c3*t + c4)**3 + c5 + c6*v**3 + c7*sin(c3*t + c4)
+    ↳ degenerate simplified (c0=9.115e-08->small coeff,c0*v**2->0; c4=6.2832~2*pi->phase absorbed; c4=6.2832~2*pi->phase absorbed): c0*v**2 + c1*v + c2*sin(c3*t + c4)**3 + c5 + c6*v**3 + c7*sin(c3*t + c4) -> c0*v + c1*sin(c2*t + c3)**3 + c4 + c5*v**3 + c6*sin(c2*t + c7)
+  ★ [P2|[LLM] A: Added exp(c*v^2)*v nested composition for nonlinear velocity-dependent damping]: test=8.99e-13  train=8.81e-13  ood=6.72e-12  → c0*sin(c1*t + c2) + c3*sin(c1*t + c4)**3 + c5*v*exp(c6*v**2)
+  ★ [P2|[LLM] C: Added linear+cubic velocity damping plus second harmonic restoring, referencing Van der Pol type from domain knowledge above: dv_dt = c0*(1-c1*v**2)*v + c2*sin(c3*t)]: test=9.02e-13  train=8.81e-13  ood=6.74e-12  → c0*sin(c1*t + c2) + c3*sin(c1*t + c4)**3 + c5*v + c6*v**3 + c7*sin(c8*t + c9)
+    ↳ degenerate simplified (c3=-2.385e-08->small coeff,c3*sin(c1*t + c4)**3->0; c7=-2.865e-09->small coeff,c7*sin(c8*t + c9)->0): c0*sin(c1*t + c2) + c3*sin(c1*t + c4)**3 + c5*v + c6*v**3 + c7*sin(c8*t + c9) -> c0*sin(c1*t + c2) + c3*v + c4*v**3
+  ★ [P2|[LLM] C: Added velocity polynomial plus second-frequency cubic restoring, referencing Duffing-like in time from domain knowledge above: dv_dt = c0*sin(c1*t) + c2*sin(c1*t)**3]: test=8.98e-13  train=8.81e-13  ood=6.72e-12  → c0*sin(c1*t + c2) + c3*sin(c1*t + c4)**3 + c5*sin(c6*t + c7)**3 + c8*v + c9*v**3
+    ↳ degenerate simplified (c3=1.178e-08->small coeff,c3*sin(c1*t + c4)**3->0; c5=3.432e-09->small coeff,c5*sin(c6*t + c7)**3->0): c0*sin(c1*t + c2) + c3*sin(c1*t + c4)**3 + c5*sin(c6*t + c7)**3 + c8*v + c9*v**3 -> c0*sin(c1*t + c2) + c3*v + c4*v**3
+  ★ [P2|[LLM] C: Added saturating velocity-dependent damping via rational fraction, referencing Michaelis-Menten kinetics from domain knowledge above: v = c0*S/(S+c1) adapted as velocity saturation]: test=8.99e-13  train=8.81e-13  ood=6.72e-12  → c0*sin(c1*t + c2) + c3*sin(c1*t + c4)**3 + c5*v/(c6*v**2 + 1)
+  ★ [P2|[LLM] B: Added product v*cos(c*t) for parametric velocity-time coupling]: test=3.94e-11  train=3.89e-11  ood=1.58e-10  → c0*sin(c1*t + c2) + c3*sin(c1*t + c4)**3 + c5*v*cos(c6*t + c7)
+    ↳ degenerate simplified (c3=-1.764e-05->small coeff,c3*sin(c1*t + c4)**3->0; c6=2.313e-04->small coeff,c6*t->0): c0*sin(c1*t + c2) + c3*sin(c1*t + c4)**3 + c5*v*cos(c6*t + c7) -> c0*sin(c1*t + c2) + c3*v
+  ★ [P1|[LLM] C: Added parametric velocity-time coupling with restoring force, referencing Mixed nonlinear from domain knowledge above: dv_dt = c0*v*sin(c1*t) + c2*cos(c1*t)]: test=5.67e-09  train=5.42e-09  ood=1.21e-08  → c0*v**2 + c1*v + c2 + c3*v*cos(c4*t + c5) + c6*sin(c4*t + c5)
+    ↳ degenerate simplified (c0=1.944e-04->small coeff,c0*v**2->0; c5=6.2832~2*pi->phase absorbed; c3=5.781e-06->small coeff,c3*v*cos(c4*t + c5)->0): c0*v**2 + c1*v + c2 + c3*v*cos(c4*t + c5) + c6*sin(c4*t + c5) -> c0*v + c1 + c2*sin(c3*t + c4)
+  ★ [P1|[LLM] C: Added velocity-saturated restoring force, referencing Michaelis-Menten kinetics from domain knowledge above: v = c0*S/(S+c1) adapted as amplitude-limited oscillation]: test=5.67e-09  train=5.42e-09  ood=1.18e-08  → c0*v**2 + c1*v + c2 + c3*sin(c4*t + c5)/(c6*v**2 + 1)
+    ↳ degenerate simplified (c0=1.404e-04->small coeff,c0*v**2->0; c6=1.000e-06->small coeff,c6*v**2->0; c5=6.2832~2*pi->phase absorbed): c0*v**2 + c1*v + c2 + c3*sin(c4*t + c5)/(c6*v**2 + 1) -> c0*v + c1 + c2*sin(c3*t + c4)
+  ★ [P2|[LLM] A: Added sin(c*v) nested sinusoidal velocity dependence]: test=8.96e-13  train=8.83e-13  ood=6.72e-12  → c0*sin(c1*t + c2) + c3*sin(c1*t + c4)**3 + c5*sin(c6*v + c7)
+    ↳ degenerate simplified (c2=6.2832~2*pi->phase absorbed; c3=-1.607e-08->small coeff,c3*sin(c1*t + c4)**3->0): c0*sin(c1*t + c2) + c3*sin(c1*t + c4)**3 + c5*sin(c6*v + c7) -> c0*sin(c1*t + c2) + c3*sin(c4*v + c5)
+  ★ [P2|[LLM] A: Added log(1+c*v^2) nested composition for saturating velocity response]: test=1.10e-02  train=1.16e-02  ood=1.08e-02  → c0*sin(c1*t + c2) + c3*sin(c1*t + c4)**3 + c5*log(c6*v**2 + 1)
+  ★ [P2|[LLM] A: Added exp(sin(c*t)) nested composition for modulated driving force]: test=9.74e-03  train=9.73e-03  ood=3.71e-02  → c0*sin(c1*t + c2) + c3*sin(c1*t + c4)**3 + c5*exp(c6*sin(c7*t + c8))
+    ↳ degenerate simplified (c5=-4.013e-04->small coeff,c5*exp(c6*sin(c7*t + c8))->0): c0*sin(c1*t + c2) + c3*sin(c1*t + c4)**3 + c5*exp(c6*sin(c7*t + c8)) -> c0*sin(c1*t + c2) + c3*sin(c1*t + c4)**3
+  ★ [P2|[LLM] C: Added quintic velocity nonlinearity for higher-order damping, referencing Quintic nonlinearity from domain knowledge above: dv_dt = c0*v + c1*v**3 + c2*v**5]: test=8.98e-13  train=8.81e-13  ood=6.72e-12  → c0*sin(c1*t + c2) + c3*sin(c1*t + c4)**3 + c5*v + c6*v**3 + c7*v**5
+  ★ [P2|[LLM] C: Added cubic velocity damping plus cosine restoring, referencing Rayleigh oscillator from domain knowledge above: dv_dt = c0*v - c1*v**3 + c2*sin(c3*t)]: test=9.06e-13  train=8.79e-13  ood=6.77e-12  → c0*sin(c1*t + c2) + c3*sin(c1*t + c4)**3 + c5*v + c6*v**3 + c7*cos(c8*t + c9)
+    ↳ degenerate simplified (c0=4.149e-09->small coeff,c0*sin(c1*t + c2)->0; c3=2.834e-09->small coeff,c3*sin(c1*t + c4)**3->0): c0*sin(c1*t + c2) + c3*sin(c1*t + c4)**3 + c5*v + c6*v**3 + c7*cos(c8*t + c9) -> c0*v + c1*v**3 + c2*cos(c3*t + c4)
+  ★ [P2|[LLM] C: Added self-sustained oscillator damping with absolute value, referencing Self-sustained oscillator from domain knowledge above: dv_dt = c0*v - c1*v*abs(v) + c2*sin(c3*t)]: test=4.69e-11  train=3.83e-11  ood=4.16e-11  → c0*sin(c1*t + c2) + c3*v*Abs(v) + c4*sin(c1*t + c5)**3 + c6*v
+    ↳ degenerate simplified (c4=-1.187e-05->small coeff,c4*sin(c1*t + c5)**3->0): c0*sin(c1*t + c2) + c3*v*Abs(v) + c4*sin(c1*t + c5)**3 + c6*v -> c0*sin(c1*t + c2) + c3*v*Abs(v) + c4*v
+  ★ [P2|[LLM] A: Added sin(c*t + c*v) nested composition coupling time and velocity]: test=8.02e-03  train=8.27e-03  ood=1.64e-02  → c0*sin(c1*t + c2) + c3*sin(c1*t + c4)**3 + c5*sin(c6*t + c7*v + c8)
+  ★ [P2|[LLM] B: Added product v^2*sin(c*t) for quadratic velocity modulated by restoring force]: test=4.21e-03  train=5.92e-03  ood=6.52e-03  → c0*sin(c1*t + c2) + c3*sin(c1*t + c4)**3 + c5*v**2*sin(c6*t + c7)
+  ★ [P2|[LLM] B: Added product t*v for time-varying linear damping coefficient]: test=1.10e-02  train=1.17e-02  ood=8.30e-03  → c0*sin(c1*t + c2) + c3*sin(c1*t + c4)**3 + c5*t*v
+    ↳ degenerate simplified (c5=-2.132e-04->small coeff,c5*t*v->0): c0*sin(c1*t + c2) + c3*sin(c1*t + c4)**3 + c5*t*v -> c0*sin(c1*t + c2) + c3*sin(c1*t + c4)**3
+  ★ [P2|[LLM] B: Added product v*sin(c*t) for parametric excitation coupling]: test=9.87e-11  train=9.55e-11  ood=1.26e-10  → c0*sin(c1*t + c2) + c3*sin(c1*t + c4)**3 + c5*v*sin(c6*t + c7)
+    ↳ degenerate simplified (c2=3.1416~1*pi->phase absorbed; c3=1.767e-05->small coeff,c3*sin(c1*t + c4)**3->0; c6=6.082e-05->small coeff,c6*t->0): c0*sin(c1*t + c2) + c3*sin(c1*t + c4)**3 + c5*v*sin(c6*t + c7) -> c0*sin(c1*t + c2) + c3*v
+  ★ [P3|[LLM] A: Added velocity-amplitude-modulated driving via exp(c*|v|)*sin(wt) nested composition]: test=4.59e-11  train=4.67e-11  ood=8.70e-11  → c0*v + c1*v*Abs(v) + c2*sin(c3*t + c4) + c5*exp(c6*Abs(v))*sin(c3*t + c4)
+    ↳ degenerate simplified (c5=3.379e-10->small coeff,c5*exp(c6*Abs(v))*sin(c3*t + c4)->0): c0*v + c1*v*Abs(v) + c2*sin(c3*t + c4) + c5*exp(c6*Abs(v))*sin(c3*t + c4) -> c0*v + c1*v*Abs(v) + c2*sin(c3*t + c4)
+  ★ [P2|[LLM] C: Added quadratic velocity parametric term, referencing Polynomial velocity with harmonic drive from domain knowledge above: dv_dt = c0*v**2*sin(c1*t) + c2*cos(c1*t)]: test=4.81e-03  train=6.43e-03  ood=1.34e-03  → c0*sin(c1*t + c2) + c3*sin(c1*t + c4)**3 + c5*v**2*sin(c1*t + c6) + c7*cos(c1*t 
+  ★ [P2|[LLM] C: Added parametric coupling v*sin(wt) and cosine correction, referencing Mixed nonlinear from domain knowledge above: dv_dt = c0*v*sin(c1*t) + c2*cos(c1*t)]: test=1.09e-02  train=1.16e-02  ood=9.90e-03  → c0*sin(c1*t + c2) + c3*sin(c1*t + c4)**3 + c5*v*sin(c1*t + c6) + c7*cos(c1*t + c
+  ★ [P3|[LLM] C: Added both cubic and quintic velocity terms for Rayleigh-type nonlinear damping hierarchy, referencing Rayleigh oscillator from domain knowledge above: dv_dt = c0*v - c1*v**3 + c2*sin(c3*t)]: test=8.99e-13  train=8.84e-13  ood=6.72e-12  → c0*v + c1*v*Abs(v) + c2*sin(c3*t + c4) + c5*v**3 + c6*v**5
+    ↳ degenerate simplified (c4=6.2832~2*pi->phase absorbed; c1=-1.463e-05->small coeff,c1*v*Abs(v)->0): c0*v + c1*v*Abs(v) + c2*sin(c3*t + c4) + c5*v**3 + c6*v**5 -> c0*v + c1*sin(c2*t + c3) + c4*v**3 + c5*v**5
+  ★ [P3|[LLM] A: Added sin(c*sin(wt)) nested composition for nonlinear distortion of the driving force]: test=9.84e-11  train=9.45e-11  ood=1.95e-10  → c0*v + c1*v*Abs(v) + c2*sin(c3*t + c4) + c5*sin(c6*sin(c3*t + c4) + c7)
+    ↳ degenerate simplified (c5=3.856e-07->small coeff,c5*sin(c6*sin(c3*t + c4) + c7)->0): c0*v + c1*v*Abs(v) + c2*sin(c3*t + c4) + c5*sin(c6*sin(c3*t + c4) + c7) -> c0*v + c1*v*Abs(v) + c2*sin(c3*t + c4)
+  ★ [P3|[LLM] A: Added exp(c5*v²)-1 as nested composition to capture higher-order velocity nonlinearity via exponential]: test=1.36e-10  train=1.25e-10  ood=2.61e-10  → c0*v + c1*v*Abs(v) + c2*sin(c3*t + c4) + c5*exp(c6*v**2) - 1
+    ↳ degenerate simplified (c6=6.357e-06->small coeff,c6*v**2->0): c0*v + c1*v*Abs(v) + c2*sin(c3*t + c4) + c5*exp(c6*v**2) - 1 -> c0*v + c1*v*Abs(v) + c2 + c3*sin(c4*t + c5)
+  ★ [P3|[LLM] C: Added second harmonic driving term for multi-mode restoring force, referencing Linear restoring via time from domain knowledge above: dv_dt = c0*sin(c1*t + c2)]: test=2.11e-11  train=2.32e-11  ood=3.94e-11  → c0*v + c1*v*Abs(v) + c2*sin(c3*t + c4) + c5*sin(c6*t + c7)
+    ↳ degenerate simplified (c2=-6.174e-07->small coeff,c2*sin(c3*t + c4)->0; c7=3.1416~1*pi->phase absorbed): c0*v + c1*v*Abs(v) + c2*sin(c3*t + c4) + c5*sin(c6*t + c7) -> c0*v + c1*v*Abs(v) + c2*sin(c3 + c4*t)
+  ★ [P3|[LLM] A: Added softplus log(1+exp(c*v)) as smooth nonlinear velocity activation]: test=1.21e-10  train=1.14e-10  ood=2.56e-10  → c0*v + c1*v*Abs(v) + c2*sin(c3*t + c4) + c5*log(c6*exp(c7*v) + 1)
+    ↳ degenerate simplified (c4=3.1416~1*pi->phase absorbed; c6=1.000e-06->small coeff,c6*exp(c7*v)->0): c0*v + c1*v*Abs(v) + c2*sin(c3*t + c4) + c5*log(c6*exp(c7*v) + 1) -> c0*v + c1*v*Abs(v) + c2*sin(c3 + c4*t)
+    [P3|[LLM] B: Added product v*sin(wt) for parametric coupling between velocity and driving]: test=1.36e-10  train=1.25e-10  ood=2.61e-10  → c0*v + c1*v*Abs(v) + c2*sin(c3*t + c4) + c5*v*sin(c3*t + c4)
+    ↳ degenerate simplified (c4=3.1416~1*pi->phase absorbed; c4=3.1416~1*pi->phase absorbed; c5=-2.831e-07->small coeff,-c5*v*sin(c3*t)->0): c0*v + c1*v*Abs(v) + c2*sin(c3*t + c4) + c5*v*sin(c3*t + c4) -> c0*v + c1*v*Abs(v) + c2*sin(c3 + c4*t)
+  ★ [P3|[LLM] B: Added product v²*sin(wt) for quadratic velocity-driving coupling]: test=1.29e-10  train=1.21e-10  ood=2.57e-10  → c0*v + c1*v*Abs(v) + c2*sin(c3*t + c4) + c5*v**2*sin(c3*t + c4)
+    ↳ degenerate simplified (c4=3.1416~1*pi->phase absorbed; c4=3.1416~1*pi->phase absorbed; c5=-2.514e-04->small coeff,-c5*v**2*sin(c3*t)->0): c0*v + c1*v*Abs(v) + c2*sin(c3*t + c4) + c5*v**2*sin(c3*t + c4) -> c0*v + c1*v*Abs(v) + c2*sin(c3 + c4*t)
+    [P3|[LLM] A: Added cos(c*v²) nested composition capturing velocity-dependent frequency modulation]: test=1.36e-10  train=1.25e-10  ood=2.60e-10  → c0*v + c1*v*Abs(v) + c2*sin(c3*t + c4) + c5*cos(c6*v**2)
+    ↳ degenerate simplified (c4=3.1416~1*pi->phase absorbed; c6=1.582e-06->small coeff,c6*v**2->0): c0*v + c1*v*Abs(v) + c2*sin(c3*t + c4) + c5*cos(c6*v**2) -> c0*v + c1*v*Abs(v) + c2*sin(c3 + c4*t) + c5
+  ★ [P3|[LLM] B: Added product v*cos(wt) for quadrature parametric coupling]: test=1.36e-10  train=1.25e-10  ood=2.60e-10  → c0*v + c1*v*Abs(v) + c2*sin(c3*t + c4) + c5*v*cos(c3*t + c4)
+    ↳ degenerate simplified (c4=3.1416~1*pi->phase absorbed; c5=2.230e-07->small coeff,c5*v*cos(c3*t + c4)->0): c0*v + c1*v*Abs(v) + c2*sin(c3*t + c4) + c5*v*cos(c3*t + c4) -> c0*v + c1*v*Abs(v) + c2*sin(c3 + c4*t)
+  ★ [P3|[LLM] B: Added sin*cos product generating second harmonic sin(2wt) driving term]: test=1.36e-10  train=1.25e-10  ood=2.60e-10  → c0*v + c1*v*Abs(v) + c2*sin(c3*t + c4) + c5*sin(c3*t + c4)*cos(c3*t + c4)
+    ↳ degenerate simplified (c5=-1.844e-08->small coeff,c5*sin(c3*t + c4)*cos(c3*t + c4)->0): c0*v + c1*v*Abs(v) + c2*sin(c3*t + c4) + c5*sin(c3*t + c4)*cos(c3*t + c4) -> c0*v + c1*v*Abs(v) + c2*sin(c3*t + c4)
+  ★ [P3|[LLM] B: Added v²*cos(wt) product for nonlinear parametric interaction]: test=1.34e-10  train=1.23e-10  ood=2.53e-10  → c0*v + c1*v*Abs(v) + c2*sin(c3*t + c4) + c5*v**2*cos(c3*t + c4)
+    ↳ degenerate simplified (c4=3.1416~1*pi->phase absorbed; c5=1.117e-04->small coeff,c5*v**2*cos(c3*t + c4)->0): c0*v + c1*v*Abs(v) + c2*sin(c3*t + c4) + c5*v**2*cos(c3*t + c4) -> c0*v + c1*v*Abs(v) + c2*sin(c3 + c4*t)
+  ★ [P3|[LLM] C: Added Van der Pol self-excitation term, referencing Van der Pol type from domain knowledge above: dv_dt = c0*(1 - c1*v**2)*v + c2*sin(c3*t)]: test=8.98e-13  train=8.84e-13  ood=6.72e-12  → c0*v + c1*v*Abs(v) + c2*v**3 + c3*sin(c4*t + c5) + c6*v
+    ↳ degenerate simplified (c5=6.2832~2*pi->phase absorbed; c1=-3.150e-06->small coeff,c1*v*Abs(v)->0): c0*v + c1*v*Abs(v) + c2*v**3 + c3*sin(c4*t + c5) + c6*v -> c0*v + c1*v**3 + c2*sin(c3*t + c4) + c5*v
+  ★ [P3|[LLM] C: Added cubic velocity term for symmetric nonlinear damping, referencing Cubic velocity from domain knowledge above: dv_dt = c0*v + c1*v**3]: test=8.98e-13  train=8.84e-13  ood=6.72e-12  → c0*v + c1*v*Abs(v) + c2*sin(c3*t + c4) + c5*v**3
+    ↳ degenerate simplified (c4=3.1416~1*pi->phase absorbed; c1=-3.150e-06->small coeff,c1*v*Abs(v)->0): c0*v + c1*v*Abs(v) + c2*sin(c3*t + c4) + c5*v**3 -> c0*v + c1*sin(c2 + c3*t) + c4*v**3
+  ★ [P3|[LLM] C: Added cosine restoring with independent frequency for multi-frequency driving, referencing Cosine restoring from domain knowledge above: dv_dt = c0*cos(c1*t + c2) + c3*v]: test=2.11e-11  train=2.32e-11  ood=3.94e-11  → c0*v + c1*v*Abs(v) + c2*sin(c3*t + c4) + c5*cos(c6*t + c7)
+    ↳ degenerate simplified (c2=6.174e-07->small coeff,c2*sin(c3*t + c4)->0): c0*v + c1*v*Abs(v) + c2*sin(c3*t + c4) + c5*cos(c6*t + c7) -> c0*v + c1*v*Abs(v) + c2*cos(c3*t + c4)
+  ★ [P3|[LLM] C: Added quintic velocity nonlinearity for higher-order corrections, referencing Quintic nonlinearity from domain knowledge above: dv_dt = c0*v + c1*v**3 + c2*v**5]: test=6.28e-12  train=6.42e-12  ood=1.72e-11  → c0*v + c1*v*Abs(v) + c2*sin(c3*t + c4) + c5*v**5
+    ↳ degenerate simplified (c4=3.1416~1*pi->phase absorbed): c0*v + c1*v*Abs(v) + c2*sin(c3*t + c4) + c5*v**5 -> c0*v + c1*v*Abs(v) + c2*sin(c3 + c4*t) + c5*v**5
+    [P3|[LLM] C: Added parametric coupling and cubic restoring for mixed nonlinear oscillator, referencing Mixed nonlinear from domain knowledge above: dv_dt = c0*v*sin(c1*t) + c2*cos(c1*t)]: test=1.36e-10  train=1.25e-10  ood=2.58e-10  → c0*v + c1*v*Abs(v) + c2*sin(c3*t + c4)**3 + c5*sin(c3*t + c4) + c6*v*sin(c3*t + 
+    ↳ degenerate simplified (c4=3.1416~1*pi->phase absorbed; c2=1.716e-07->small coeff,-c2*sin(c3*t)**3->0; c4=3.1416~1*pi->phase absorbed; c4=3.1416~1*pi->phase absorbed; c6=-2.989e-07->small coeff,-c6*v*sin(c3*t)->0): c0*v + c1*v*Abs(v) + c2*sin(c3*t + c4)**3 + c5*sin(c3*t + c4) + c6*v*sin(c3*t + c4) -> c0*v + c1*v*Abs(v) + c2*sin(c3 + c4*t)
+  ★ [P4|[LLM] C: Extended best with parametric coupling term, referencing Mixed nonlinear from domain knowledge above: dv_dt = c0*v*sin(c1*t) + c2*cos(c1*t)]: test=8.96e-13  train=8.82e-13  ood=6.72e-12  → c0*v + c1*v**3 + c2*sin(c3*t + c4)**3 + c5*sin(c3*t + c4) + c6*v*sin(c3*t + c7)
+    ↳ degenerate simplified (c4=6.2832~2*pi->phase absorbed; c4=6.2832~2*pi->phase absorbed; c6=-1.783e-08->small coeff,c6*v*sin(c3*t + c7)->0): c0*v + c1*v**3 + c2*sin(c3*t + c4)**3 + c5*sin(c3*t + c4) + c6*v*sin(c3*t + c7) -> c0*v + c1*v**3 + c2*sin(c3*t + c4)**3 + c5*sin(c3*t + c6)
+  ★ [P4|[LLM] C: Added v^2*sin coupling for nonlinear parametric interaction, referencing Polynomial velocity with harmonic drive from domain knowledge above: dv_dt = c0*v**2*sin(c1*t) + c2*cos(c1*t)]: test=8.99e-13  train=8.82e-13  ood=6.73e-12  → c0*v + c1*v**3 + c2*sin(c3*t + c4)**3 + c5*sin(c3*t + c4) + c6*v**2*sin(c3*t + c
+    ↳ degenerate simplified (c6=7.239e-07->small coeff,c6*v**2*sin(c3*t + c4)->0): c0*v + c1*v**3 + c2*sin(c3*t + c4)**3 + c5*sin(c3*t + c4) + c6*v**2*sin(c3*t + c4) -> c0*v + c1*v**3 + c2*sin(c3*t + c4)**3 + c5*sin(c3*t + c4)
+  ★ [P4|[LLM] C: Added v*|v| quadratic damping preserving sign, referencing Self-sustained oscillator from domain knowledge above: dv_dt = c0*v - c1*v*abs(v) + c2*sin(c3*t)]: test=8.98e-13  train=8.82e-13  ood=6.72e-12  → c0*v + c1*v**3 + c2*sin(c3*t + c4)**3 + c5*sin(c3*t + c4) + c6*v*Abs(v)
+    ↳ degenerate simplified (c4=6.2832~2*pi->phase absorbed; c4=6.2832~2*pi->phase absorbed; c6=-3.167e-06->small coeff,c6*v*Abs(v)->0): c0*v + c1*v**3 + c2*sin(c3*t + c4)**3 + c5*sin(c3*t + c4) + c6*v*Abs(v) -> c0*v + c1*v**3 + c2*sin(c3*t + c4)**3 + c5*sin(c3*t + c6)
+  ★ [P4|[LLM] A: Added exp(c*v^2)*sin term as nested composition for amplitude-dependent restoring force]: test=1.13e-02  train=1.20e-02  ood=2.36e-03  → c0*v*cos(c1*t) + c2*sin(c1*t + c3) + c4*v**3 + c5*exp(c6*v**2)*sin(c1*t + c3)
+  ★ [P4|[LLM] C: Added velocity-time parametric coupling v*cos, referencing Mixed nonlinear from domain knowledge above: dv_dt = c0*v*sin(c1*t) + c2*cos(c1*t)]: test=8.97e-13  train=8.81e-13  ood=6.72e-12  → c0*v + c1*v**3 + c2*sin(c3*t + c4)**3 + c5*sin(c3*t + c4) + c6*v*cos(c3*t + c7)
+    ↳ degenerate simplified (c4=6.2832~2*pi->phase absorbed; c4=6.2832~2*pi->phase absorbed; c6=-4.469e-08->small coeff,c6*v*cos(c3*t + c7)->0): c0*v + c1*v**3 + c2*sin(c3*t + c4)**3 + c5*sin(c3*t + c4) + c6*v*cos(c3*t + c7) -> c0*v + c1*v**3 + c2*sin(c3*t + c4)**3 + c5*sin(c3*t + c6)
+  ★ [P5|[LLM] A: Added exp(c*v^2)*sin(c*t+c) nested composition for amplitude-dependent restoring modulation]: test=8.98e-13  train=8.82e-13  ood=6.72e-12  → c0*v + c1*v**3 + c2*sin(c3*t + c4)**3 + c5*sin(c3*t + c4) + c6*exp(c7*v**2)*sin(
+    ↳ degenerate simplified (c4=6.2832~2*pi->phase absorbed; c4=6.2832~2*pi->phase absorbed; c4=6.2832~2*pi->phase absorbed; c6=-1.499e-09->small coeff,c6*exp(c7*v**2)*sin(c3*t)->0): c0*v + c1*v**3 + c2*sin(c3*t + c4)**3 + c5*sin(c3*t + c4) + c6*exp(c7*v**2)*sin(c3*t + c4) -> c0*v + c1*v**3 + c2*sin(c3*t + c4)**3 + c5*sin(c3*t + c6)
+  ★ [P4|[LLM] A: Added log(1+c*v^2) as nested logarithmic saturation of velocity nonlinearity]: test=1.15e-02  train=1.22e-02  ood=2.40e-03  → c0*v*cos(c1*t) + c2*sin(c1*t + c3) + c4*v**3 + c5*log(c6*v**2 + 1)
+    [P5|[LLM] A: Added sin(c*sin(c*t+c)) nested composition for higher harmonic generation]: test=8.99e-13  train=8.81e-13  ood=6.72e-12  → c0*v + c1*v**3 + c2*sin(c3*t + c4)**3 + c5*sin(c3*t + c4) + c6*sin(c7*sin(c3*t +
+    ↳ degenerate simplified (c6=-6.016e-09->small coeff,c6*sin(c7*sin(c3*t + c4) + c8)->0): c0*v + c1*v**3 + c2*sin(c3*t + c4)**3 + c5*sin(c3*t + c4) + c6*sin(c7*sin(c3*t + c4) + c8) -> c0*v + c1*v**3 + c2*sin(c3*t + c4)**3 + c5*sin(c3*t + c4)
+    [P5|[LLM] A: Added softplus log(1+exp(c*v)) for smooth asymmetric velocity response]: test=8.99e-13  train=8.82e-13  ood=6.73e-12  → c0*v + c1*v**3 + c2*sin(c3*t + c4)**3 + c5*sin(c3*t + c4) + c6*log(c7*exp(c8*v) 
+    ↳ degenerate simplified (c6=-1.676e-10->small coeff,c6*log(c7*exp(c8*v) + 1)->0): c0*v + c1*v**3 + c2*sin(c3*t + c4)**3 + c5*sin(c3*t + c4) + c6*log(c7*exp(c8*v) + 1) -> c0*v + c1*v**3 + c2*sin(c3*t + c4)**3 + c5*sin(c3*t + c4)
+  ★ [P4|[LLM] A: Added sin(c*sin(c*t+c)) nested sinusoidal composition for anharmonic restoring]: test=1.03e-02  train=1.07e-02  ood=1.41e-02  → c0*v*cos(c1*t) + c2*sin(c1*t + c3) + c4*v**3 + c5*sin(c6*sin(c1*t + c3) + c7)
+    [P5|[LLM] A: Added cos(c*exp(c*v)) nested composition for nonlinear velocity-frequency coupling]: test=8.99e-13  train=8.82e-13  ood=6.73e-12  → c0*v + c1*v**3 + c2*sin(c3*t + c4)**3 + c5*sin(c3*t + c4) + c6*cos(c7*exp(c8*v))
+    ↳ degenerate simplified (c6=-2.633e-10->small coeff,c6*cos(c7*exp(c8*v))->0): c0*v + c1*v**3 + c2*sin(c3*t + c4)**3 + c5*sin(c3*t + c4) + c6*cos(c7*exp(c8*v)) -> c0*v + c1*v**3 + c2*sin(c3*t + c4)**3 + c5*sin(c3*t + c4)
+    [P5|[LLM] B: Added v^2*cos(c*t+c) product for quadratic velocity times displacement derivative]: test=8.99e-13  train=8.82e-13  ood=6.72e-12  → c0*v + c1*v**3 + c2*sin(c3*t + c4)**3 + c5*sin(c3*t + c4) + c6*v**2*cos(c3*t + c
+    ↳ degenerate simplified (c6=4.686e-07->small coeff,c6*v**2*cos(c3*t + c4)->0): c0*v + c1*v**3 + c2*sin(c3*t + c4)**3 + c5*sin(c3*t + c4) + c6*v**2*cos(c3*t + c4) -> c0*v + c1*v**3 + c2*sin(c3*t + c4)**3 + c5*sin(c3*t + c4)
+  ★ [P5|[LLM] B: Added t*v product for time-varying linear damping coefficient]: test=8.95e-13  train=8.83e-13  ood=6.73e-12  → c0*v + c1*v**3 + c2*sin(c3*t + c4)**3 + c5*sin(c3*t + c4) + c6*t*v
+    ↳ degenerate simplified (c4=6.2832~2*pi->phase absorbed; c2=-7.259e-09->small coeff,c2*sin(c3*t)**3->0; c4=6.2832~2*pi->phase absorbed; c6=2.182e-09->small coeff,c6*t*v->0): c0*v + c1*v**3 + c2*sin(c3*t + c4)**3 + c5*sin(c3*t + c4) + c6*t*v -> c0*v + c1*v**3 + c2*sin(c3*t + c4)
+  ★ [P4|[LLM] A: Added cos(c*v^2 + c*t) as nested phase modulation coupling velocity and time]: test=1.14e-02  train=1.21e-02  ood=2.29e-03  → c0*v*cos(c1*t) + c2*sin(c1*t + c3) + c4*v**3 + c5*cos(c1*t + c6*v**2)
+    ↳ degenerate simplified (c6=1.487e-06->small coeff,c6*v**2->0): c0*v*cos(c1*t) + c2*sin(c1*t + c3) + c4*v**3 + c5*cos(c1*t + c6*v**2) -> c0*v*cos(c1*t) + c2*sin(c1*t + c3) + c4*v**3 + c5*cos(c1*t)
+    [P5|[LLM] C: Added quintic restoring correction, referencing Hardening/softening spring analogy from domain knowledge above: higher-order corrections to sinusoidal restoring sin^5]: test=9.02e-13  train=8.78e-13  ood=6.73e-12  → c0*v + c1*v**3 + c2*sin(c3*t + c4)**3 + c5*sin(c3*t + c4)**5 + c6*sin(c3*t + c4)
+    ↳ degenerate simplified (c4=6.2832~2*pi->phase absorbed; c4=6.2832~2*pi->phase absorbed; c4=6.2832~2*pi->phase absorbed): c0*v + c1*v**3 + c2*sin(c3*t + c4)**3 + c5*sin(c3*t + c4)**5 + c6*sin(c3*t + c4) -> c0*v + c1*v**3 + c2*sin(c3*t + c4)**3 + c5*sin(c3*t + c6)**5 + c7*sin(c3*t + c8)
+  ★ [P4|[LLM] A: Added exp(c*cos(c*t)) nested composition for periodic exponential modulation of drive]: test=9.99e-03  train=1.04e-02  ood=9.02e-03  → c0*v*cos(c1*t) + c2*sin(c1*t + c3) + c4*v**3 + c5*exp(c6*cos(c1*t))
+    ↳ degenerate simplified (c5=-2.483e-04->small coeff,c5*exp(c6*cos(c1*t))->0): c0*v*cos(c1*t) + c2*sin(c1*t + c3) + c4*v**3 + c5*exp(c6*cos(c1*t)) -> c0*v*cos(c1*t) + c2*sin(c1*t + c3) + c4*v**3
+  ★ [P5|[LLM] C: Added saturating damping term, referencing Michaelis-Menten kinetics from domain knowledge above: v = c0*S/(S+c1) applied to velocity-dependent damping saturation]: test=8.98e-13  train=8.82e-13  ood=6.72e-12  → c0*v + c1*v**3 + c2*sin(c3*t + c4)**3 + c5*sin(c3*t + c4) + c6*v/(c7*v**2 + 1)
+    ↳ degenerate simplified (c4=6.2832~2*pi->phase absorbed; c4=6.2832~2*pi->phase absorbed; c6=1.332e-04->small coeff,c6*v/(c7*v**2 + 1)->0): c0*v + c1*v**3 + c2*sin(c3*t + c4)**3 + c5*sin(c3*t + c4) + c6*v/(c7*v**2 + 1) -> c0*v + c1*v**3 + c2*sin(c3*t + c4)**3 + c5*sin(c3*t + c6)
+    [P5|[LLM] C: Added mixed harmonic-quadratic restoring, referencing Duffing-like in time from domain knowledge above: coupling between displacement harmonics for asymmetric restoring force]: test=8.99e-13  train=8.81e-13  ood=6.79e-12  → c0*v + c1*v**3 + c2*sin(c3*t + c4)**3 + c5*sin(c3*t + c4)**2*cos(c6*t + c7) + c8
+    ↳ degenerate simplified (c5=-2.934e-07->small coeff,c5*sin(c3*t + c4)**2*cos(c6*t + c7)->0): c0*v + c1*v**3 + c2*sin(c3*t + c4)**3 + c5*sin(c3*t + c4)**2*cos(c6*t + c7) + c8*sin(c3*t + c4) -> c0*v + c1*v**3 + c2*sin(c3*t + c4)**3 + c5*sin(c3*t + c4)
+  ★ [P4|[LLM] B: Added product v*sin(c*t+c) coupling velocity with harmonic restoring]: test=1.15e-02  train=1.23e-02  ood=2.27e-03  → c0*v*cos(c1*t) + c2*sin(c1*t + c3) + c4*v**3 + c5*v*sin(c1*t + c6)
+  ★ [P4|[LLM] C: Added linear v and cubic sin terms, referencing Duffing-like in time from domain knowledge above: dv_dt = c0*sin(c1*t) + c2*sin(c1*t)**3]: test=9.00e-13  train=8.82e-13  ood=6.73e-12  → c0*v*cos(c1*t) + c2*sin(c1*t + c3)**3 + c4*sin(c1*t + c3) + c5*v**3 + c6*v
+    ↳ degenerate simplified (c0=-7.442e-09->small coeff,c0*v*cos(c1*t)->0): c0*v*cos(c1*t) + c2*sin(c1*t + c3)**3 + c4*sin(c1*t + c3) + c5*v**3 + c6*v -> c0*sin(c1*t + c2)**3 + c3*sin(c1*t + c2) + c4*v**3 + c5*v
+  ★ [P4|[LLM] C: Added Van der Pol self-excitation term, referencing Van der Pol type from domain knowledge above: dv_dt = c0*(1 - c1*v**2)*v]: test=8.98e-13  train=8.82e-13  ood=6.72e-12  → c0*v + c1*v**3 + c2*v**3 + c3*sin(c4*t + c5) + c6*sin(c4*t + c5)**3 + c7*v
+    ↳ degenerate simplified (c5=6.2832~2*pi->phase absorbed; c5=6.2832~2*pi->phase absorbed): c0*v + c1*v**3 + c2*v**3 + c3*sin(c4*t + c5) + c6*sin(c4*t + c5)**3 + c7*v -> c0*v + c1*v**3 + c2*sin(c3*t + c4)**3 + c5*v**3 + c6*sin(c3*t + c7) + c8*v
+  ★ [P4|[LLM] C: Replaced sin with cos restoring with cubic correction, referencing Cosine restoring from domain knowledge above: dv_dt = c0*cos(c1*t + c2) + c3*v]: test=8.98e-13  train=8.82e-13  ood=6.72e-12  → c0*v + c1*v**3 + c2*cos(c3*t + c4)**3 + c5*cos(c3*t + c4)
+  ★ [P4|[LLM] B: Added product v^3*cos(c*t+c) for cubic velocity modulated by harmonic]: test=1.15e-02  train=1.23e-02  ood=1.81e-03  → c0*v*cos(c1*t) + c2*sin(c1*t + c3) + c4*v**3 + c5*v**3*cos(c1*t + c6)
+  ★ [P4|[LLM] B: Added product v^2*cos(c*t+c) for even-power velocity coupling with cosine]: test=1.02e-02  train=1.06e-02  ood=2.52e-03  → c0*v*cos(c1*t) + c2*sin(c1*t + c3) + c4*v**3 + c5*v**2*cos(c1*t + c6)
+  ★ [P4|[LLM] B: Added triple product v*cos*sin for velocity-modulated second harmonic]: test=2.22e-03  train=2.02e-03  ood=5.86e-04  → c0*v*cos(c1*t) + c2*sin(c1*t + c3) + c4*v**3 + c5*v*sin(c1*t + c6)*cos(c1*t + c6
+  ★ [P4|[LLM] B: Added product v^2*sin(c*t+c) as quadratic velocity times harmonic term]: test=1.02e-02  train=1.06e-02  ood=2.52e-03  → c0*v*cos(c1*t) + c2*sin(c1*t + c3) + c4*v**3 + c5*v**2*sin(c1*t + c6)
+  [Degenerate simplification] Evaluating 54 simplified formulas
+
+  [Unified eval] 11 candidates, pool workers=16, timeout=120s
+    Parent tags: P1=c0*v**2 + c1*v + c2  P2=c0*sin(c1*t + c2) + c3*sin(c1*t + c4)**3  P3=c0*v + c1*v*Abs(v) + c2*sin(c3*t + c4)  P4=c0*v*cos(c1*t) + c2*sin(c1*t + c3) + c4*
+  ★ [P1|[P1|[Degenerated] [LLM] C: Added cubic velocity and cosine restoring, referencing Cosine restoring from domain knowledge above: dv_dt = c0*cos(c1*t + c2) + c3*v]]: test=8.97e-13  train=8.84e-13  ood=6.72e-12  → c0*v + c1 + c2*v**3 + c3*cos(c4*t + c5)
+  ★ [P1|[P1|[Degenerated] [LLM] C: Added v*|v| for asymmetric nonlinear damping, referencing Self-sustained oscillator from domain knowledge above: dv_dt = c0*v - c1*v*abs(v) + c2*sin(c3*t)]]: test=1.36e-10  train=1.25e-10  ood=2.60e-10  → c0*v + c1 + c2*v*Abs(v) + c3*sin(c4*t + c5)
+    ↳ degenerate simplified (c5=3.1416~1*pi->phase absorbed): c0*v + c1 + c2*v*Abs(v) + c3*sin(c4*t + c5) -> c0*v + c1 + c2*sin(c3 + c4*t) + c5*v*Abs(v)
+  ★ [P1|[P1|[Degenerated] [LLM] A: Added sin with log-velocity-dependent phase shift for amplitude-dependent frequency]]: test=5.69e-09  train=5.44e-09  ood=1.16e-08  → c0*v + c1 + c2*sin(c3*t + c4)
+    ↳ degenerate simplified (c4=6.2832~2*pi->phase absorbed): c0*v + c1 + c2*sin(c3*t + c4) -> c0*v + c1 + c2*sin(c3*t + c4)
+  ★ [P1|[P1|[Degenerated] [LLM] C: Added cubic velocity and sinusoidal restoring, referencing Rayleigh oscillator from domain knowledge above: dv_dt = c0*v - c1*v**3 + c2*sin(c3*t)]]: test=8.97e-13  train=8.84e-13  ood=6.72e-12  → c0*v + c1 + c2*v**3 + c3*sin(c4*t + c5)
+    ↳ degenerate simplified (c5=6.2832~2*pi->phase absorbed): c0*v + c1 + c2*v**3 + c3*sin(c4*t + c5) -> c0*v + c1 + c2*v**3 + c3*sin(c4*t + c5)
+  ★ [P1|[P1|[Degenerated] [LLM] A: Added cos with nested sin phase modulation for quasi-periodic restoring force]]: test=5.69e-09  train=5.44e-09  ood=1.16e-08  → c0*v + c1 + c2*cos(c3 + c4*t)
+  ★ [P2|[P2|[Degenerated] [LLM] A: Added sin(c*v) nested sinusoidal velocity dependence]]: test=8.97e-13  train=8.84e-13  ood=6.72e-12  → c0*sin(c1*t + c2) + c3*sin(c4*v + c5)
+    ↳ degenerate simplified (c2=6.2832~2*pi->phase absorbed; c5=3.1416~1*pi->phase absorbed): c0*sin(c1*t + c2) + c3*sin(c4*v + c5) -> c0*sin(c1*t + c2) + c3*sin(c4 + c5*v)
+  ★ [P1|[P1|[Degenerated] [LLM] C: Combined Rayleigh cubic velocity with Duffing cubic sine, referencing both Rayleigh oscillator and Duffing-like in time from domain knowledge above]]: test=8.98e-13  train=8.81e-13  ood=6.72e-12  → c0*v + c1*sin(c2*t + c3)**3 + c4 + c5*v**3 + c6*sin(c2*t + c7)
+    ↳ degenerate simplified (c3=6.2832~2*pi->phase absorbed; c7=6.2832~2*pi->phase absorbed): c0*v + c1*sin(c2*t + c3)**3 + c4 + c5*v**3 + c6*sin(c2*t + c7) -> c0*v + c1*sin(c2*t + c3)**3 + c4 + c5*v**3 + c6*sin(c2*t + c7)
+  ★ [P4|[P4|[Degenerated] [LLM] A: Added cos(c*v^2 + c*t) as nested phase modulation coupling velocity and time]]: test=1.16e-02  train=1.24e-02  ood=2.16e-03  → c0*v*cos(c1*t) + c2*sin(c1*t + c3) + c4*v**3 + c5*cos(c1*t)
+    [P3|[P3|[Degenerated] [LLM] C: Added cosine restoring with independent frequency for multi-frequency driving, referencing Cosine restoring from domain knowledge above: dv_dt = c0*cos(c1*t + c2) + c3*v]]: test=1.36e-10  train=1.25e-10  ood=2.60e-10  → c0*v + c1*v*Abs(v) + c2*cos(c3*t + c4)
+  ★ [P3|[P3|[Degenerated] [LLM] C: Added Van der Pol self-excitation term, referencing Van der Pol type from domain knowledge above: dv_dt = c0*(1 - c1*v**2)*v + c2*sin(c3*t)]]: test=8.98e-13  train=8.84e-13  ood=6.72e-12  → c0*v + c1*v**3 + c2*sin(c3*t + c4) + c5*v
+    ↳ degenerate simplified (c4=6.2832~2*pi->phase absorbed): c0*v + c1*v**3 + c2*sin(c3*t + c4) + c5*v -> c0*v + c1*v**3 + c2*sin(c3*t + c4) + c5*v
+  ★ [P3|[P3|[Degenerated] [LLM] C: Added both cubic and quintic velocity terms for Rayleigh-type nonlinear damping hierarchy, referencing Rayleigh oscillator from domain knowledge above: dv_dt = c0*v - c1*v**3 + c2*sin(c3*t)]]: test=8.98e-13  train=8.84e-13  ood=6.72e-12  → c0*v + c1*sin(c2*t + c3) + c4*v**3 + c5*v**5
+    ↳ degenerate simplified (c3=3.1416~1*pi->phase absorbed): c0*v + c1*sin(c2*t + c3) + c4*v**3 + c5*v**5 -> c0*v + c1*sin(c2 + c3*t) + c4*v**3 + c5*v**5
+  [Degenerate simplification] Evaluating 7 simplified formulas
+
+  [Summary] Parents: 5, successfully evaluated: 90
+  [Step best] [LLM] B: Added t*v product for time-varying linear damping coefficient
+    formula: c0*v + c1*v**3 + c2*sin(c3*t + c4)**3 + c5*sin(c3*t + c4) + c6*t*v
+    params: c0=-1.4532e+00, c1=8.0696e-02, c2=-7.2592e-09, c3=1.0000e+00, c4=6.2832e+00, c5=1.0626e-01, c6=2.1823e-09
+    train=8.83e-13  test=8.95e-13  ood=6.73e-12
+
+  [Global best] c0*v + c1*v**3 + c2*sin(c3*t + c4)**3 + c5*sin(c3*t + c4) + c6*t*v
+    params: c0=-1.4532e+00, c1=8.0696e-02, c2=-7.2592e-09, c3=1.0000e+00, c4=6.2832e+00, c5=1.0626e-01, c6=2.1823e-09
+    train=8.83e-13  test=8.95e-13  ood=6.73e-12
+  [Mature nodes] 3/50
+  [Mature] c0*v**2 + c1*v + c2 + c3*v**3 + c4*sin(c5*t + c6)
+         train=8.84e-13  test=8.97e-13  ood=6.72e-12
+  [Mature] c0*v**2 + c1*v + c2 + c3*v**3 + c4*cos(c5*t + c6)
+         train=8.84e-13  test=8.97e-13  ood=6.72e-12
+  [Mature] c0*v**2 + c1*v + c2*sin(c3*t + c4)**3 + c5 + c6*v**3 + c7*sin(c3*t + c4)
+         train=8.82e-13  test=8.97e-13  ood=6.72e-12
+  [Mature] c0*sin(c1*t + c2) + c3*sin(c1*t + c4)**3 + c5*v*exp(c6*v**2)
+         train=8.81e-13  test=8.99e-13  ood=6.72e-12
+  [Mature] c0*sin(c1*t + c2) + c3*sin(c1*t + c4)**3 + c5*sin(c6*v + c7)
+         train=8.83e-13  test=8.96e-13  ood=6.72e-12
+  [Mature] c0*sin(c1*t + c2) + c3*sin(c1*t + c4)**3 + c5*v + c6*v**3 + c7*sin(c8*t + c9)
+         train=8.81e-13  test=9.02e-13  ood=6.74e-12
+  [Mature] c0*sin(c1*t + c2) + c3*sin(c1*t + c4)**3 + c5*v + c6*v**3 + c7*v**5
+         train=8.81e-13  test=8.98e-13  ood=6.72e-12
+  [Mature] c0*sin(c1*t + c2) + c3*sin(c1*t + c4)**3 + c5*v + c6*v**3 + c7*cos(c8*t + c9)
+         train=8.79e-13  test=9.06e-13  ood=6.77e-12
+  [Mature] c0*sin(c1*t + c2) + c3*sin(c1*t + c4)**3 + c5*sin(c6*t + c7)**3 + c8*v + c9*v**3
+         train=8.81e-13  test=8.98e-13  ood=6.72e-12
+  [Mature] c0*sin(c1*t + c2) + c3*sin(c1*t + c4)**3 + c5*v/(c6*v**2 + 1)
+         train=8.81e-13  test=8.99e-13  ood=6.72e-12
+  [Mature] c0*v + c1*v*Abs(v) + c2*sin(c3*t + c4) + c5*v**3
+         train=8.84e-13  test=8.98e-13  ood=6.72e-12
+  [Mature] c0*v + c1*v*Abs(v) + c2*v**3 + c3*sin(c4*t + c5) + c6*v
+         train=8.84e-13  test=8.98e-13  ood=6.72e-12
+  [Mature] c0*v + c1*v*Abs(v) + c2*sin(c3*t + c4) + c5*v**3 + c6*v**5
+         train=8.84e-13  test=8.99e-13  ood=6.72e-12
+  [Mature] c0*v*cos(c1*t) + c2*sin(c1*t + c3)**3 + c4*sin(c1*t + c3) + c5*v**3 + c6*v
+         train=8.82e-13  test=9.00e-13  ood=6.73e-12
+  [Mature] c0*v + c1*v**3 + c2*sin(c3*t + c4)**3 + c5*sin(c3*t + c4) + c6*v*sin(c3*t + c7)
+         train=8.82e-13  test=8.96e-13  ood=6.72e-12
+  [Mature] c0*v + c1*v**3 + c2*v**3 + c3*sin(c4*t + c5) + c6*sin(c4*t + c5)**3 + c7*v
+         train=8.82e-13  test=8.98e-13  ood=6.72e-12
+  [Mature] c0*v + c1*v**3 + c2*cos(c3*t + c4)**3 + c5*cos(c3*t + c4)
+         train=8.82e-13  test=8.98e-13  ood=6.72e-12
+  [Mature] c0*v + c1*v**3 + c2*sin(c3*t + c4)**3 + c5*sin(c3*t + c4) + c6*v**2*sin(c3*t + c4)
+         train=8.82e-13  test=8.99e-13  ood=6.73e-12
+  [Mature] c0*v + c1*v**3 + c2*sin(c3*t + c4)**3 + c5*sin(c3*t + c4) + c6*v*Abs(v)
+         train=8.82e-13  test=8.98e-13  ood=6.72e-12
+  [Mature] c0*v + c1*v**3 + c2*sin(c3*t + c4)**3 + c5*sin(c3*t + c4) + c6*v*cos(c3*t + c7)
+         train=8.81e-13  test=8.97e-13  ood=6.72e-12
+  [Mature] c0*v + c1*v**3 + c2*sin(c3*t + c4)**3 + c5*sin(c3*t + c4) + c6*exp(c7*v**2)*sin(c3*t + c4)
+         train=8.82e-13  test=8.98e-13  ood=6.72e-12
+  [Mature] c0*v + c1*v**3 + c2*sin(c3*t + c4)**3 + c5*sin(c3*t + c4) + c6*sin(c7*sin(c3*t + c4) + c8)
+         train=8.81e-13  test=8.99e-13  ood=6.72e-12
+  [Mature] c0*v + c1*v**3 + c2*sin(c3*t + c4)**3 + c5*sin(c3*t + c4) + c6*log(c7*exp(c8*v) + 1)
+         train=8.82e-13  test=8.99e-13  ood=6.73e-12
+  [Mature] c0*v + c1*v**3 + c2*sin(c3*t + c4)**3 + c5*sin(c3*t + c4) + c6*cos(c7*exp(c8*v))
+         train=8.82e-13  test=8.99e-13  ood=6.73e-12
+  [Mature] c0*v + c1*v**3 + c2*sin(c3*t + c4)**3 + c5*sin(c3*t + c4) + c6*v**2*cos(c3*t + c4)
+         train=8.82e-13  test=8.99e-13  ood=6.72e-12
+  [Mature] c0*v + c1*v**3 + c2*sin(c3*t + c4)**3 + c5*sin(c3*t + c4) + c6*t*v
+         train=8.83e-13  test=8.95e-13  ood=6.73e-12
+  [Mature] c0*v + c1*v**3 + c2*sin(c3*t + c4)**3 + c5*sin(c3*t + c4)**5 + c6*sin(c3*t + c4)
+         train=8.78e-13  test=9.02e-13  ood=6.73e-12
+  [Mature] c0*v + c1*v**3 + c2*sin(c3*t + c4)**3 + c5*sin(c3*t + c4) + c6*v/(c7*v**2 + 1)
+         train=8.82e-13  test=8.98e-13  ood=6.72e-12
+  [Mature] c0*v + c1*v**3 + c2*sin(c3*t + c4)**3 + c5*sin(c3*t + c4)**2*cos(c6*t + c7) + c8*sin(c3*t + c4)
+         train=8.81e-13  test=8.99e-13  ood=6.79e-12
+  [Mature] c0*v + c1 + c2*v**3 + c3*sin(c4*t + c5)
+         train=8.84e-13  test=8.97e-13  ood=6.72e-12
+  [Mature] c0*v + c1 + c2*v**3 + c3*cos(c4*t + c5)
+         train=8.84e-13  test=8.97e-13  ood=6.72e-12
+  [Mature] c0*v + c1*sin(c2*t + c3)**3 + c4 + c5*v**3 + c6*sin(c2*t + c7)
+         train=8.81e-13  test=8.98e-13  ood=6.72e-12
+  [Mature] c0*sin(c1*t + c2) + c3*sin(c4*v + c5)
+         train=8.84e-13  test=8.97e-13  ood=6.72e-12
+  [Mature] c0*v + c1*sin(c2*t + c3) + c4*v**3 + c5*v**5
+         train=8.84e-13  test=8.98e-13  ood=6.72e-12
+  [Mature] c0*v + c1*v**3 + c2*sin(c3*t + c4) + c5*v
+         train=8.84e-13  test=8.98e-13  ood=6.72e-12
+
+============================================================
+Step 2/30
+============================================================
+
+  [Selector] Selected 5 parents:
+
+  [1/5] Parent: c0*v + c1*v**3 + c2*cos(c3*t + c4)**3 + c5*cos(c3*t + c4)
+    [Annealing] Mature node, remaining budget 2/3
+
+  [1/5] Parent: c0*v + c1*v**3 + c2*cos(c3*t + c4)**3 + c5*cos(c3*t + c4)
+    params: c0=-1.4532e+00, c1=8.0702e-02, c2=-4.2503e-01, c3=3.3333e-01, c4=-1.5708e+00, c5=3.1877e-01
+    train=8.82e-13  test=8.98e-13  ood=6.72e-12
+    rationale: Near-zero NMSE with 0 children; uses cos instead of sin, providing structural diversity. Compact 6-parameter form worth exploring further.
+
+  [Mutation] Programmatic deletion: 0, Programmatic addition: 0
+
+  [2/5] Parent: c0*sin(c1*t + c2) + c3*sin(c1*t + c4)**3 + c5*v*exp(c6*v**2)
+    [Annealing] Mature node, remaining budget 2/3
+
+  [2/5] Parent: c0*sin(c1*t + c2) + c3*sin(c1*t + c4)**3 + c5*v*exp(c6*v**2)
+    params: c0=3.1877e-01, c1=3.3333e-01, c2=4.1888e+00, c3=-4.2503e-01, c4=4.1888e+00, c5=-1.4532e+00, c6=-5.5541e-02
+    train=8.81e-13  test=8.99e-13  ood=6.72e-12
+    rationale: Near-zero NMSE with 0 children; unique v*exp(v²) nonlinearity not seen in other formulas. Mutations could simplify or improve this.
+
+  [Mutation] Programmatic deletion: 0, Programmatic addition: 0
+
+  [3/5] Parent: c0*v*cos(c1*t) + c2*sin(c1*t + c3) + c4*v**3 + c5*v*sin(c1*t + c6)*cos(c1*t + c6)
+    params: c0=-4.4242e-03, c1=1.0000e+00, c2=8.7634e-02, c3=1.4480e-01, c4=-5.8073e+02, c5=-2.1021e+00, c6=3.3330e+00
+    train=2.02e-03  test=2.22e-03  ood=5.86e-04
+    rationale: Best mid-range formula (NMSE=0.002) with 0 children; contains v*sin*cos interaction (effectively v*sin(2t)) which is a distinct structural motif worth exploring.
+
+  [Mutation] Programmatic deletion: 0, Programmatic addition: 0
+
+  [4/5] Parent: c0*v + c1 + c2*v**3 + c3*cos(c4*t + c5)
+    [Annealing] Mature node, remaining budget 2/3
+
+  [4/5] Parent: c0*v + c1 + c2*v**3 + c3*cos(c4*t + c5)
+    params: c0=-1.4532e+00, c1=-5.3818e-10, c2=8.0703e-02, c3=1.0626e-01, c4=1.0000e+00, c5=-1.5708e+00
+    train=8.84e-13  test=8.97e-13  ood=6.72e-12
+    rationale: Near-zero NMSE with 0 children; simpler structure with additive constant term. Different from sin-based formulas, mutations may discover important missing terms.
+
+  [Mutation] Programmatic deletion: 0, Programmatic addition: 0
+
+  [5/5] Parent: c0*v**2*sin(c1*t + c2) + c3*cos(c1*t)
+    params: c0=8.2522e+00, c1=9.8975e-01, c2=6.0486e+00, c3=6.1244e-02
+    train=4.08e-02  test=3.96e-02  ood=1.10e-01
+    rationale: Mid-range NMSE (0.041) with 0 children; unique v²*sin(t) interaction not well-explored. This structural form could yield improvements through mutation, providing diversity from the dominant v+v³+trig patterns.
+
+  [Mutation] Programmatic deletion: 0, Programmatic addition: 0
+  [Mutation] LLM suggestions: 20
+  [Mutation] After dedup: 19 unique candidates (raw 20)
+  [Mutation] LLM suggestions: 20
+  [Mutation] After dedup: 18 unique candidates (raw 20)
+  [Mutation] LLM suggestions: 20
+  [Mutation] After dedup: 18 unique candidates (raw 20)
+  [Mutation] LLM suggestions: 20
+  [Mutation] After dedup: 18 unique candidates (raw 20)
+  [Mutation] LLM suggestions: 20
+  [Mutation] After dedup: 19 unique candidates (raw 20)
+
+  [Unified eval] 86 candidates, skipped 6 (params>10), pool workers=16, timeout=120s
+    Parent tags: P1=c0*v**2*sin(c1*t + c2) + c3*cos(c1*t)  P2=c0*sin(c1*t + c2) + c3*sin(c1*t + c4)**3  P3=c0*v + c1 + c2*v**3 + c3*cos(c4*t + c5)  P4=c0*v + c1*v**3 + c2*cos(c3*t + c4)**3 +   P5=c0*v*cos(c1*t) + c2*sin(c1*t + c3) + c4*
+  ★ [P1|[LLM] A: Added nested exp(sin(c*t)) term for nonlinear periodic modulation of acceleration]: test=2.68e-02  train=2.71e-02  ood=6.90e-02  → c0*v**2*sin(c1*t + c2) + c3*cos(c1*t) + c4*exp(c5*sin(c6*t + c7))
+    ↳ degenerate simplified (c4=-9.335e-04->small coeff,c4*exp(c5*sin(c6*t + c7))->0): c0*v**2*sin(c1*t + c2) + c3*cos(c1*t) + c4*exp(c5*sin(c6*t + c7)) -> c0*v**2*sin(c1*t + c2) + c3*cos(c1*t)
+  ★ [P1|[LLM] A: Added sin(c*v^2 + c*t) for nested velocity-time phase coupling]: test=7.87e-03  train=8.14e-03  ood=1.26e-02  → c0*v**2*sin(c1*t + c2) + c3*cos(c1*t) + c4*sin(c5*v**2 + c6*t + c7)
+  ★ [P1|[LLM] A: Added softplus log(1+exp(c*v)) for smooth threshold activation in velocity]: test=3.76e-02  train=3.79e-02  ood=1.11e-01  → c0*v**2*sin(c1*t + c2) + c3*cos(c1*t) + c4*log(c5*exp(c6*v) + 1)
+    ↳ degenerate simplified (c4=-7.497e-04->small coeff,c4*log(c5*exp(c6*v) + 1)->0): c0*v**2*sin(c1*t + c2) + c3*cos(c1*t) + c4*log(c5*exp(c6*v) + 1) -> c0*v**2*sin(c1*t + c2) + c3*cos(c1*t)
+  ★ [P1|[LLM] A: Added sin(log(1+c*t^2)) for logarithmically chirped oscillation]: test=3.74e-02  train=3.62e-02  ood=1.54e-01  → c0*v**2*sin(c1*t + c2) + c3*cos(c1*t) + c4*sin(c5*log(c6*t**2 + 1) + c7)
+  ★ [P1|[LLM] A: Added cos(sin(c*t)) for doubly nested periodic modulation]: test=1.06e-02  train=1.08e-02  ood=3.04e-02  → c0*v**2*sin(c1*t + c2) + c3*cos(c1*t) + c4*cos(c5*sin(c6*t + c7))
+  ★ [P1|[LLM] C: Combined Rayleigh damping with harmonic restoring, referencing Rayleigh oscillator from domain knowledge above: dv_dt = c0*v - c1*v**3 + c2*sin(c3*t)]: test=9.10e-13  train=8.77e-13  ood=6.86e-12  → c0*v**2*sin(c1*t + c2) + c3*cos(c1*t) + c4*v + c5*v**3 + c6*sin(c7*t + c8)
+    ↳ degenerate simplified (c3=-9.924e-09->small coeff,c3*cos(c1*t)->0; c8=3.1416~1*pi->phase absorbed; c0=-2.805e-06->small coeff,c0*v**2*sin(c1*t + c2)->0): c0*v**2*sin(c1*t + c2) + c3*cos(c1*t) + c4*v + c5*v**3 + c6*sin(c7*t + c8) -> c0*sin(c1 + c2*t) + c3*v + c4*v**3
+  ★ [P1|[LLM] B: Added v^3*cos(c*t) product for cubic velocity with periodic modulation]: test=2.10e-02  train=2.14e-02  ood=3.16e-02  → c0*v**2*sin(c1*t + c2) + c3*cos(c1*t) + c4*v**3*cos(c5*t + c6)
+  ★ [P1|[LLM] B: Added v^2*cos(c*t) product as quadrature complement to existing v^2*sin term]: test=2.12e-02  train=2.13e-02  ood=2.70e-02  → c0*v**2*sin(c1*t + c2) + c3*cos(c1*t) + c4*v**2*cos(c5*t + c6)
+  ★ [P1|[LLM] C: Added cubic sinusoidal restoring force, referencing Duffing-like in time from domain knowledge above: dv_dt = c0*sin(c1*t) + c2*sin(c1*t)**3]: test=1.03e-02  train=1.09e-02  ood=7.88e-03  → c0*v**2*sin(c1*t + c2) + c3*sin(c4*t + c5)**3 + c6*cos(c1*t)
+  ★ [P1|[LLM] B: Added v*t product for time-dependent linear damping]: test=3.78e-02  train=3.83e-02  ood=7.55e-02  → c0*v**2*sin(c1*t + c2) + c3*cos(c1*t) + c4*t*v
+  ★ [P1|[LLM] B: Added product v*sin(c*t+c) for parametric velocity-time coupling]: test=1.51e-02  train=1.48e-02  ood=8.86e-03  → c0*v**2*sin(c1*t + c2) + c3*cos(c1*t) + c4*v*sin(c5*t + c6)
+  ★ [P1|[LLM] B: Added t*sin(c*t) product for linearly growing oscillatory forcing]: test=2.43e-02  train=2.31e-02  ood=1.13e-01  → c0*v**2*sin(c1*t + c2) + c3*cos(c1*t) + c4*t*sin(c5*t + c6)
+  ★ [P1|[LLM] C: Added harmonic restoring + linear damping, referencing velocity-dependent restoring from domain knowledge above: dv_dt = c0*sin(c1*t) + c2*v]: test=8.36e-12  train=7.37e-12  ood=1.88e-11  → c0*v**2*sin(c1*t + c2) + c3*cos(c1*t) + c4*sin(c5*t + c6) + c7*v
+    ↳ degenerate simplified (c3=-4.418e-06->small coeff,c3*cos(c1*t)->0; c6=3.1416~1*pi->phase absorbed): c0*v**2*sin(c1*t + c2) + c3*cos(c1*t) + c4*sin(c5*t + c6) + c7*v -> c0*v**2*sin(c1*t + c2) + c3*sin(c4 + c5*t) + c6*v
+  ★ [P1|[LLM] C: Added linear and cubic velocity damping terms, referencing Rayleigh oscillator from domain knowledge above: dv_dt = c0*v - c1*v**3 + c2*sin(c3*t)]: test=2.13e-02  train=2.22e-02  ood=1.01e-02  → c0*v**2*sin(c1*t + c2) + c3*cos(c1*t) + c4*v + c5*v**3
+  ★ [P1|[LLM] C: Added v*|v| for symmetric nonlinear drag, referencing self-sustained oscillator from domain knowledge above: dv_dt = c0*v - c1*v*abs(v) + c2*sin(c3*t)]: test=2.30e-02  train=2.36e-02  ood=2.74e-02  → c0*v**2*sin(c1*t + c2) + c3*cos(c1*t) + c4*v*Abs(v)
+  ★ [P1|[LLM] C: Added quintic polynomial velocity expansion, referencing quintic nonlinearity from domain knowledge above: dv_dt = c0*v + c1*v**3 + c2*v**5]: test=2.13e-02  train=2.21e-02  ood=9.82e-03  → c0*v**2*sin(c1*t + c2) + c3*cos(c1*t) + c4*v + c5*v**3 + c6*v**5
+    [P2|[LLM] A: Added cos(log(1+t²)) for logarithmic frequency modulation over time]: test=9.00e-13  train=8.77e-13  ood=6.75e-12  → c0*sin(c1*t + c2) + c3*sin(c1*t + c4)**3 + c5*v*exp(c6*v**2) + c7*cos(c8*log(c9*
+    ↳ degenerate simplified (c2=6.2832~2*pi->phase absorbed; c3=3.643e-08->small coeff,c3*sin(c1*t + c4)**3->0; c7=4.722e-09->small coeff,c7*cos(c8*log(c9*t**2 + 1))->0): c0*sin(c1*t + c2) + c3*sin(c1*t + c4)**3 + c5*v*exp(c6*v**2) + c7*cos(c8*log(c9*t**2 + 1)) -> c0*sin(c1*t + c2) + c3*v*exp(c4*v**2)
+  ★ [P1|[LLM] C: Added cosine restoring with Rayleigh damping, referencing cosine restoring from domain knowledge above: dv_dt = c0*cos(c1*t + c2) + c3*v combined with cubic velocity damping]: test=9.00e-13  train=8.79e-13  ood=6.74e-12  → c0*v**2*sin(c1*t + c2) + c3*cos(c1*t) + c4*cos(c5*t + c6) + c7*v + c8*v**3
+    ↳ degenerate simplified (c3=-5.997e-09->small coeff,c3*cos(c1*t)->0; c0=-9.435e-07->small coeff,c0*v**2*sin(c1*t + c2)->0): c0*v**2*sin(c1*t + c2) + c3*cos(c1*t) + c4*cos(c5*t + c6) + c7*v + c8*v**3 -> c0*cos(c1*t + c2) + c3*v + c4*v**3
+  ★ [P2|[LLM] A: Added log-exp softplus composition to capture smooth nonlinear velocity response]: test=8.96e-13  train=8.83e-13  ood=6.72e-12  → c0*sin(c1*t + c2) + c3*sin(c1*t + c4)**3 + c5*v*exp(c6*v**2) + c7*log(c8*exp(c9*
+    ↳ degenerate simplified (c2=3.1416~1*pi->phase absorbed; c3=-1.647e-08->small coeff,c3*sin(c1*t + c4)**3->0; c7=-2.439e-10->small coeff,c7*log(c8*exp(c9*v) + 1)->0): c0*sin(c1*t + c2) + c3*sin(c1*t + c4)**3 + c5*v*exp(c6*v**2) + c7*log(c8*exp(c9*v) + 1) -> c0*sin(c1*t + c2) + c3*v*exp(c4*v**2)
+  ★ [P2|[LLM] B: Added product v*t for linear time-velocity cross-coupling]: test=8.95e-13  train=8.83e-13  ood=6.73e-12  → c0*sin(c1*t + c2) + c3*sin(c1*t + c4)**3 + c5*v*exp(c6*v**2) + c7*t*v
+    ↳ degenerate simplified (c3=-2.969e-08->small coeff,c3*sin(c1*t + c4)**3->0; c7=2.773e-09->small coeff,c7*t*v->0): c0*sin(c1*t + c2) + c3*sin(c1*t + c4)**3 + c5*v*exp(c6*v**2) + c7*t*v -> c0*sin(c1*t + c2) + c3*v*exp(c4*v**2)
+  ★ [P2|[LLM] B: Added v²*sin(t) for quadratic velocity modulated by restoring force]: test=8.95e-13  train=8.83e-13  ood=6.72e-12  → c0*sin(c1*t + c2) + c3*sin(c1*t + c4)**3 + c5*v*exp(c6*v**2) + c7*v**2*sin(c8*t 
+    ↳ degenerate simplified (c2=6.2832~2*pi->phase absorbed; c3=9.843e-09->small coeff,c3*sin(c1*t + c4)**3->0; c7=-6.482e-07->small coeff,c7*v**2*sin(c8*t + c9)->0): c0*sin(c1*t + c2) + c3*sin(c1*t + c4)**3 + c5*v*exp(c6*v**2) + c7*v**2*sin(c8*t + c9) -> c0*sin(c1*t + c2) + c3*v*exp(c4*v**2)
+  ★ [P2|[LLM] B: Added cubic velocity times cosine for nonlinear parametric coupling]: test=8.96e-13  train=8.83e-13  ood=6.72e-12  → c0*sin(c1*t + c2) + c3*sin(c1*t + c4)**3 + c5*v*exp(c6*v**2) + c7*v**3*cos(c8*t 
+    ↳ degenerate simplified (c3=7.113e-09->small coeff,c3*sin(c1*t + c4)**3->0; c7=9.743e-06->small coeff,c7*v**3*cos(c8*t + c9)->0): c0*sin(c1*t + c2) + c3*sin(c1*t + c4)**3 + c5*v*exp(c6*v**2) + c7*v**3*cos(c8*t + c9) -> c0*sin(c1*t + c2) + c3*v*exp(c4*v**2)
+  ★ [P2|[LLM] C: Added cubic velocity term for higher-order nonlinear damping, referencing cubic velocity from domain knowledge above: dv_dt = c0*v + c1*v**3]: test=8.99e-13  train=8.81e-13  ood=6.72e-12  → c0*sin(c1*t + c2) + c3*sin(c1*t + c4)**3 + c5*v*exp(c6*v**2) + c7*v**3
+    [P2|[LLM] B: Added t*sin(t) product for linearly growing oscillatory drive]: test=9.01e-13  train=8.76e-13  ood=6.75e-12  → c0*sin(c1*t + c2) + c3*sin(c1*t + c4)**3 + c5*v*exp(c6*v**2) + c7*t*sin(c8*t + c
+    ↳ degenerate simplified (c2=3.1416~1*pi->phase absorbed; c3=-1.978e-08->small coeff,c3*sin(c1*t + c4)**3->0; c7=2.297e-10->small coeff,c7*t*sin(c8*t + c9)->0): c0*sin(c1*t + c2) + c3*sin(c1*t + c4)**3 + c5*v*exp(c6*v**2) + c7*t*sin(c8*t + c9) -> c0*sin(c1*t + c2) + c3*v*exp(c4*v**2)
+  ★ [P2|[LLM] C: Added quintic velocity for higher-order nonlinearity, referencing quintic nonlinearity from domain knowledge above: dv_dt = c0*v + c1*v**3 + c2*v**5]: test=8.96e-13  train=8.83e-13  ood=6.72e-12  → c0*sin(c1*t + c2) + c3*sin(c1*t + c4)**3 + c5*v*exp(c6*v**2) + c7*v**5
+    ↳ degenerate simplified (c2=6.2832~2*pi->phase absorbed; c3=1.640e-08->small coeff,c3*sin(c1*t + c4)**3->0): c0*sin(c1*t + c2) + c3*sin(c1*t + c4)**3 + c5*v*exp(c6*v**2) + c7*v**5 -> c0*sin(c1*t + c2) + c3*v*exp(c4*v**2) + c5*v**5
+  ★ [P2|[LLM] B: Added v*sin(t) product for parametric velocity-time interaction]: test=8.95e-13  train=8.81e-13  ood=6.74e-12  → c0*sin(c1*t + c2) + c3*sin(c1*t + c4)**3 + c5*v*exp(c6*v**2) + c7*v*sin(c8*t + c
+    ↳ degenerate simplified (c2=3.1416~1*pi->phase absorbed; c3=-2.507e-08->small coeff,c3*sin(c1*t + c4)**3->0; c7=-7.104e-08->small coeff,c7*v*sin(c8*t + c9)->0): c0*sin(c1*t + c2) + c3*sin(c1*t + c4)**3 + c5*v*exp(c6*v**2) + c7*v*sin(c8*t + c9) -> c0*sin(c1*t + c2) + c3*v*exp(c4*v**2)
+  ★ [P2|[LLM] C: Added v*|v| for asymmetric quadratic damping, referencing self-sustained oscillator from domain knowledge above: dv_dt = c0*v - c1*v*abs(v) + c2*sin(c3*t)]: test=8.99e-13  train=8.81e-13  ood=6.72e-12  → c0*sin(c1*t + c2) + c3*sin(c1*t + c4)**3 + c5*v*exp(c6*v**2) + c7*v*Abs(v)
+    ↳ degenerate simplified (c7=-4.275e-06->small coeff,c7*v*Abs(v)->0): c0*sin(c1*t + c2) + c3*sin(c1*t + c4)**3 + c5*v*exp(c6*v**2) + c7*v*Abs(v) -> c0*sin(c1*t + c2) + c3*sin(c1*t + c4)**3 + c5*v*exp(c6*v**2)
+  ★ [P2|[LLM] C: Added cosine at same frequency for phase-shifted restoring component, referencing cosine restoring from domain knowledge above: dv_dt = c0*cos(c1*t + c2) + c3*v]: test=8.99e-13  train=8.81e-13  ood=6.72e-12  → c0*sin(c1*t + c2) + c3*sin(c1*t + c4)**3 + c5*v*exp(c6*v**2) + c7*cos(c1*t + c8)
+    [P2|[LLM] C: Changed sin³ to cos³ for phase flexibility and added v + v³ polynomial, referencing Duffing-like in time from domain knowledge above: dv_dt = c0*sin(c1*t) + c2*sin(c1*t)**3]: test=8.99e-13  train=8.81e-13  ood=6.72e-12  → c0*sin(c1*t + c2) + c3*cos(c1*t + c4)**3 + c5*v*exp(c6*v**2) + c7*v + c8*v**3
+    ↳ degenerate simplified (c2=6.2832~2*pi->phase absorbed; c5=1.029e-07->small coeff,c5*v*exp(c6*v**2)->0): c0*sin(c1*t + c2) + c3*cos(c1*t + c4)**3 + c5*v*exp(c6*v**2) + c7*v + c8*v**3 -> c0*sin(c1*t + c2) + c3*cos(c1*t + c4)**3 + c5*v + c6*v**3
+  ★ [P2|[LLM] C: Added linear v, cubic v, and t*v terms matching historical best structure, referencing nonlinear damping + restoring from domain knowledge above: dv_dt = c0*v**2 + c1*sin(c2*t) combined with cubic velocity]: test=8.95e-13  train=8.83e-13  ood=6.73e-12  → c0*sin(c1*t + c2) + c3*sin(c1*t + c4)**3 + c5*v*exp(c6*v**2) + c7*v + c8*v**3 + 
+    ↳ degenerate simplified (c2=6.2832~2*pi->phase absorbed; c3=-3.057e-08->small coeff,c3*sin(c1*t + c4)**3->0; c5=9.201e-08->small coeff,c5*v*exp(c6*v**2)->0; c9=2.796e-09->small coeff,c9*t*v->0): c0*sin(c1*t + c2) + c3*sin(c1*t + c4)**3 + c5*v*exp(c6*v**2) + c7*v + c8*v**3 + c9*t*v -> c0*sin(c1*t + c2) + c3*v + c4*v**3
+  ★ [P2|[LLM] C: Added rational saturation term in v² for bounded nonlinear response, referencing Michaelis-Menten kinetics from domain knowledge above: v = c0*S/(S + c1) adapted as velocity saturation]: test=8.96e-13  train=8.83e-13  ood=6.72e-12  → c0*sin(c1*t + c2) + c3*sin(c1*t + c4)**3 + c5*v*exp(c6*v**2) + c7/(c8*v**2 + 1)
+    ↳ degenerate simplified (c2=3.1416~1*pi->phase absorbed; c3=1.720e-08->small coeff,c3*sin(c1*t + c4)**3->0; c7=-6.601e-10->small coeff,c7/(c8*v**2 + 1)->0): c0*sin(c1*t + c2) + c3*sin(c1*t + c4)**3 + c5*v*exp(c6*v**2) + c7/(c8*v**2 + 1) -> c0*sin(c1*t + c2) + c3*v*exp(c4*v**2)
+    [P3|[LLM] A: added nested sin(log(1+t^2)) term for slow frequency modulation]: test=9.02e-13  train=8.78e-13  ood=6.76e-12  → c0*v + c1*v**3 + c2*cos(c3*t + c4) + c5*sin(c6*log(c7*t**2 + 1) + c8)
+    ↳ degenerate simplified (c5=-5.031e-09->small coeff,c5*sin(c6*log(c7*t**2 + 1) + c8)->0): c0*v + c1*v**3 + c2*cos(c3*t + c4) + c5*sin(c6*log(c7*t**2 + 1) + c8) -> c0*v + c1*v**3 + c2*cos(c3*t + c4)
+    [P2|[LLM] C: Added second harmonic sinusoidal driving term, referencing linear restoring via time from domain knowledge above: dv_dt = c0*sin(c1*t + c2) allowing superposition of two frequencies]: test=8.99e-13  train=8.81e-13  ood=6.72e-12  → c0*sin(c1*t + c2) + c3*sin(c1*t + c4)**3 + c5*v*exp(c6*v**2) + c7*sin(c8*t + c9)
+    ↳ degenerate simplified (c3=9.732e-09->small coeff,c3*sin(c1*t + c4)**3->0; c7=-3.008e-09->small coeff,c7*sin(c8*t + c9)->0): c0*sin(c1*t + c2) + c3*sin(c1*t + c4)**3 + c5*v*exp(c6*v**2) + c7*sin(c8*t + c9) -> c0*sin(c1*t + c2) + c3*v*exp(c4*v**2)
+    [P3|[LLM] A: added cos(exp(c*v)) for velocity-dependent nested oscillatory correction]: test=8.98e-13  train=8.83e-13  ood=6.72e-12  → c0*v + c1*v**3 + c2*cos(c3*t + c4) + c5*cos(c6*exp(c7*v))
+    ↳ degenerate simplified (c5=-1.733e-09->small coeff,c5*cos(c6*exp(c7*v))->0): c0*v + c1*v**3 + c2*cos(c3*t + c4) + c5*cos(c6*exp(c7*v)) -> c0*v + c1*v**3 + c2*cos(c3*t + c4)
+    [P3|[LLM] A: added softplus of v^2 via log(1+exp(c*v^2)) for smooth saturation correction]: test=8.98e-13  train=8.84e-13  ood=6.72e-12  → c0*v + c1*v**3 + c2*cos(c3*t + c4) + c5*log(c6*exp(c7*v**2) + 1)
+    ↳ degenerate simplified (c5=-8.000e-10->small coeff,c5*log(c6*exp(c7*v**2) + 1)->0): c0*v + c1*v**3 + c2*cos(c3*t + c4) + c5*log(c6*exp(c7*v**2) + 1) -> c0*v + c1*v**3 + c2*cos(c3*t + c4)
+    [P3|[LLM] B: added v^2*sin(c*t) product for quadratic velocity parametric term]: test=9.02e-13  train=8.82e-13  ood=6.74e-12  → c0*v + c1*v**3 + c2*cos(c3*t + c4) + c5*v**2*sin(c6*t + c7)
+    ↳ degenerate simplified (c5=1.267e-06->small coeff,c5*v**2*sin(c6*t + c7)->0): c0*v + c1*v**3 + c2*cos(c3*t + c4) + c5*v**2*sin(c6*t + c7) -> c0*v + c1*v**3 + c2*cos(c3*t + c4)
+    [P3|[LLM] B: added product v*cos(c*t+c) for parametric velocity-time coupling]: test=9.01e-13  train=8.82e-13  ood=6.82e-12  → c0*v + c1*v**3 + c2*cos(c3*t + c4) + c5*v*cos(c6*t + c7)
+    ↳ degenerate simplified (c5=-7.339e-07->small coeff,c5*v*cos(c6*t + c7)->0): c0*v + c1*v**3 + c2*cos(c3*t + c4) + c5*v*cos(c6*t + c7) -> c0*v + c1*v**3 + c2*cos(c3*t + c4)
+  ★ [P3|[LLM] B: added t*v product for time-varying linear damping coefficient]: test=8.97e-13  train=8.84e-13  ood=6.73e-12  → c0*v + c1*v**3 + c2*cos(c3*t + c4) + c5*t*v
+    ↳ degenerate simplified (c5=2.317e-09->small coeff,c5*t*v->0): c0*v + c1*v**3 + c2*cos(c3*t + c4) + c5*t*v -> c0*v + c1*v**3 + c2*cos(c3*t + c4)
+    [P3|[LLM] B: added v^2*t product for time-dependent quadratic velocity correction]: test=8.98e-13  train=8.84e-13  ood=6.72e-12  → c0*v + c1*v**3 + c2*cos(c3*t + c4) + c5*t*v**2
+    ↳ degenerate simplified (c5=-6.465e-09->small coeff,c5*t*v**2->0): c0*v + c1*v**3 + c2*cos(c3*t + c4) + c5*t*v**2 -> c0*v + c1*v**3 + c2*cos(c3*t + c4)
+    [P3|[LLM] B: added v^5 quintic velocity factor for higher-order nonlinear damping]: test=8.98e-13  train=8.84e-13  ood=6.72e-12  → c0*v + c1*v**3 + c2*cos(c3*t + c4) + c5*v**5
+  ★ [P3|[LLM] C: added cubic sinusoidal restoring force, referencing Duffing-like in time from domain knowledge above: dv_dt = c0*sin(c1*t) + c2*sin(c1*t)**3]: test=8.97e-13  train=8.83e-13  ood=6.72e-12  → c0*v + c1*v**3 + c2*sin(c3*t + c4)**3 + c5*cos(c3*t + c4)
+    ↳ degenerate simplified (c2=-2.888e-08->small coeff,c2*sin(c3*t + c4)**3->0): c0*v + c1*v**3 + c2*sin(c3*t + c4)**3 + c5*cos(c3*t + c4) -> c0*v + c1*v**3 + c2*cos(c3*t + c4)
+    [P3|[LLM] C: restructured damping as Van der Pol (1-c*v^2)*v, referencing Van der Pol type from domain knowledge above: dv_dt = c0*(1-c1*v**2)*v + c2*sin(c3*t)]: test=8.98e-13  train=8.84e-13  ood=6.72e-12  → c0*v + c1*v**3 + c2*cos(c3*t + c4) + c5*v**3
+    [P3|[LLM] C: added v*|v| for asymmetric nonlinear damping, referencing Self-sustained oscillator from domain knowledge above: dv_dt = c0*v - c1*v*abs(v) + c2*sin(c3*t)]: test=8.98e-13  train=8.84e-13  ood=6.72e-12  → c0*v + c1*v**3 + c2*cos(c3*t + c4) + c5*v*Abs(v)
+    ↳ degenerate simplified (c5=-3.150e-06->small coeff,c5*v*Abs(v)->0): c0*v + c1*v**3 + c2*cos(c3*t + c4) + c5*v*Abs(v) -> c0*v + c1*v**3 + c2*cos(c3*t + c4)
+    [P3|[LLM] C: added second harmonic restoring component, referencing Linear restoring via time from domain knowledge above: dv_dt = c0*sin(c1*t+c2) with multiple harmonics for anharmonic potential]: test=9.03e-13  train=8.78e-13  ood=6.76e-12  → c0*v + c1*v**3 + c2*sin(c3*t + c4) + c5*cos(c3*t + c6) + c7*sin(c8*t + c9)
+    ↳ degenerate simplified (c2=1.152e-10->small coeff,c2*sin(c3*t + c4)->0; c5=-4.854e-09->small coeff,c5*cos(c3*t + c6)->0; c9=3.1416~1*pi->phase absorbed): c0*v + c1*v**3 + c2*sin(c3*t + c4) + c5*cos(c3*t + c6) + c7*sin(c8*t + c9) -> c0*v + c1*v**3 + c2*sin(c3 + c4*t)
+  ★ [P3|[LLM] C: added parametric coupling v*sin(t), referencing Mixed nonlinear from domain knowledge above: dv_dt = c0*v*sin(c1*t) + c2*cos(c1*t)]: test=8.97e-13  train=8.84e-13  ood=6.72e-12  → c0*v + c1*v**3 + c2*cos(c3*t + c4) + c5*v*sin(c3*t + c6)
+    ↳ degenerate simplified (c5=-3.049e-08->small coeff,c5*v*sin(c3*t + c6)->0): c0*v + c1*v**3 + c2*cos(c3*t + c4) + c5*v*sin(c3*t + c6) -> c0*v + c1*v**3 + c2*cos(c3*t + c4)
+    [P3|[LLM] C: replaced linear v with sin(c*v) for saturating velocity response, referencing Velocity-dependent restoring from domain knowledge above with sinusoidal nonlinearity in velocity]: test=8.97e-13  train=8.84e-13  ood=6.72e-12  → c0*sin(c1*v + c2) + c3*cos(c4*t + c5) + c6*v**3
+    [P3|[LLM] C: added saturating velocity damping v/(1+c*v^2), referencing Michaelis-Menten kinetics from domain knowledge above: v = c0*S/(S+c1) adapted for velocity saturation]: test=8.98e-13  train=8.84e-13  ood=6.72e-12  → c0*v + c1*v**3 + c2*cos(c3*t + c4) + c5*v/(c6*v**2 + 1)
+    ↳ degenerate simplified (c5=7.531e-07->small coeff,c5*v/(c6*v**2 + 1)->0): c0*v + c1*v**3 + c2*cos(c3*t + c4) + c5*v/(c6*v**2 + 1) -> c0*v + c1*v**3 + c2*cos(c3*t + c4)
+    [P3|[LLM] C: added second independent harmonic for subharmonic/superharmonic content, referencing Cosine restoring from domain knowledge above: dv_dt = c0*cos(c1*t+c2) + c3*v with multiple frequency components]: test=9.03e-13  train=8.78e-13  ood=6.76e-12  → c0*v + c1*v**3 + c2*cos(c3*t + c4) + c5*cos(c6*t + c7)
+    ↳ degenerate simplified (c5=-4.934e-09->small coeff,c5*cos(c6*t + c7)->0): c0*v + c1*v**3 + c2*cos(c3*t + c4) + c5*cos(c6*t + c7) -> c0*v + c1*v**3 + c2*cos(c3*t + c4)
+    [P4|[LLM] A: added exp(c6*v**2) term for Gaussian-type velocity-dependent correction]: test=8.99e-13  train=8.82e-13  ood=6.73e-12  → c0*v + c1*v**3 + c2*cos(c3*t + c4)**3 + c5*cos(c3*t + c4) + c6*exp(c7*v**2)
+    ↳ degenerate simplified (c6=-6.235e-10->small coeff,c6*exp(c7*v**2)->0): c0*v + c1*v**3 + c2*cos(c3*t + c4)**3 + c5*cos(c3*t + c4) + c6*exp(c7*v**2) -> c0*v + c1*v**3 + c2*cos(c3*t + c4)**3 + c5*cos(c3*t + c4)
+  ★ [P4|[LLM] A: added softplus-like log(1+exp(c7*v**2)) for smooth saturation in velocity dependence]: test=8.97e-13  train=8.82e-13  ood=6.72e-12  → c0*v + c1*v**3 + c2*cos(c3*t + c4)**3 + c5*cos(c3*t + c4) + c6*log(c7*exp(c8*v**
+    ↳ degenerate simplified (c7=6.499e-05->small coeff,c7*exp(c8*v**2)->0): c0*v + c1*v**3 + c2*cos(c3*t + c4)**3 + c5*cos(c3*t + c4) + c6*log(c7*exp(c8*v**2) + 1) -> c0*v + c1*v**3 + c2*cos(c3*t + c4)**3 + c5*cos(c3*t + c4)
+  ★ [P4|[LLM] A: added sin with nested velocity-squared phase modulation for amplitude-dependent frequency]: test=8.95e-13  train=8.83e-13  ood=6.73e-12  → c0*v + c1*v**3 + c2*cos(c3*t + c4)**3 + c5*cos(c3*t + c4) + c6*sin(c7 + c8*t + c
+    ↳ degenerate simplified (c2=5.639e-08->small coeff,c2*cos(c3*t + c4)**3->0; c9=2.101e-04->small coeff,c9*v**2->0): c0*v + c1*v**3 + c2*cos(c3*t + c4)**3 + c5*cos(c3*t + c4) + c6*sin(c7 + c8*t + c9*v**2) -> c0*v + c1*v**3 + c2*cos(c3*t + c4) + c5*sin(c6 + c7*t)
+  ★ [P4|[LLM] B: added v*t product for time-varying damping coefficient]: test=8.98e-13  train=8.82e-13  ood=6.74e-12  → c0*v + c1*v**3 + c2*cos(c3*t + c4)**3 + c5*cos(c3*t + c4) + c6*t*v
+    ↳ degenerate simplified (c6=2.521e-09->small coeff,c6*t*v->0): c0*v + c1*v**3 + c2*cos(c3*t + c4)**3 + c5*cos(c3*t + c4) + c6*t*v -> c0*v + c1*v**3 + c2*cos(c3*t + c4)**3 + c5*cos(c3*t + c4)
+    [P4|[LLM] B: added v**2*sin product for quadratic velocity coupled with restoring force]: test=8.99e-13  train=8.82e-13  ood=6.72e-12  → c0*v + c1*v**3 + c2*cos(c3*t + c4)**3 + c5*cos(c3*t + c4) + c6*v**2*sin(c3*t + c
+    ↳ degenerate simplified (c6=-4.686e-07->small coeff,c6*v**2*sin(c3*t + c4)->0): c0*v + c1*v**3 + c2*cos(c3*t + c4)**3 + c5*cos(c3*t + c4) + c6*v**2*sin(c3*t + c4) -> c0*v + c1*v**3 + c2*cos(c3*t + c4)**3 + c5*cos(c3*t + c4)
+  ★ [P4|[LLM] B: added v*cos product for parametric coupling between velocity and displacement proxy]: test=8.96e-13  train=8.81e-13  ood=6.71e-12  → c0*v + c1*v**3 + c2*cos(c3*t + c4)**3 + c5*cos(c3*t + c4) + c6*v*cos(c3*t + c4)
+    ↳ degenerate simplified (c6=-4.592e-08->small coeff,c6*v*cos(c3*t + c4)->0): c0*v + c1*v**3 + c2*cos(c3*t + c4)**3 + c5*cos(c3*t + c4) + c6*v*cos(c3*t + c4) -> c0*v + c1*v**3 + c2*cos(c3*t + c4)**3 + c5*cos(c3*t + c4)
+    [P4|[LLM] A: added cos(sin(c7*t)) nested composition for quasi-periodic modulation]: test=1.25e-11  train=1.43e-11  ood=9.65e-11  → c0*v + c1*v**3 + c2*cos(c3*t + c4)**3 + c5*cos(c3*t + c4) + c6*cos(c7*sin(c8*t +
+    ↳ degenerate simplified (c2=1.195e-09->small coeff,c2*cos(c3*t + c4)**3->0; c6=1.087e-09->small coeff,c6*cos(c7*sin(c8*t + c9))->0): c0*v + c1*v**3 + c2*cos(c3*t + c4)**3 + c5*cos(c3*t + c4) + c6*cos(c7*sin(c8*t + c9)) -> c0*v + c1*v**3 + c2*cos(c3*t + c4)
+    [P4|[LLM] A: added sin(exp(c7*v)) nested composition for nonlinear velocity response]: test=7.76e-11  train=8.16e-11  ood=5.10e-10  → c0*v + c1*v**3 + c2*cos(c3*t + c4)**3 + c5*cos(c3*t + c4) + c6*sin(c7*exp(c8*v) 
+    ↳ degenerate simplified (c2=9.182e-08->small coeff,c2*cos(c3*t + c4)**3->0; c6=2.840e-08->small coeff,c6*sin(c7*exp(c8*v) + c9)->0): c0*v + c1*v**3 + c2*cos(c3*t + c4)**3 + c5*cos(c3*t + c4) + c6*sin(c7*exp(c8*v) + c9) -> c0*v + c1*v**3 + c2*cos(c3*t + c4)
+  ★ [P4|[LLM] B: added v**5 quintic velocity product for higher-order nonlinear damping]: test=8.98e-13  train=8.82e-13  ood=6.72e-12  → c0*v + c1*v**3 + c2*cos(c3*t + c4)**3 + c5*cos(c3*t + c4) + c6*v**5
+    [P4|[LLM] B: added t*cos product for linearly growing/decaying oscillation amplitude]: test=9.06e-13  train=8.75e-13  ood=6.90e-12  → c0*v + c1*v**3 + c2*cos(c3*t + c4)**3 + c5*cos(c3*t + c4) + c6*t*cos(c3*t + c4)
+    ↳ degenerate simplified (c6=5.721e-10->small coeff,c6*t*cos(c3*t + c4)->0): c0*v + c1*v**3 + c2*cos(c3*t + c4)**3 + c5*cos(c3*t + c4) + c6*t*cos(c3*t + c4) -> c0*v + c1*v**3 + c2*cos(c3*t + c4)**3 + c5*cos(c3*t + c4)
+    [P4|[LLM] C: added independent harmonic at different frequency for multi-mode restoring, referencing velocity-dependent restoring from domain knowledge above: dv_dt = c0 * sin(c1 * t) + c2 * v]: test=9.09e-13  train=8.74e-13  ood=7.81e-12  → c0*v + c1*v**3 + c2*cos(c3*t + c4)**3 + c5*cos(c3*t + c4) + c6*sin(c7*t + c8)
+    ↳ degenerate simplified (c2=-5.128e-05->small coeff,c2*cos(c3*t + c4)**3->0; c5=1.799e-07->small coeff,c5*cos(c3*t + c4)->0; c8=3.1416~1*pi->phase absorbed): c0*v + c1*v**3 + c2*cos(c3*t + c4)**3 + c5*cos(c3*t + c4) + c6*sin(c7*t + c8) -> c0*v + c1*v**3 + c2*sin(c3 + c4*t)
+    [P3|[LLM] A: added exp(sin(c*t)) for nonlinear periodic modulation of amplitude]: test=9.11e-13  train=8.76e-13  ood=7.60e-12  → c0*v + c1*v**3 + c2*cos(c3*t + c4) + c5*exp(c6*sin(c7*t + c8))
+    ↳ degenerate simplified (c5=1.769e-10->small coeff,c5*exp(c6*sin(c7*t + c8))->0): c0*v + c1*v**3 + c2*cos(c3*t + c4) + c5*exp(c6*sin(c7*t + c8)) -> c0*v + c1*v**3 + c2*cos(c3*t + c4)
+  ★ [P4|[LLM] C: added Van der Pol self-excitation term for limit cycle dynamics, referencing Van der Pol type from domain knowledge above: dv_dt = c0 * (1 - c1 * v**2) * v + c2 * sin(c3 * t)]: test=8.98e-13  train=8.82e-13  ood=6.72e-12  → c0*v + c1*v**3 + c2*v**3 + c3*cos(c4*t + c5)**3 + c6*cos(c4*t + c5) + c7*v
+  ★ [P4|[LLM] C: added v*Abs(v) for asymmetric nonlinear damping, referencing self-sustained oscillator from domain knowledge above: dv_dt = c0 * v - c1 * v * abs(v) + c2 * sin(c3 * t)]: test=8.98e-13  train=8.82e-13  ood=6.72e-12  → c0*v + c1*v**3 + c2*cos(c3*t + c4)**3 + c5*cos(c3*t + c4) + c6*v*Abs(v)
+    ↳ degenerate simplified (c6=-3.167e-06->small coeff,c6*v*Abs(v)->0): c0*v + c1*v**3 + c2*cos(c3*t + c4)**3 + c5*cos(c3*t + c4) + c6*v*Abs(v) -> c0*v + c1*v**3 + c2*cos(c3*t + c4)**3 + c5*cos(c3*t + c4)
+    [P4|[LLM] C: added v**2*cos coupling for nonlinear parametric oscillation, referencing polynomial velocity with harmonic drive from domain knowledge above: dv_dt = c0 * v**2 * sin(c1 * t) + c2 * cos(c1 * t)]: test=8.99e-13  train=8.82e-13  ood=6.73e-12  → c0*v + c1*v**3 + c2*cos(c3*t + c4)**3 + c5*cos(c3*t + c4) + c6*v**2*cos(c3*t + c
+    ↳ degenerate simplified (c6=-7.239e-07->small coeff,c6*v**2*cos(c3*t + c4)->0): c0*v + c1*v**3 + c2*cos(c3*t + c4)**3 + c5*cos(c3*t + c4) + c6*v**2*cos(c3*t + c4) -> c0*v + c1*v**3 + c2*cos(c3*t + c4)**3 + c5*cos(c3*t + c4)
+    [P4|[LLM] C: added parametric excitation v*sin with independent frequency, referencing mixed nonlinear from domain knowledge above: dv_dt = c0 * v * sin(c1 * t) + c2 * cos(c1 * t)]: test=9.01e-13  train=8.80e-13  ood=6.72e-12  → c0*v + c1*v**3 + c2*cos(c3*t + c4)**3 + c5*cos(c3*t + c4) + c6*v*sin(c7*t + c8)
+    ↳ degenerate simplified (c6=5.867e-08->small coeff,c6*v*sin(c7*t + c8)->0): c0*v + c1*v**3 + c2*cos(c3*t + c4)**3 + c5*cos(c3*t + c4) + c6*v*sin(c7*t + c8) -> c0*v + c1*v**3 + c2*cos(c3*t + c4)**3 + c5*cos(c3*t + c4)
+    [P4|[LLM] C: added cosine restoring at independent frequency for beating/multi-mode, referencing cosine restoring from domain knowledge above: dv_dt = c0 * cos(c1 * t + c2) + c3 * v]: test=9.09e-13  train=8.75e-13  ood=6.73e-12  → c0*v + c1*v**3 + c2*cos(c3*t + c4)**3 + c5*cos(c3*t + c4) + c6*cos(c7*t + c8)
+    ↳ degenerate simplified (c2=1.679e-08->small coeff,c2*cos(c3*t + c4)**3->0; c5=-8.712e-09->small coeff,c5*cos(c3*t + c4)->0): c0*v + c1*v**3 + c2*cos(c3*t + c4)**3 + c5*cos(c3*t + c4) + c6*cos(c7*t + c8) -> c0*v + c1*v**3 + c2*cos(c3*t + c4)
+    [P4|[LLM] C: added saturating velocity damping via rational fraction for bounded nonlinear damping, referencing Michaelis-Menten kinetics from domain knowledge above: v = c0 * S / (S + c1)]: test=8.99e-13  train=8.82e-13  ood=6.73e-12  → c0*v + c1*v**3 + c2*cos(c3*t + c4)**3 + c5*cos(c3*t + c4) + c6*v/(c7*v**2 + 1)
+    ↳ degenerate simplified (c6=3.106e-06->small coeff,c6*v/(c7*v**2 + 1)->0): c0*v + c1*v**3 + c2*cos(c3*t + c4)**3 + c5*cos(c3*t + c4) + c6*v/(c7*v**2 + 1) -> c0*v + c1*v**3 + c2*cos(c3*t + c4)**3 + c5*cos(c3*t + c4)
+    [P4|[LLM] C: added cubic velocity coupled with displacement proxy for amplitude-dependent parametric term, referencing nonlinear damping + restoring from domain knowledge above: dv_dt = c0 * v**2 + c1 * sin(c2 * t)]: test=8.99e-13  train=8.82e-13  ood=6.73e-12  → c0*v + c1*v**3 + c2*cos(c3*t + c4)**3 + c5*cos(c3*t + c4) + c6*v**3*sin(c3*t + c
+    ↳ degenerate simplified (c6=-9.813e-06->small coeff,c6*v**3*sin(c3*t + c4)->0): c0*v + c1*v**3 + c2*cos(c3*t + c4)**3 + c5*cos(c3*t + c4) + c6*v**3*sin(c3*t + c4) -> c0*v + c1*v**3 + c2*cos(c3*t + c4)**3 + c5*cos(c3*t + c4)
+  ★ [P5|[LLM] B: added linear v and quintic v^5 product terms for higher-order velocity polynomial]: test=8.95e-13  train=8.83e-13  ood=6.72e-12  → c0*v*cos(c1*t) + c2*sin(c1*t + c3) + c4*v**3 + c5*v*sin(c1*t + c6)*cos(c1*t + c6
+    ↳ degenerate simplified (c3=3.1416~1*pi->phase absorbed; c0=2.745e-08->small coeff,c0*v*cos(c1*t)->0; c5=1.764e-07->small coeff,c5*v*sin(c1*t + c6)*cos(c1*t + c6)->0): c0*v*cos(c1*t) + c2*sin(c1*t + c3) + c4*v**3 + c5*v*sin(c1*t + c6)*cos(c1*t + c6) + c7*v + c8*v**5 -> c0*sin(c1*t + c2) + c3*v**3 + c4*v + c5*v**5
+  ★ [P5|[LLM] C: added linear damping c*v, referencing Van der Pol type from domain knowledge above: dv_dt = c0*(1 - c1*v**2)*v which expands to c*v + c*v**3]: test=8.95e-13  train=8.83e-13  ood=6.72e-12  → c0*v + c1*v**3 + c2*sin(c3*t + c4) + c5*v*cos(c3*t) + c6*v*sin(c3*t + c7)*cos(c3
+    ↳ degenerate simplified (c4=6.2832~2*pi->phase absorbed; c5=2.741e-08->small coeff,c5*v*cos(c3*t)->0; c6=-1.835e-07->small coeff,c6*v*sin(c3*t + c7)*cos(c3*t + c7)->0): c0*v + c1*v**3 + c2*sin(c3*t + c4) + c5*v*cos(c3*t) + c6*v*sin(c3*t + c7)*cos(c3*t + c7) -> c0*v + c1*v**3 + c2*sin(c3*t + c4)
+  ★ [P5|[LLM] C: combined Van der Pol damping with Duffing restoring, referencing Van der Pol type and Duffing-like in time from domain knowledge above]: test=8.98e-13  train=8.82e-13  ood=6.72e-12  → c0*v + c1*v**3 + c2*sin(c3*t + c4)**3 + c5*sin(c3*t + c4) + c6*v*cos(c3*t) + c7*
+    ↳ degenerate simplified (c4=6.2832~2*pi->phase absorbed; c4=6.2832~2*pi->phase absorbed; c6=-2.615e-09->small coeff,c6*v*cos(c3*t)->0; c7=-1.300e-08->small coeff,c7*v*sin(c3*t + c8)*cos(c3*t + c8)->0): c0*v + c1*v**3 + c2*sin(c3*t + c4)**3 + c5*sin(c3*t + c4) + c6*v*cos(c3*t) + c7*v*sin(c3*t + c8)*cos(c3*t + c8) -> c0*v + c1*v**3 + c2*sin(c3*t + c4)**3 + c5*sin(c3*t + c6)
+  ★ [P1|[LLM] C: Added sinusoidal function of velocity for periodic velocity dependence, referencing historical best #2 structure: c*sin(c*v + c)]: test=2.11e-02  train=2.18e-02  ood=2.10e-02  → c0*v**2*sin(c1*t + c2) + c3*cos(c1*t) + c4*sin(c5*v + c6)
+    ↳ degenerate simplified (c6=6.2707~2*pi->phase absorbed): c0*v**2*sin(c1*t + c2) + c3*cos(c1*t) + c4*sin(c5*v + c6) -> c0*v**2*sin(c1*t + c2) + c3*cos(c1*t) + c4*sin(c5*v + c6)
+  ★ [P1|[LLM] C: Added saturating velocity damping v/(1+c*v^2), referencing Michaelis-Menten kinetics from domain knowledge above: v = c0*S/(S+c1) adapted for velocity saturation in nonlinear oscillator]: test=2.17e-02  train=2.26e-02  ood=1.86e-02  → c0*v**2*sin(c1*t + c2) + c3*cos(c1*t) + c4*v/(c5*v**2 + 1)
+  ★ [P5|[LLM] C: added linear damping and secular drift coupling t*v, referencing Velocity-dependent restoring from domain knowledge above: dv_dt = c0*sin(c1*t) + c2*v, with t*v from historical best #1]: test=8.94e-13  train=8.82e-13  ood=6.73e-12  → c0*v*cos(c1*t) + c2*sin(c1*t + c3) + c4*v**3 + c5*v*sin(c1*t + c6)*cos(c1*t + c6
+    ↳ degenerate simplified (c3=3.1416~1*pi->phase absorbed; c0=2.904e-08->small coeff,c0*v*cos(c1*t)->0; c8=2.794e-09->small coeff,c8*t*v->0; c5=-6.456e-07->small coeff,c5*v*sin(c1*t + c6)*cos(c1*t + c6)->0): c0*v*cos(c1*t) + c2*sin(c1*t + c3) + c4*v**3 + c5*v*sin(c1*t + c6)*cos(c1*t + c6) + c7*v + c8*t*v -> c0*sin(c1*t + c2) + c3*v**3 + c4*v
+  ★ [P5|[LLM] A: added exp(c*v^2)*sin(c*t+c) nested composition for Gaussian-modulated restoring]: test=3.69e-06  train=3.58e-06  ood=8.78e-07  → c0*v*cos(c1*t) + c2*sin(c1*t + c3) + c4*v**3 + c5*v*sin(c1*t + c6)*cos(c1*t + c6
+    ↳ degenerate simplified (c0=4.630e-04->small coeff,c0*v*cos(c1*t)->0): c0*v*cos(c1*t) + c2*sin(c1*t + c3) + c4*v**3 + c5*v*sin(c1*t + c6)*cos(c1*t + c6) + c7*exp(c8*v**2)*sin(c1*t + c9) -> c0*v*sin(c1 + c2*t) + c3*sin(c4*t + c5) + c6*v**3 + c7*exp(c8*v**2)*sin(c4*t + c9)
+  ★ [P5|[LLM] A: added log(1+exp(c*v)) softplus nested composition for smooth threshold in velocity]: test=2.09e-03  train=1.88e-03  ood=1.09e-03  → c0*v*cos(c1*t) + c2*sin(c1*t + c3) + c4*v**3 + c5*v*sin(c1*t + c6)*cos(c1*t + c6
+    ↳ degenerate simplified (c7=2.891e-04->small coeff,c7*log(c8*exp(c9*v) + 1)->0): c0*v*cos(c1*t) + c2*sin(c1*t + c3) + c4*v**3 + c5*v*sin(c1*t + c6)*cos(c1*t + c6) + c7*log(c8*exp(c9*v) + 1) -> c0*v*cos(c1*t) + c2*v*sin(c3 + c4*t) + c5*sin(c1*t + c6) + c7*v**3
+  ★ [P5|[LLM] A: added cos(c*sin(c*t+c)) nested composition for frequency-modulated restoring]: test=9.55e-04  train=9.91e-04  ood=1.13e-03  → c0*v*cos(c1*t) + c2*sin(c1*t + c3) + c4*v**3 + c5*v*sin(c1*t + c6)*cos(c1*t + c6
+  ★ [P5|[LLM] B: added c*v*t product of velocity and time (linear coupling)]: test=1.79e-03  train=1.67e-03  ood=1.97e-03  → c0*v*cos(c1*t) + c2*sin(c1*t + c3) + c4*v**3 + c5*v*sin(c1*t + c6)*cos(c1*t + c6
+  ★ [P5|[LLM] B: added cos*sin^2 triple product of harmonic factors for cubic harmonic correction]: test=3.15e-05  train=3.26e-05  ood=1.11e-05  → c0*v*cos(c1*t) + c2*sin(c1*t + c3)**2*cos(c1*t + c3) + c4*sin(c1*t + c5) + c6*v*
+  ★ [P5|[LLM] C: added cubic sinusoidal restoring, referencing Duffing-like in time from domain knowledge above: dv_dt = c0*sin(c1*t) + c2*sin(c1*t)**3]: test=3.15e-05  train=3.26e-05  ood=1.11e-05  → c0*v*cos(c1*t) + c2*sin(c1*t + c3)**3 + c4*sin(c1*t + c5) + c6*v**3 + c7*v*sin(c
+  ★ [P5|[LLM] C: added v*|v| quadratic damping preserving sign, referencing Self-sustained oscillator from domain knowledge above: dv_dt = c0*v - c1*v*abs(v) + c2*sin(c3*t)]: test=1.88e-03  train=1.82e-03  ood=8.05e-04  → c0*v*cos(c1*t) + c2*sin(c1*t + c3) + c4*v**3 + c5*v*sin(c1*t + c6)*cos(c1*t + c6
+  ★ [P5|[LLM] B: added v^2*sin(c*t+c) product of quadratic velocity with harmonic restoring]: test=3.86e-06  train=3.65e-06  ood=7.46e-07  → c0*v*cos(c1*t) + c2*sin(c1*t + c3) + c4*v**3 + c5*v*sin(c1*t + c6)*cos(c1*t + c6
+    ↳ degenerate simplified (c3=6.2756~2*pi->phase absorbed; c0=4.723e-04->small coeff,c0*v*cos(c1*t)->0): c0*v*cos(c1*t) + c2*sin(c1*t + c3) + c4*v**3 + c5*v*sin(c1*t + c6)*cos(c1*t + c6) + c7*v**2*sin(c1*t + c8) -> c0*v*sin(c1 + c2*t) + c3*sin(c4*t + c5) + c6*v**3 + c7*v**2*sin(c4*t + c8)
+  ★ [P5|[LLM] B: added v^3*cos(c*t+c) product coupling cubic velocity with harmonic time]: test=2.09e-03  train=1.90e-03  ood=9.81e-04  → c0*v*cos(c1*t) + c2*sin(c1*t + c3) + c4*v**3 + c5*v*sin(c1*t + c6)*cos(c1*t + c6
+  ★ [P5|[LLM] C: added phase-shifted cosine restoring, referencing Cosine restoring from domain knowledge above: dv_dt = c0*cos(c1*t + c2) + c3*v]: test=2.22e-03  train=2.02e-03  ood=5.86e-04  → c0*v*cos(c1*t) + c2*sin(c1*t + c3) + c4*v**3 + c5*v*sin(c1*t + c6)*cos(c1*t + c6
+  ★ [P5|[LLM] C: added parametric coupling v*sin(c*t+c), referencing Mixed nonlinear from domain knowledge above: dv_dt = c0*v*sin(c1*t) + c2*cos(c1*t)]: test=2.12e-03  train=1.92e-03  ood=1.01e-03  → c0*v*cos(c1*t) + c2*sin(c1*t + c3) + c4*v**3 + c5*v*sin(c1*t + c6)*cos(c1*t + c6
+  ★ [P5|[LLM] C: added v^2*cos for nonlinear parametric coupling, referencing Polynomial velocity with harmonic drive from domain knowledge above: dv_dt = c0*v**2*sin(c1*t) + c2*cos(c1*t)]: test=3.86e-06  train=3.65e-06  ood=7.46e-07  → c0*v*cos(c1*t) + c2*sin(c1*t + c3) + c4*v**3 + c5*v*sin(c1*t + c6)*cos(c1*t + c6
+    ↳ degenerate simplified (c3=6.2756~2*pi->phase absorbed; c0=4.723e-04->small coeff,c0*v*cos(c1*t)->0): c0*v*cos(c1*t) + c2*sin(c1*t + c3) + c4*v**3 + c5*v*sin(c1*t + c6)*cos(c1*t + c6) + c7*v**2*cos(c1*t + c8) -> c0*v*sin(c1 + c2*t) + c3*sin(c4*t + c5) + c6*v**3 + c7*v**2*cos(c4*t + c8)
+    [P5|[LLM] C: added saturation term 1/(1+c*v^2), referencing Michaelis-Menten kinetics saturation from domain knowledge above: v = c0*S/(S+c1) adapted to velocity saturation]: test=2.23e-03  train=2.01e-03  ood=6.10e-04  → c0*v*cos(c1*t) + c2*sin(c1*t + c3) + c4*v**3 + c5*v*sin(c1*t + c6)*cos(c1*t + c6
+    ↳ degenerate simplified (c8=1.000e-06->small coeff,c8*v**2->0): c0*v*cos(c1*t) + c2*sin(c1*t + c3) + c4*v**3 + c5*v*sin(c1*t + c6)*cos(c1*t + c6) + c7/(c8*v**2 + 1) -> c0*v*cos(c1*t) + c2*v*sin(c3 + c4*t) + c5*sin(c1*t + c6) + c7*v**3 + c8
+  [Degenerate simplification] Evaluating 58 simplified formulas
+
+  [Unified eval] 9 candidates, pool workers=16, timeout=120s
+    Parent tags: P1=c0*v**2*sin(c1*t + c2) + c3*cos(c1*t)  P2=c0*sin(c1*t + c2) + c3*sin(c1*t + c4)**3  P4=c0*v + c1*v**3 + c2*cos(c3*t + c4)**3 +   P5=c0*v*cos(c1*t) + c2*sin(c1*t + c3) + c4*
+  ★ [P2|[P2|[Degenerated] [LLM] C: Added quintic velocity for higher-order nonlinearity, referencing quintic nonlinearity from domain knowledge above: dv_dt = c0*v + c1*v**3 + c2*v**5]]: test=8.98e-13  train=8.84e-13  ood=6.72e-12  → c0*sin(c1*t + c2) + c3*v*exp(c4*v**2) + c5*v**5
+    ↳ degenerate simplified (c2=3.1416~1*pi->phase absorbed): c0*sin(c1*t + c2) + c3*v*exp(c4*v**2) + c5*v**5 -> c0*sin(c1*t + c2) + c3*v*exp(c4*v**2) + c5*v**5
+  ★ [P2|[P2|[Degenerated] [LLM] A: Added cos(log(1+t²)) for logarithmic frequency modulation over time]]: test=8.98e-13  train=8.84e-13  ood=6.72e-12  → c0*sin(c1*t + c2) + c3*v*exp(c4*v**2)
+    ↳ degenerate simplified (c2=3.1416~1*pi->phase absorbed): c0*sin(c1*t + c2) + c3*v*exp(c4*v**2) -> c0*sin(c1*t + c2) + c3*v*exp(c4*v**2)
+  ★ [P1|[P1|[Degenerated] [LLM] C: Added harmonic restoring + linear damping, referencing velocity-dependent restoring from domain knowledge above: dv_dt = c0*sin(c1*t) + c2*v]]: test=9.01e-12  train=7.82e-12  ood=1.52e-11  → c0*v**2*sin(c1*t + c2) + c3*sin(c4 + c5*t) + c6*v
+  ★ [P2|[P2|[Degenerated] [LLM] C: Changed sin³ to cos³ for phase flexibility and added v + v³ polynomial, referencing Duffing-like in time from domain knowledge above: dv_dt = c0*sin(c1*t) + c2*sin(c1*t)**3]]: test=8.99e-13  train=8.81e-13  ood=6.72e-12  → c0*sin(c1*t + c2) + c3*cos(c1*t + c4)**3 + c5*v + c6*v**3
+    [P4|[P4|[Degenerated] [LLM] A: added sin with nested velocity-squared phase modulation for amplitude-dependent frequency]]: test=9.03e-13  train=8.78e-13  ood=6.76e-12  → c0*v + c1*v**3 + c2*cos(c3*t + c4) + c5*sin(c6 + c7*t)
+    ↳ degenerate simplified (c5=-4.939e-09->small coeff,c5*sin(c6 + c7*t)->0): c0*v + c1*v**3 + c2*cos(c3*t + c4) + c5*sin(c6 + c7*t) -> c0*v + c1*v**3 + c2*cos(c3*t + c4)
+  ★ [P5|[P5|[Degenerated] [LLM] A: added exp(c*v^2)*sin(c*t+c) nested composition for Gaussian-modulated restoring]]: test=4.21e-11  train=4.46e-11  ood=1.12e-10  → c0*v*sin(c1 + c2*t) + c3*sin(c4*t + c5) + c6*v**3 + c7*exp(c8*v**2)*sin(c4*t + c
+    ↳ degenerate simplified (c2=1.482e-04->small coeff,c2*t->0): c0*v*sin(c1 + c2*t) + c3*sin(c4*t + c5) + c6*v**3 + c7*exp(c8*v**2)*sin(c4*t + c9) -> c0*v + c1*sin(c2*t + c3) + c4*v**3 + c5*exp(c6*v**2)*sin(c2*t + c7)
+  ★ [P5|[P5|[Degenerated] [LLM] C: added v^2*cos for nonlinear parametric coupling, referencing Polynomial velocity with harmonic drive from domain knowledge above: dv_dt = c0*v**2*sin(c1*t) + c2*cos(c1*t)]]: test=9.00e-13  train=8.81e-13  ood=6.84e-12  → c0*v*sin(c1 + c2*t) + c3*sin(c4*t + c5) + c6*v**3 + c7*v**2*cos(c4*t + c8)
+    ↳ degenerate simplified (c5=3.1416~1*pi->phase absorbed; c2=2.817e-05->small coeff,c2*t->0; c7=-3.055e-05->small coeff,c7*v**2*cos(c4*t + c8)->0): c0*v*sin(c1 + c2*t) + c3*sin(c4*t + c5) + c6*v**3 + c7*v**2*cos(c4*t + c8) -> c0*sin(c1 + c2*t) + c3*v + c4*v**3
+  ★ [P5|[P5|[Degenerated] [LLM] B: added v^2*sin(c*t+c) product of quadratic velocity with harmonic restoring]]: test=3.78e-06  train=3.57e-06  ood=1.27e-06  → c0*v*sin(c1 + c2*t) + c3*sin(c4*t + c5) + c6*v**3 + c7*v**2*sin(c4*t + c8)
+    ↳ degenerate simplified (c5=3.1341~1*pi->phase absorbed): c0*v*sin(c1 + c2*t) + c3*sin(c4*t + c5) + c6*v**3 + c7*v**2*sin(c4*t + c8) -> c0*v*sin(c1 + c2*t) + c3*sin(c4 + c5*t) + c6*v**3 + c7*v**2*sin(c5*t + c8)
+  ★ [P5|[P5|[Degenerated] [LLM] C: added saturation term 1/(1+c*v^2), referencing Michaelis-Menten kinetics saturation from domain knowledge above: v = c0*S/(S+c1) adapted to velocity saturation]]: test=8.99e-13  train=8.81e-13  ood=6.84e-12  → c0*v*cos(c1*t) + c2*v*sin(c3 + c4*t) + c5*sin(c1*t + c6) + c7*v**3 + c8
+    ↳ degenerate simplified (c6=3.1416~1*pi->phase absorbed; c0=3.128e-08->small coeff,c0*v*cos(c1*t)->0; c4=2.649e-05->small coeff,c4*t->0): c0*v*cos(c1*t) + c2*v*sin(c3 + c4*t) + c5*sin(c1*t + c6) + c7*v**3 + c8 -> c0*sin(c1*t + c2) + c3*v + c4*v**3 + c5
+  [Degenerate simplification] Evaluating 7 simplified formulas
+
+  [Unified eval] 1 candidates, pool workers=16, timeout=120s
+    Parent tags: P3=c0*v*cos(c1*t) + c2*sin(c1*t + c3) + c4*
+  ★ [P3|[P5|[Degenerated] [P5|[Degenerated] [LLM] A: added exp(c*v^2)*sin(c*t+c) nested composition for Gaussian-modulated restoring]]]: test=8.96e-13  train=8.83e-13  ood=6.72e-12  → c0*v + c1*sin(c2*t + c3) + c4*v**3 + c5*exp(c6*v**2)*sin(c2*t + c7)
+    ↳ degenerate simplified (c6=-2.247e-05->small coeff,c6*v**2->0; Like-term merge: c1*sin(c2*t + c3) + c5*sin(c2*t + c7) -> (c1 + c5)*sin(c2*t + c3)): c0*v + c1*sin(c2*t + c3) + c4*v**3 + c5*exp(c6*v**2)*sin(c2*t + c7) -> c0*v + c1*sin(c2*t + c3) + c4*v**3 + c5*sin(c2*t + c3)
+  [Degenerate simplification] Evaluating 1 simplified formulas
+
+  [Unified eval] 1 candidates, pool workers=16, timeout=120s
+    Parent tags: P1=c0*v*cos(c1*t) + c2*sin(c1*t + c3) + c4*
+  ★ [P1|[P3|[Degenerated] [P5|[Degenerated] [P5|[Degenerated] [LLM] A: added exp(c*v^2)*sin(c*t+c) nested composition for Gaussian-modulated restoring]]]]: test=8.98e-13  train=8.84e-13  ood=6.72e-12  → c0*v + c1*sin(c2*t + c3) + c4*v**3 + c5*sin(c2*t + c3)
+    ↳ degenerate simplified (c3=6.2832~2*pi->phase absorbed; c3=6.2832~2*pi->phase absorbed; Like-term merge: c1*sin(c2*t) + c5*sin(c2*t) -> (c1 + c5)*sin(c2*t)): c0*v + c1*sin(c2*t + c3) + c4*v**3 + c5*sin(c2*t + c3) -> c0*v + c1*sin(c2*t + c3) + c4*v**3 + c5*sin(c2*t + c6)
+  [Degenerate simplification] Evaluating 1 simplified formulas
+
+  [Summary] Parents: 5, successfully evaluated: 97
+  [Step best] [LLM] C: added linear damping and secular drift coupling t*v, referencing Velocity-dependent restoring from domain knowledge above: dv_dt = c0*sin(c1*t) + c2*v, with t*v from historical best #1
+    formula: c0*v*cos(c1*t) + c2*sin(c1*t + c3) + c4*v**3 + c5*v*sin(c1*t + c6)*cos(c1*t + c6) + c7*v + c8*t*v
+    params: c0=2.9042e-08, c1=1.0000e+00, c2=-1.0626e-01, c3=3.1416e+00, c4=8.0878e-02, c5=-6.4564e-07, c6=4.9956e+00, c7=-1.4532e+00, c8=2.7940e-09
+    train=8.82e-13  test=8.94e-13  ood=6.73e-12
+
+  [Global best] c0*v*cos(c1*t) + c2*sin(c1*t + c3) + c4*v**3 + c5*v*sin(c1*t + c6)*cos(c1*t + c6) + c7*v + c8*t*v
+    params: c0=2.9042e-08, c1=1.0000e+00, c2=-1.0626e-01, c3=3.1416e+00, c4=8.0878e-02, c5=-6.4564e-07, c6=4.9956e+00, c7=-1.4532e+00, c8=2.7940e-09
+    train=8.82e-13  test=8.94e-13  ood=6.73e-12
+  [Mature nodes] 38/50
+  [Mature] c0*v**2*sin(c1*t + c2) + c3*cos(c1*t) + c4*v + c5*v**3 + c6*sin(c7*t + c8)
+         train=8.77e-13  test=9.10e-13  ood=6.86e-12
+  [Mature] c0*v**2*sin(c1*t + c2) + c3*cos(c1*t) + c4*cos(c5*t + c6) + c7*v + c8*v**3
+         train=8.79e-13  test=9.00e-13  ood=6.74e-12
+  [Mature] c0*sin(c1*t + c2) + c3*sin(c1*t + c4)**3 + c5*v*exp(c6*v**2) + c7*log(c8*exp(c9*v) + 1)
+         train=8.83e-13  test=8.96e-13  ood=6.72e-12
+  [Mature] c0*sin(c1*t + c2) + c3*sin(c1*t + c4)**3 + c5*v*exp(c6*v**2) + c7*cos(c8*log(c9*t**2 + 1))
+         train=8.77e-13  test=9.00e-13  ood=6.75e-12
+  [Mature] c0*sin(c1*t + c2) + c3*sin(c1*t + c4)**3 + c5*v*exp(c6*v**2) + c7*t*v
+         train=8.83e-13  test=8.95e-13  ood=6.73e-12
+  [Mature] c0*sin(c1*t + c2) + c3*sin(c1*t + c4)**3 + c5*v*exp(c6*v**2) + c7*v**3*cos(c8*t + c9)
+         train=8.83e-13  test=8.96e-13  ood=6.72e-12
+  [Mature] c0*sin(c1*t + c2) + c3*sin(c1*t + c4)**3 + c5*v*exp(c6*v**2) + c7*v*sin(c8*t + c9)
+         train=8.81e-13  test=8.95e-13  ood=6.74e-12
+  [Mature] c0*sin(c1*t + c2) + c3*sin(c1*t + c4)**3 + c5*v*exp(c6*v**2) + c7*v**2*sin(c8*t + c9)
+         train=8.83e-13  test=8.95e-13  ood=6.72e-12
+  [Mature] c0*sin(c1*t + c2) + c3*sin(c1*t + c4)**3 + c5*v*exp(c6*v**2) + c7*t*sin(c8*t + c9)
+         train=8.76e-13  test=9.01e-13  ood=6.75e-12
+  [Mature] c0*sin(c1*t + c2) + c3*sin(c1*t + c4)**3 + c5*v*exp(c6*v**2) + c7*v**3
+         train=8.81e-13  test=8.99e-13  ood=6.72e-12
+  [Mature] c0*sin(c1*t + c2) + c3*sin(c1*t + c4)**3 + c5*v*exp(c6*v**2) + c7*v**5
+         train=8.83e-13  test=8.96e-13  ood=6.72e-12
+  [Mature] c0*sin(c1*t + c2) + c3*sin(c1*t + c4)**3 + c5*v*exp(c6*v**2) + c7*v*Abs(v)
+         train=8.81e-13  test=8.99e-13  ood=6.72e-12
+  [Mature] c0*sin(c1*t + c2) + c3*sin(c1*t + c4)**3 + c5*v*exp(c6*v**2) + c7*cos(c1*t + c8)
+         train=8.81e-13  test=8.99e-13  ood=6.72e-12
+  [Mature] c0*sin(c1*t + c2) + c3*sin(c1*t + c4)**3 + c5*v*exp(c6*v**2) + c7*v + c8*v**3 + c9*t*v
+         train=8.83e-13  test=8.95e-13  ood=6.73e-12
+  [Mature] c0*sin(c1*t + c2) + c3*cos(c1*t + c4)**3 + c5*v*exp(c6*v**2) + c7*v + c8*v**3
+         train=8.81e-13  test=8.99e-13  ood=6.72e-12
+  [Mature] c0*sin(c1*t + c2) + c3*sin(c1*t + c4)**3 + c5*v*exp(c6*v**2) + c7*sin(c8*t + c9)
+         train=8.81e-13  test=8.99e-13  ood=6.72e-12
+  [Mature] c0*sin(c1*t + c2) + c3*sin(c1*t + c4)**3 + c5*v*exp(c6*v**2) + c7/(c8*v**2 + 1)
+         train=8.83e-13  test=8.96e-13  ood=6.72e-12
+  [Mature] c0*v + c1*v**3 + c2*cos(c3*t + c4) + c5*sin(c6*log(c7*t**2 + 1) + c8)
+         train=8.78e-13  test=9.02e-13  ood=6.76e-12
+  [Mature] c0*v + c1*v**3 + c2*cos(c3*t + c4) + c5*exp(c6*sin(c7*t + c8))
+         train=8.76e-13  test=9.11e-13  ood=7.60e-12
+  [Mature] c0*v + c1*v**3 + c2*cos(c3*t + c4) + c5*cos(c6*exp(c7*v))
+         train=8.83e-13  test=8.98e-13  ood=6.72e-12
+  [Mature] c0*v + c1*v**3 + c2*cos(c3*t + c4) + c5*log(c6*exp(c7*v**2) + 1)
+         train=8.84e-13  test=8.98e-13  ood=6.72e-12
+  [Mature] c0*v + c1*v**3 + c2*cos(c3*t + c4) + c5*v*cos(c6*t + c7)
+         train=8.82e-13  test=9.01e-13  ood=6.82e-12
+  [Mature] c0*v + c1*v**3 + c2*cos(c3*t + c4) + c5*v**2*sin(c6*t + c7)
+         train=8.82e-13  test=9.02e-13  ood=6.74e-12
+  [Mature] c0*v + c1*v**3 + c2*cos(c3*t + c4) + c5*t*v
+         train=8.84e-13  test=8.97e-13  ood=6.73e-12
+  [Mature] c0*v + c1*v**3 + c2*cos(c3*t + c4) + c5*t*v**2
+         train=8.84e-13  test=8.98e-13  ood=6.72e-12
+  [Mature] c0*v + c1*v**3 + c2*cos(c3*t + c4) + c5*v**5
+         train=8.84e-13  test=8.98e-13  ood=6.72e-12
+  [Mature] c0*v + c1*v**3 + c2*sin(c3*t + c4)**3 + c5*cos(c3*t + c4)
+         train=8.83e-13  test=8.97e-13  ood=6.72e-12
+  [Mature] c0*v + c1*v**3 + c2*cos(c3*t + c4) + c5*v**3
+         train=8.84e-13  test=8.98e-13  ood=6.72e-12
+  [Mature] c0*v + c1*v**3 + c2*cos(c3*t + c4) + c5*v*Abs(v)
+         train=8.84e-13  test=8.98e-13  ood=6.72e-12
+  [Mature] c0*v + c1*v**3 + c2*sin(c3*t + c4) + c5*cos(c3*t + c6) + c7*sin(c8*t + c9)
+         train=8.78e-13  test=9.03e-13  ood=6.76e-12
+  [Mature] c0*v + c1*v**3 + c2*cos(c3*t + c4) + c5*v*sin(c3*t + c6)
+         train=8.84e-13  test=8.97e-13  ood=6.72e-12
+  [Mature] c0*sin(c1*v + c2) + c3*cos(c4*t + c5) + c6*v**3
+         train=8.84e-13  test=8.97e-13  ood=6.72e-12
+  [Mature] c0*v + c1*v**3 + c2*cos(c3*t + c4) + c5*v/(c6*v**2 + 1)
+         train=8.84e-13  test=8.98e-13  ood=6.72e-12
+  [Mature] c0*v + c1*v**3 + c2*cos(c3*t + c4) + c5*cos(c6*t + c7)
+         train=8.78e-13  test=9.03e-13  ood=6.76e-12
+  [Mature] c0*v + c1*v**3 + c2*cos(c3*t + c4)**3 + c5*cos(c3*t + c4) + c6*exp(c7*v**2)
+         train=8.82e-13  test=8.99e-13  ood=6.73e-12
+  [Mature] c0*v + c1*v**3 + c2*cos(c3*t + c4)**3 + c5*cos(c3*t + c4) + c6*log(c7*exp(c8*v**2) + 1)
+         train=8.82e-13  test=8.97e-13  ood=6.72e-12
+  [Mature] c0*v + c1*v**3 + c2*cos(c3*t + c4)**3 + c5*cos(c3*t + c4) + c6*sin(c7 + c8*t + c9*v**2)
+         train=8.83e-13  test=8.95e-13  ood=6.73e-12
+  [Mature] c0*v + c1*v**3 + c2*cos(c3*t + c4)**3 + c5*cos(c3*t + c4) + c6*t*v
+         train=8.82e-13  test=8.98e-13  ood=6.74e-12
+  [Mature] c0*v + c1*v**3 + c2*cos(c3*t + c4)**3 + c5*cos(c3*t + c4) + c6*v**2*sin(c3*t + c4)
+         train=8.82e-13  test=8.99e-13  ood=6.72e-12
+  [Mature] c0*v + c1*v**3 + c2*cos(c3*t + c4)**3 + c5*cos(c3*t + c4) + c6*v*cos(c3*t + c4)
+         train=8.81e-13  test=8.96e-13  ood=6.71e-12
+  [Mature] c0*v + c1*v**3 + c2*cos(c3*t + c4)**3 + c5*cos(c3*t + c4) + c6*v**5
+         train=8.82e-13  test=8.98e-13  ood=6.72e-12
+  [Mature] c0*v + c1*v**3 + c2*cos(c3*t + c4)**3 + c5*cos(c3*t + c4) + c6*t*cos(c3*t + c4)
+         train=8.75e-13  test=9.06e-13  ood=6.90e-12
+  [Mature] c0*v + c1*v**3 + c2*cos(c3*t + c4)**3 + c5*cos(c3*t + c4) + c6*sin(c7*t + c8)
+         train=8.74e-13  test=9.09e-13  ood=7.81e-12
+  [Mature] c0*v + c1*v**3 + c2*v**3 + c3*cos(c4*t + c5)**3 + c6*cos(c4*t + c5) + c7*v
+         train=8.82e-13  test=8.98e-13  ood=6.72e-12
+  [Mature] c0*v + c1*v**3 + c2*cos(c3*t + c4)**3 + c5*cos(c3*t + c4) + c6*v*Abs(v)
+         train=8.82e-13  test=8.98e-13  ood=6.72e-12
+  [Mature] c0*v + c1*v**3 + c2*cos(c3*t + c4)**3 + c5*cos(c3*t + c4) + c6*v**2*cos(c3*t + c4)
+         train=8.82e-13  test=8.99e-13  ood=6.73e-12
+  [Mature] c0*v + c1*v**3 + c2*cos(c3*t + c4)**3 + c5*cos(c3*t + c4) + c6*v*sin(c7*t + c8)
+         train=8.80e-13  test=9.01e-13  ood=6.72e-12
+  [Mature] c0*v + c1*v**3 + c2*cos(c3*t + c4)**3 + c5*cos(c3*t + c4) + c6*cos(c7*t + c8)
+         train=8.75e-13  test=9.09e-13  ood=6.73e-12
+  [Mature] c0*v + c1*v**3 + c2*cos(c3*t + c4)**3 + c5*cos(c3*t + c4) + c6*v/(c7*v**2 + 1)
+         train=8.82e-13  test=8.99e-13  ood=6.73e-12
+  [Mature] c0*v + c1*v**3 + c2*cos(c3*t + c4)**3 + c5*cos(c3*t + c4) + c6*v**3*sin(c3*t + c4)
+         train=8.82e-13  test=8.99e-13  ood=6.73e-12
+  [Mature] c0*v*cos(c1*t) + c2*sin(c1*t + c3) + c4*v**3 + c5*v*sin(c1*t + c6)*cos(c1*t + c6) + c7*v + c8*v**5
+         train=8.83e-13  test=8.95e-13  ood=6.72e-12
+  [Mature] c0*v + c1*v**3 + c2*sin(c3*t + c4) + c5*v*cos(c3*t) + c6*v*sin(c3*t + c7)*cos(c3*t + c7)
+         train=8.83e-13  test=8.95e-13  ood=6.72e-12
+  [Mature] c0*v + c1*v**3 + c2*sin(c3*t + c4)**3 + c5*sin(c3*t + c4) + c6*v*cos(c3*t) + c7*v*sin(c3*t + c8)*cos(c3*t + c8)
+         train=8.82e-13  test=8.98e-13  ood=6.72e-12
+  [Mature] c0*v*cos(c1*t) + c2*sin(c1*t + c3) + c4*v**3 + c5*v*sin(c1*t + c6)*cos(c1*t + c6) + c7*v + c8*t*v
+         train=8.82e-13  test=8.94e-13  ood=6.73e-12
+  [Mature] c0*sin(c1*t + c2) + c3*v*exp(c4*v**2)
+         train=8.84e-13  test=8.98e-13  ood=6.72e-12
+  [Mature] c0*sin(c1*t + c2) + c3*v*exp(c4*v**2) + c5*v**5
+         train=8.84e-13  test=8.98e-13  ood=6.72e-12
+  [Mature] c0*sin(c1*t + c2) + c3*cos(c1*t + c4)**3 + c5*v + c6*v**3
+         train=8.81e-13  test=8.99e-13  ood=6.72e-12
+  [Mature] c0*v + c1*v**3 + c2*cos(c3*t + c4) + c5*sin(c6 + c7*t)
+         train=8.78e-13  test=9.03e-13  ood=6.76e-12
+  [Mature] c0*v*sin(c1 + c2*t) + c3*sin(c4*t + c5) + c6*v**3 + c7*v**2*cos(c4*t + c8)
+         train=8.81e-13  test=9.00e-13  ood=6.84e-12
+  [Mature] c0*v*cos(c1*t) + c2*v*sin(c3 + c4*t) + c5*sin(c1*t + c6) + c7*v**3 + c8
+         train=8.81e-13  test=8.99e-13  ood=6.84e-12
+  [Mature] c0*v + c1*sin(c2*t + c3) + c4*v**3 + c5*exp(c6*v**2)*sin(c2*t + c7)
+         train=8.83e-13  test=8.96e-13  ood=6.72e-12
+  [Mature] c0*v + c1*sin(c2*t + c3) + c4*v**3 + c5*sin(c2*t + c3)
+         train=8.84e-13  test=8.98e-13  ood=6.72e-12
+
+  [Early stop] Collected 100 mature nodes (>= 50), ending search early.
+    1. c0*v*cos(c1*t) + c2*sin(c1*t + c3) + c4*v**3 + c5*v*sin(c1*t + c6)*cos(c1*t + c6) + c7*v + c8*t*v
+       train=8.82e-13  test=8.94e-13  ood=6.73e-12
+    2. c0*sin(c1*t + c2) + c3*sin(c1*t + c4)**3 + c5*v*exp(c6*v**2) + c7*v*sin(c8*t + c9)
+       train=8.81e-13  test=8.95e-13  ood=6.74e-12
+    3. c0*v*cos(c1*t) + c2*sin(c1*t + c3) + c4*v**3 + c5*v*sin(c1*t + c6)*cos(c1*t + c6) + c7*v + c8*v**5
+       train=8.83e-13  test=8.95e-13  ood=6.72e-12
+    4. c0*v + c1*v**3 + c2*sin(c3*t + c4) + c5*v*cos(c3*t) + c6*v*sin(c3*t + c7)*cos(c3*t + c7)
+       train=8.83e-13  test=8.95e-13  ood=6.72e-12
+    5. c0*v + c1*v**3 + c2*cos(c3*t + c4)**3 + c5*cos(c3*t + c4) + c6*sin(c7 + c8*t + c9*v**2)
+       train=8.83e-13  test=8.95e-13  ood=6.73e-12
+    6. c0*v + c1*v**3 + c2*sin(c3*t + c4)**3 + c5*sin(c3*t + c4) + c6*t*v
+       train=8.83e-13  test=8.95e-13  ood=6.73e-12
+    7. c0*sin(c1*t + c2) + c3*sin(c1*t + c4)**3 + c5*v*exp(c6*v**2) + c7*t*v
+       train=8.83e-13  test=8.95e-13  ood=6.73e-12
+    8. c0*sin(c1*t + c2) + c3*sin(c1*t + c4)**3 + c5*v*exp(c6*v**2) + c7*v + c8*v**3 + c9*t*v
+       train=8.83e-13  test=8.95e-13  ood=6.73e-12
+    9. c0*sin(c1*t + c2) + c3*sin(c1*t + c4)**3 + c5*v*exp(c6*v**2) + c7*v**2*sin(c8*t + c9)
+       train=8.83e-13  test=8.95e-13  ood=6.72e-12
+    10. c0*sin(c1*t + c2) + c3*sin(c1*t + c4)**3 + c5*v*exp(c6*v**2) + c7*log(c8*exp(c9*v) + 1)
+       train=8.83e-13  test=8.96e-13  ood=6.72e-12
+    11. c0*sin(c1*t + c2) + c3*sin(c1*t + c4)**3 + c5*sin(c6*v + c7)
+       train=8.83e-13  test=8.96e-13  ood=6.72e-12
+    12. c0*sin(c1*t + c2) + c3*sin(c1*t + c4)**3 + c5*v*exp(c6*v**2) + c7/(c8*v**2 + 1)
+       train=8.83e-13  test=8.96e-13  ood=6.72e-12
+    13. c0*sin(c1*t + c2) + c3*sin(c1*t + c4)**3 + c5*v*exp(c6*v**2) + c7*v**3*cos(c8*t + c9)
+       train=8.83e-13  test=8.96e-13  ood=6.72e-12
+    14. c0*v + c1*v**3 + c2*cos(c3*t + c4)**3 + c5*cos(c3*t + c4) + c6*v*cos(c3*t + c4)
+       train=8.81e-13  test=8.96e-13  ood=6.71e-12
+    15. c0*v + c1*sin(c2*t + c3) + c4*v**3 + c5*exp(c6*v**2)*sin(c2*t + c7)
+       train=8.83e-13  test=8.96e-13  ood=6.72e-12
+    16. c0*sin(c1*t + c2) + c3*sin(c1*t + c4)**3 + c5*v*exp(c6*v**2) + c7*v**5
+       train=8.83e-13  test=8.96e-13  ood=6.72e-12
+    17. c0*v + c1*v**3 + c2*sin(c3*t + c4)**3 + c5*sin(c3*t + c4) + c6*v*sin(c3*t + c7)
+       train=8.82e-13  test=8.96e-13  ood=6.72e-12
+    18. c0*v + c1*v**3 + c2*sin(c3*t + c4)**3 + c5*sin(c3*t + c4) + c6*v*cos(c3*t + c7)
+       train=8.81e-13  test=8.97e-13  ood=6.72e-12
+    19. c0*v + c1*v**3 + c2*cos(c3*t + c4) + c5*t*v
+       train=8.84e-13  test=8.97e-13  ood=6.73e-12
+    20. c0*v + c1*v**3 + c2*sin(c3*t + c4)**3 + c5*cos(c3*t + c4)
+       train=8.83e-13  test=8.97e-13  ood=6.72e-12
+    21. c0*v**2 + c1*v + c2*sin(c3*t + c4)**3 + c5 + c6*v**3 + c7*sin(c3*t + c4)
+       train=8.82e-13  test=8.97e-13  ood=6.72e-12
+    22. c0*v + c1*v**3 + c2*cos(c3*t + c4) + c5*v*sin(c3*t + c6)
+       train=8.84e-13  test=8.97e-13  ood=6.72e-12
+    23. c0*v + c1 + c2*v**3 + c3*sin(c4*t + c5)
+       train=8.84e-13  test=8.97e-13  ood=6.72e-12
+    24. c0*v + c1 + c2*v**3 + c3*cos(c4*t + c5)
+       train=8.84e-13  test=8.97e-13  ood=6.72e-12
+    25. c0*v + c1*v**3 + c2*cos(c3*t + c4)**3 + c5*cos(c3*t + c4) + c6*log(c7*exp(c8*v**2) + 1)
+       train=8.82e-13  test=8.97e-13  ood=6.72e-12
+    26. c0*sin(c1*t + c2) + c3*sin(c4*v + c5)
+       train=8.84e-13  test=8.97e-13  ood=6.72e-12
+    27. c0*sin(c1*v + c2) + c3*cos(c4*t + c5) + c6*v**3
+       train=8.84e-13  test=8.97e-13  ood=6.72e-12
+    28. c0*v**2 + c1*v + c2 + c3*v**3 + c4*sin(c5*t + c6)
+       train=8.84e-13  test=8.97e-13  ood=6.72e-12
+    29. c0*v**2 + c1*v + c2 + c3*v**3 + c4*cos(c5*t + c6)
+       train=8.84e-13  test=8.97e-13  ood=6.72e-12
+    30. c0*v + c1*v**3 + c2*sin(c3*t + c4)**3 + c5*sin(c3*t + c4) + c6*v/(c7*v**2 + 1)
+       train=8.82e-13  test=8.98e-13  ood=6.72e-12
+    31. c0*v + c1*v**3 + c2*cos(c3*t + c4)**3 + c5*cos(c3*t + c4) + c6*v**5
+       train=8.82e-13  test=8.98e-13  ood=6.72e-12
+    32. c0*v + c1*v**3 + c2*cos(c3*t + c4) + c5*t*v**2
+       train=8.84e-13  test=8.98e-13  ood=6.72e-12
+    33. c0*v + c1*v**3 + c2*cos(c3*t + c4) + c5*cos(c6*exp(c7*v))
+       train=8.83e-13  test=8.98e-13  ood=6.72e-12
+    34. c0*v + c1*v**3 + c2*cos(c3*t + c4)**3 + c5*cos(c3*t + c4) + c6*v*Abs(v)
+       train=8.82e-13  test=8.98e-13  ood=6.72e-12
+    35. c0*v + c1*v**3 + c2*sin(c3*t + c4)**3 + c5*sin(c3*t + c4) + c6*v*Abs(v)
+       train=8.82e-13  test=8.98e-13  ood=6.72e-12
+    36. c0*v + c1*v**3 + c2*sin(c3*t + c4)**3 + c5*sin(c3*t + c4) + c6*exp(c7*v**2)*sin(c3*t + c4)
+       train=8.82e-13  test=8.98e-13  ood=6.72e-12
+    37. c0*v + c1*v**3 + c2*cos(c3*t + c4)**3 + c5*cos(c3*t + c4) + c6*t*v
+       train=8.82e-13  test=8.98e-13  ood=6.74e-12
+    38. c0*v + c1*v**3 + c2*v**3 + c3*cos(c4*t + c5)**3 + c6*cos(c4*t + c5) + c7*v
+       train=8.82e-13  test=8.98e-13  ood=6.72e-12
+    39. c0*v + c1*v**3 + c2*v**3 + c3*sin(c4*t + c5) + c6*sin(c4*t + c5)**3 + c7*v
+       train=8.82e-13  test=8.98e-13  ood=6.72e-12
+    40. c0*v + c1*v**3 + c2*sin(c3*t + c4) + c5*sin(c3*t + c4)**3
+       train=8.82e-13  test=8.98e-13  ood=6.72e-12
+    41. c0*v + c1*v**3 + c2*cos(c3*t + c4)**3 + c5*cos(c3*t + c4)
+       train=8.82e-13  test=8.98e-13  ood=6.72e-12
+    42. c0*v + c1*v**3 + c2*cos(c3*t + c4) + c5*log(c6*exp(c7*v**2) + 1)
+       train=8.84e-13  test=8.98e-13  ood=6.72e-12
+    43. c0*v + c1*v**3 + c2*sin(c3*t + c4)**3 + c5*sin(c3*t + c4) + c6*v*cos(c3*t) + c7*v*sin(c3*t + c8)*cos(c3*t + c8)
+       train=8.82e-13  test=8.98e-13  ood=6.72e-12
+    44. c0*v + c1*sin(c2*t + c3)**3 + c4 + c5*v**3 + c6*sin(c2*t + c7)
+       train=8.81e-13  test=8.98e-13  ood=6.72e-12
+    45. c0*v + c1*v**3 + c2*cos(c3*t + c4) + c5*v/(c6*v**2 + 1)
+       train=8.84e-13  test=8.98e-13  ood=6.72e-12
+    46. c0*v + c1*v**3 + c2*cos(c3*t + c4) + c5*v**5
+       train=8.84e-13  test=8.98e-13  ood=6.72e-12
+    47. c0*v + c1*sin(c2*t + c3) + c4*v**3 + c5*v**5
+       train=8.84e-13  test=8.98e-13  ood=6.72e-12
+    48. c0*sin(c1*t + c2) + c3*v*exp(c4*v**2) + c5*v**5
+       train=8.84e-13  test=8.98e-13  ood=6.72e-12
+    49. c0*sin(c1*t + c2) + c3*sin(c1*t + c4)**3 + c5*sin(c6*t + c7)**3 + c8*v + c9*v**3
+       train=8.81e-13  test=8.98e-13  ood=6.72e-12
+    50. c0*v + c1*v*Abs(v) + c2*sin(c3*t + c4) + c5*v**3
+       train=8.84e-13  test=8.98e-13  ood=6.72e-12
+    51. c0*v + c1*v*Abs(v) + c2*v**3 + c3*sin(c4*t + c5) + c6*v
+       train=8.84e-13  test=8.98e-13  ood=6.72e-12
+    52. c0*v + c1*v**3 + c2*cos(c3*t + c4) + c5*v*Abs(v)
+       train=8.84e-13  test=8.98e-13  ood=6.72e-12
+    53. c0*v + c1*v**3 + c2*sin(c3*t + c4) + c5*v
+       train=8.84e-13  test=8.98e-13  ood=6.72e-12
+    54. c0*cos(c1*t + c2) + c3*v + c4*v**3
+       train=8.84e-13  test=8.98e-13  ood=6.72e-12
+    55. c0*v + c1*v**3 + c2*sin(c3*t + c4)
+       train=8.84e-13  test=8.98e-13  ood=6.72e-12
+    56. c0*v + c1*sin(c2*t + c3) + c4*v**3 + c5*sin(c2*t + c3)
+       train=8.84e-13  test=8.98e-13  ood=6.72e-12
+    57. c0*v + c1*v**3 + c2*cos(c3*t + c4) + c5*v**3
+       train=8.84e-13  test=8.98e-13  ood=6.72e-12
+    58. c0*sin(c1*t + c2) + c3*v*exp(c4*v**2)
+       train=8.84e-13  test=8.98e-13  ood=6.72e-12
+    59. c0*sin(c1*t + c2) + c3*sin(c1*t + c4)**3 + c5*v + c6*v**3 + c7*v**5
+       train=8.81e-13  test=8.98e-13  ood=6.72e-12
+    60. c0*sin(c1*t + c2) + c3*cos(c1*t + c4)**3 + c5*v + c6*v**3
+       train=8.81e-13  test=8.99e-13  ood=6.72e-12
+    61. c0*sin(c1*t + c2) + c3*sin(c1*t + c4)**3 + c5*v*exp(c6*v**2) + c7*v**3
+       train=8.81e-13  test=8.99e-13  ood=6.72e-12
+    62. c0*sin(c1*t + c2) + c3*sin(c1*t + c4)**3 + c5*v*exp(c6*v**2) + c7*v*Abs(v)
+       train=8.81e-13  test=8.99e-13  ood=6.72e-12
+    63. c0*sin(c1*t + c2) + c3*sin(c1*t + c4)**3 + c5*v*exp(c6*v**2) + c7*cos(c1*t + c8)
+       train=8.81e-13  test=8.99e-13  ood=6.72e-12
+    64. c0*sin(c1*t + c2) + c3*sin(c1*t + c4)**3 + c5*v*exp(c6*v**2)
+       train=8.81e-13  test=8.99e-13  ood=6.72e-12
+    65. c0*v + c1*v*Abs(v) + c2*sin(c3*t + c4) + c5*v**3 + c6*v**5
+       train=8.84e-13  test=8.99e-13  ood=6.72e-12
+    66. c0*sin(c1*t + c2) + c3*sin(c1*t + c4)**3 + c5*v/(c6*v**2 + 1)
+       train=8.81e-13  test=8.99e-13  ood=6.72e-12
+    67. c0*sin(c1*t + c2) + c3*cos(c1*t + c4)**3 + c5*v*exp(c6*v**2) + c7*v + c8*v**3
+       train=8.81e-13  test=8.99e-13  ood=6.72e-12
+    68. c0*v + c1*v**3 + c2*sin(c3*t + c4)**3 + c5*sin(c3*t + c4) + c6*log(c7*exp(c8*v) + 1)
+       train=8.82e-13  test=8.99e-13  ood=6.73e-12
+    69. c0*v + c1*v**3 + c2*cos(c3*t + c4)**3 + c5*cos(c3*t + c4) + c6*v**3*sin(c3*t + c4)
+       train=8.82e-13  test=8.99e-13  ood=6.73e-12
+    70. c0*v + c1*v**3 + c2*sin(c3*t + c4)**3 + c5*sin(c3*t + c4)**2*cos(c6*t + c7) + c8*sin(c3*t + c4)
+       train=8.81e-13  test=8.99e-13  ood=6.79e-12
+    71. c0*v + c1*v**3 + c2*sin(c3*t + c4)**3 + c5*sin(c3*t + c4) + c6*sin(c7*sin(c3*t + c4) + c8)
+       train=8.81e-13  test=8.99e-13  ood=6.72e-12
+    72. c0*v + c1*v**3 + c2*cos(c3*t + c4)**3 + c5*cos(c3*t + c4) + c6*exp(c7*v**2)
+       train=8.82e-13  test=8.99e-13  ood=6.73e-12
+    73. c0*v + c1*v**3 + c2*sin(c3*t + c4)**3 + c5*sin(c3*t + c4) + c6*v**2*sin(c3*t + c4)
+       train=8.82e-13  test=8.99e-13  ood=6.73e-12
+    74. c0*v + c1*v**3 + c2*cos(c3*t + c4)**3 + c5*cos(c3*t + c4) + c6*v**2*cos(c3*t + c4)
+       train=8.82e-13  test=8.99e-13  ood=6.73e-12
+    75. c0*v + c1*v**3 + c2*sin(c3*t + c4)**3 + c5*sin(c3*t + c4) + c6*cos(c7*exp(c8*v))
+       train=8.82e-13  test=8.99e-13  ood=6.73e-12
+    76. c0*v*cos(c1*t) + c2*v*sin(c3 + c4*t) + c5*sin(c1*t + c6) + c7*v**3 + c8
+       train=8.81e-13  test=8.99e-13  ood=6.84e-12
+    77. c0*v + c1*v**3 + c2*sin(c3*t + c4)**3 + c5*sin(c3*t + c4) + c6*v**2*cos(c3*t + c4)
+       train=8.82e-13  test=8.99e-13  ood=6.72e-12
+    78. c0*v + c1*v**3 + c2*cos(c3*t + c4)**3 + c5*cos(c3*t + c4) + c6*v**2*sin(c3*t + c4)
+       train=8.82e-13  test=8.99e-13  ood=6.72e-12
+    79. c0*v + c1*v**3 + c2*cos(c3*t + c4)**3 + c5*cos(c3*t + c4) + c6*v/(c7*v**2 + 1)
+       train=8.82e-13  test=8.99e-13  ood=6.73e-12
+    80. c0*sin(c1*t + c2) + c3*sin(c1*t + c4)**3 + c5*v*exp(c6*v**2) + c7*sin(c8*t + c9)
+       train=8.81e-13  test=8.99e-13  ood=6.72e-12
+    81. c0*v*cos(c1*t) + c2*sin(c1*t + c3)**3 + c4*sin(c1*t + c3) + c5*v**3 + c6*v
+       train=8.82e-13  test=9.00e-13  ood=6.73e-12
+    82. c0*v*sin(c1 + c2*t) + c3*sin(c4*t + c5) + c6*v**3 + c7*v**2*cos(c4*t + c8)
+       train=8.81e-13  test=9.00e-13  ood=6.84e-12
+    83. c0*v**2*sin(c1*t + c2) + c3*cos(c1*t) + c4*cos(c5*t + c6) + c7*v + c8*v**3
+       train=8.79e-13  test=9.00e-13  ood=6.74e-12
+    84. c0*sin(c1*t + c2) + c3*sin(c1*t + c4)**3 + c5*v*exp(c6*v**2) + c7*cos(c8*log(c9*t**2 + 1))
+       train=8.77e-13  test=9.00e-13  ood=6.75e-12
+    85. c0*v + c1*v**3 + c2*cos(c3*t + c4)**3 + c5*cos(c3*t + c4) + c6*v*sin(c7*t + c8)
+       train=8.80e-13  test=9.01e-13  ood=6.72e-12
+    86. c0*v + c1*v**3 + c2*cos(c3*t + c4) + c5*v*cos(c6*t + c7)
+       train=8.82e-13  test=9.01e-13  ood=6.82e-12
+    87. c0*sin(c1*t + c2) + c3*sin(c1*t + c4)**3 + c5*v*exp(c6*v**2) + c7*t*sin(c8*t + c9)
+       train=8.76e-13  test=9.01e-13  ood=6.75e-12
+    88. c0*v + c1*v**3 + c2*sin(c3*t + c4)**3 + c5*sin(c3*t + c4)**5 + c6*sin(c3*t + c4)
+       train=8.78e-13  test=9.02e-13  ood=6.73e-12
+    89. c0*v + c1*v**3 + c2*cos(c3*t + c4) + c5*sin(c6*log(c7*t**2 + 1) + c8)
+       train=8.78e-13  test=9.02e-13  ood=6.76e-12
+    90. c0*v + c1*v**3 + c2*cos(c3*t + c4) + c5*v**2*sin(c6*t + c7)
+       train=8.82e-13  test=9.02e-13  ood=6.74e-12
+    91. c0*sin(c1*t + c2) + c3*sin(c1*t + c4)**3 + c5*v + c6*v**3 + c7*sin(c8*t + c9)
+       train=8.81e-13  test=9.02e-13  ood=6.74e-12
+    92. c0*v + c1*v**3 + c2*sin(c3*t + c4) + c5*cos(c3*t + c6) + c7*sin(c8*t + c9)
+       train=8.78e-13  test=9.03e-13  ood=6.76e-12
+    93. c0*v + c1*v**3 + c2*cos(c3*t + c4) + c5*sin(c6 + c7*t)
+       train=8.78e-13  test=9.03e-13  ood=6.76e-12
+    94. c0*v + c1*v**3 + c2*cos(c3*t + c4) + c5*cos(c6*t + c7)
+       train=8.78e-13  test=9.03e-13  ood=6.76e-12
+    95. c0*sin(c1*t + c2) + c3*sin(c1*t + c4)**3 + c5*v + c6*v**3 + c7*cos(c8*t + c9)
+       train=8.79e-13  test=9.06e-13  ood=6.77e-12
+    96. c0*v + c1*v**3 + c2*cos(c3*t + c4)**3 + c5*cos(c3*t + c4) + c6*t*cos(c3*t + c4)
+       train=8.75e-13  test=9.06e-13  ood=6.90e-12
+    97. c0*v + c1*v**3 + c2*cos(c3*t + c4)**3 + c5*cos(c3*t + c4) + c6*cos(c7*t + c8)
+       train=8.75e-13  test=9.09e-13  ood=6.73e-12
+    98. c0*v + c1*v**3 + c2*cos(c3*t + c4)**3 + c5*cos(c3*t + c4) + c6*sin(c7*t + c8)
+       train=8.74e-13  test=9.09e-13  ood=7.81e-12
+    99. c0*v**2*sin(c1*t + c2) + c3*cos(c1*t) + c4*v + c5*v**3 + c6*sin(c7*t + c8)
+       train=8.77e-13  test=9.10e-13  ood=6.86e-12
+    100. c0*v + c1*v**3 + c2*cos(c3*t + c4) + c5*exp(c6*sin(c7*t + c8))
+       train=8.76e-13  test=9.11e-13  ood=7.60e-12
+
+============================================================
+Search completed, elapsed 801.4s
+Explored 206 nodes total, global best (test): train=8.82e-13  test=8.94e-13  ood=6.73e-12
+Best formula: c0*v*cos(c1*t) + c2*sin(c1*t + c3) + c4*v**3 + c5*v*sin(c1*t + c6)*cos(c1*t + c6) + c7*v + c8*t*v
+Best expression params: c0=2.9042e-08, c1=1.0000e+00, c2=-1.0626e-01, c3=3.1416e+00, c4=8.0878e-02, c5=-6.4564e-07, c6=4.9956e+00, c7=-1.4532e+00, c8=2.7940e-09
+
+Final output 100 formulas (mature 100, supplement 0):
+  1. [Mature] <<<FORMULA>>>c0*v*cos(c1*t) + c2*sin(c1*t + c3) + c4*v**3 + c5*v*sin(c1*t + c6)*cos(c1*t + c6) + c7*v + c8*t*v<<<END_FORMULA>>>
+     params: c0=2.9042e-08, c1=1.0000e+00, c2=-1.0626e-01, c3=3.1416e+00, c4=8.0878e-02, c5=-6.4564e-07, c6=4.9956e+00, c7=-1.4532e+00, c8=2.7940e-09
+     train=8.82e-13  test=8.94e-13  ood=6.73e-12
+  2. [Mature] <<<FORMULA>>>c0*sin(c1*t + c2) + c3*sin(c1*t + c4)**3 + c5*v*exp(c6*v**2) + c7*v*sin(c8*t + c9)<<<END_FORMULA>>>
+     params: c0=-1.0626e-01, c1=1.0000e+00, c2=3.1416e+00, c3=-2.5073e-08, c4=4.5395e+00, c5=-1.4532e+00, c6=-5.5465e-02, c7=-7.1036e-08, c8=8.2151e-01, c9=2.8239e+00
+     train=8.81e-13  test=8.95e-13  ood=6.74e-12
+  3. [Mature] <<<FORMULA>>>c0*v*cos(c1*t) + c2*sin(c1*t + c3) + c4*v**3 + c5*v*sin(c1*t + c6)*cos(c1*t + c6) + c7*v + c8*v**5<<<END_FORMULA>>>
+     params: c0=2.7446e-08, c1=1.0000e+00, c2=-1.0626e-01, c3=3.1416e+00, c4=8.0726e-02, c5=1.7637e-07, c6=3.7260e+00, c7=-1.4532e+00, c8=2.2791e-03
+     train=8.83e-13  test=8.95e-13  ood=6.72e-12
+  4. [Mature] <<<FORMULA>>>c0*v + c1*v**3 + c2*sin(c3*t + c4) + c5*v*cos(c3*t) + c6*v*sin(c3*t + c7)*cos(c3*t + c7)<<<END_FORMULA>>>
+     params: c0=-1.4532e+00, c1=8.0739e-02, c2=1.0626e-01, c3=1.0000e+00, c4=6.2832e+00, c5=2.7409e-08, c6=-1.8348e-07, c7=2.1362e+00
+     train=8.83e-13  test=8.95e-13  ood=6.72e-12
+  5. [Mature] <<<FORMULA>>>c0*v + c1*v**3 + c2*cos(c3*t + c4)**3 + c5*cos(c3*t + c4) + c6*sin(c7 + c8*t + c9*v**2)<<<END_FORMULA>>>
+     params: c0=-1.4532e+00, c1=8.0578e-02, c2=5.6391e-08, c3=1.0000e+00, c4=-1.0801e+00, c5=1.9052e-01, c6=-1.0899e-01, c7=9.6805e-01, c8=1.0000e+00, c9=2.1008e-04
+     train=8.83e-13  test=8.95e-13  ood=6.73e-12
+  6. [Mature] <<<FORMULA>>>c0*v + c1*v**3 + c2*sin(c3*t + c4)**3 + c5*sin(c3*t + c4) + c6*t*v<<<END_FORMULA>>>
+     params: c0=-1.4532e+00, c1=8.0696e-02, c2=-7.2592e-09, c3=1.0000e+00, c4=6.2832e+00, c5=1.0626e-01, c6=2.1823e-09
+     train=8.83e-13  test=8.95e-13  ood=6.73e-12
+  7. [Mature] <<<FORMULA>>>c0*sin(c1*t + c2) + c3*sin(c1*t + c4)**3 + c5*v*exp(c6*v**2) + c7*t*v<<<END_FORMULA>>>
+     params: c0=1.0626e-01, c1=1.0000e+00, c2=2.6559e-07, c3=-2.9688e-08, c4=1.5777e+00, c5=-1.4532e+00, c6=-5.5632e-02, c7=2.7734e-09
+     train=8.83e-13  test=8.95e-13  ood=6.73e-12
+  8. [Mature] <<<FORMULA>>>c0*sin(c1*t + c2) + c3*sin(c1*t + c4)**3 + c5*v*exp(c6*v**2) + c7*v + c8*v**3 + c9*t*v<<<END_FORMULA>>>
+     params: c0=1.0626e-01, c1=1.0000e+00, c2=6.2832e+00, c3=-3.0567e-08, c4=5.7639e+00, c5=9.2006e-08, c6=-2.0352e+03, c7=-1.4532e+00, c8=8.0845e-02, c9=2.7960e-09
+     train=8.83e-13  test=8.95e-13  ood=6.73e-12
+  9. [Mature] <<<FORMULA>>>c0*sin(c1*t + c2) + c3*sin(c1*t + c4)**3 + c5*v*exp(c6*v**2) + c7*v**2*sin(c8*t + c9)<<<END_FORMULA>>>
+     params: c0=1.0626e-01, c1=1.0000e+00, c2=6.2832e+00, c3=9.8426e-09, c4=5.4151e+00, c5=-1.4532e+00, c6=-5.5520e-02, c7=-6.4819e-07, c8=5.3954e-01, c9=5.2402e+00
+     train=8.83e-13  test=8.95e-13  ood=6.72e-12
+  10. [Mature] <<<FORMULA>>>c0*sin(c1*t + c2) + c3*sin(c1*t + c4)**3 + c5*v*exp(c6*v**2) + c7*log(c8*exp(c9*v) + 1)<<<END_FORMULA>>>
+     params: c0=-1.0626e-01, c1=1.0000e+00, c2=3.1416e+00, c3=-1.6465e-08, c4=1.6493e+00, c5=-1.4532e+00, c6=-5.5588e-02, c7=-2.4389e-10, c8=4.9827e+00, c9=6.3896e+01
+     train=8.83e-13  test=8.96e-13  ood=6.72e-12
+  11. [Mature] <<<FORMULA>>>c0*sin(c1*t + c2) + c3*sin(c1*t + c4)**3 + c5*sin(c6*v + c7)<<<END_FORMULA>>>
+     params: c0=1.0626e-01, c1=1.0000e+00, c2=6.2832e+00, c3=-1.6075e-08, c4=5.8418e+00, c5=-2.5164e+00, c6=5.7750e-01, c7=2.2880e-10
+     train=8.83e-13  test=8.96e-13  ood=6.72e-12
+  12. [Mature] <<<FORMULA>>>c0*sin(c1*t + c2) + c3*sin(c1*t + c4)**3 + c5*v*exp(c6*v**2) + c7/(c8*v**2 + 1)<<<END_FORMULA>>>
+     params: c0=-1.0626e-01, c1=1.0000e+00, c2=3.1416e+00, c3=1.7196e-08, c4=5.9396e-01, c5=-1.4532e+00, c6=-5.5591e-02, c7=-6.6011e-10, c8=8.8060e+01
+     train=8.83e-13  test=8.96e-13  ood=6.72e-12
+  13. [Mature] <<<FORMULA>>>c0*sin(c1*t + c2) + c3*sin(c1*t + c4)**3 + c5*v*exp(c6*v**2) + c7*v**3*cos(c8*t + c9)<<<END_FORMULA>>>
+     params: c0=1.0626e-01, c1=1.0000e+00, c2=3.5382e-09, c3=7.1128e-09, c4=5.2077e+00, c5=-1.4532e+00, c6=-5.5539e-02, c7=9.7433e-06, c8=4.8455e-01, c9=2.4087e+00
+     train=8.83e-13  test=8.96e-13  ood=6.72e-12
+  14. [Mature] <<<FORMULA>>>c0*v + c1*v**3 + c2*cos(c3*t + c4)**3 + c5*cos(c3*t + c4) + c6*v*cos(c3*t + c4)<<<END_FORMULA>>>
+     params: c0=-1.4532e+00, c1=8.0702e-02, c2=-4.2503e-01, c3=3.3333e-01, c4=-1.5708e+00, c5=3.1877e-01, c6=-4.5924e-08
+     train=8.81e-13  test=8.96e-13  ood=6.71e-12
+  15. [Mature] <<<FORMULA>>>c0*v + c1*sin(c2*t + c3) + c4*v**3 + c5*exp(c6*v**2)*sin(c2*t + c7)<<<END_FORMULA>>>
+     params: c0=-1.4532e+00, c1=4.5448e-02, c2=1.0000e+00, c3=4.9034e+00, c4=8.0723e-02, c5=1.0734e-01, c6=-2.2465e-05, c7=4.2870e-01
+     train=8.83e-13  test=8.96e-13  ood=6.72e-12
+  16. [Mature] <<<FORMULA>>>c0*sin(c1*t + c2) + c3*sin(c1*t + c4)**3 + c5*v*exp(c6*v**2) + c7*v**5<<<END_FORMULA>>>
+     params: c0=1.0626e-01, c1=1.0000e+00, c2=6.2832e+00, c3=1.6396e-08, c4=5.9990e-01, c5=-1.4532e+00, c6=-5.5574e-02, c7=4.3154e-03
+     train=8.83e-13  test=8.96e-13  ood=6.72e-12
+  17. [Mature] <<<FORMULA>>>c0*v + c1*v**3 + c2*sin(c3*t + c4)**3 + c5*sin(c3*t + c4) + c6*v*sin(c3*t + c7)<<<END_FORMULA>>>
+     params: c0=-1.4532e+00, c1=8.0702e-02, c2=-4.2503e-01, c3=3.3333e-01, c4=6.2832e+00, c5=3.1877e-01, c6=-1.7831e-08, c7=5.1091e+00
+     train=8.82e-13  test=8.96e-13  ood=6.72e-12
+  18. [Mature] <<<FORMULA>>>c0*v + c1*v**3 + c2*sin(c3*t + c4)**3 + c5*sin(c3*t + c4) + c6*v*cos(c3*t + c7)<<<END_FORMULA>>>
+     params: c0=-1.4532e+00, c1=8.0702e-02, c2=-4.2503e-01, c3=3.3333e-01, c4=6.2832e+00, c5=3.1877e-01, c6=-4.4690e-08, c7=-1.3330e+00
+     train=8.81e-13  test=8.97e-13  ood=6.72e-12
+  19. [Mature] <<<FORMULA>>>c0*v + c1*v**3 + c2*cos(c3*t + c4) + c5*t*v<<<END_FORMULA>>>
+     params: c0=-1.4532e+00, c1=8.0703e-02, c2=1.0626e-01, c3=1.0000e+00, c4=-1.5708e+00, c5=2.3173e-09
+     train=8.84e-13  test=8.97e-13  ood=6.73e-12
+  20. [Mature] <<<FORMULA>>>c0*v + c1*v**3 + c2*sin(c3*t + c4)**3 + c5*cos(c3*t + c4)<<<END_FORMULA>>>
+     params: c0=-1.4532e+00, c1=8.0830e-02, c2=-2.8879e-08, c3=1.0000e+00, c4=1.5708e+00, c5=-1.0626e-01
+     train=8.83e-13  test=8.97e-13  ood=6.72e-12
+  21. [Mature] <<<FORMULA>>>c0*v**2 + c1*v + c2*sin(c3*t + c4)**3 + c5 + c6*v**3 + c7*sin(c3*t + c4)<<<END_FORMULA>>>
+     params: c0=9.1147e-08, c1=-1.4532e+00, c2=-4.2503e-01, c3=3.3333e-01, c4=6.2832e+00, c5=-6.9337e-10, c6=8.0702e-02, c7=3.1877e-01
+     train=8.82e-13  test=8.97e-13  ood=6.72e-12
+  22. [Mature] <<<FORMULA>>>c0*v + c1*v**3 + c2*cos(c3*t + c4) + c5*v*sin(c3*t + c6)<<<END_FORMULA>>>
+     params: c0=-1.4532e+00, c1=8.0702e-02, c2=1.0626e-01, c3=1.0000e+00, c4=-1.5708e+00, c5=-3.0489e-08, c6=4.4713e+00
+     train=8.84e-13  test=8.97e-13  ood=6.72e-12
+  23. [Mature] <<<FORMULA>>>c0*v + c1 + c2*v**3 + c3*sin(c4*t + c5)<<<END_FORMULA>>>
+     params: c0=-1.4532e+00, c1=-5.3818e-10, c2=8.0703e-02, c3=1.0626e-01, c4=1.0000e+00, c5=6.2832e+00
+     train=8.84e-13  test=8.97e-13  ood=6.72e-12
+  24. [Mature] <<<FORMULA>>>c0*v + c1 + c2*v**3 + c3*cos(c4*t + c5)<<<END_FORMULA>>>
+     params: c0=-1.4532e+00, c1=-5.3818e-10, c2=8.0703e-02, c3=1.0626e-01, c4=1.0000e+00, c5=-1.5708e+00
+     train=8.84e-13  test=8.97e-13  ood=6.72e-12
+  25. [Mature] <<<FORMULA>>>c0*v + c1*v**3 + c2*cos(c3*t + c4)**3 + c5*cos(c3*t + c4) + c6*log(c7*exp(c8*v**2) + 1)<<<END_FORMULA>>>
+     params: c0=-1.4532e+00, c1=8.0702e-02, c2=-4.2503e-01, c3=3.3333e-01, c4=-1.5708e+00, c5=3.1877e-01, c6=-1.8461e-05, c7=6.4992e-05, c8=-1.7723e+03
+     train=8.82e-13  test=8.97e-13  ood=6.72e-12
+  26. [Mature] <<<FORMULA>>>c0*sin(c1*t + c2) + c3*sin(c4*v + c5)<<<END_FORMULA>>>
+     params: c0=1.0626e-01, c1=1.0000e+00, c2=6.2832e+00, c3=2.5174e+00, c4=5.7726e-01, c5=3.1416e+00
+     train=8.84e-13  test=8.97e-13  ood=6.72e-12
+  27. [Mature] <<<FORMULA>>>c0*sin(c1*v + c2) + c3*cos(c4*t + c5) + c6*v**3<<<END_FORMULA>>>
+     params: c0=-2.2042e+00, c1=6.5928e-01, c2=2.4373e-10, c3=-1.0626e-01, c4=1.0000e+00, c5=-4.7124e+00, c6=-2.4559e-02
+     train=8.84e-13  test=8.97e-13  ood=6.72e-12
+  28. [Mature] <<<FORMULA>>>c0*v**2 + c1*v + c2 + c3*v**3 + c4*sin(c5*t + c6)<<<END_FORMULA>>>
+     params: c0=5.3303e-08, c1=-1.4532e+00, c2=-6.3509e-10, c3=8.0703e-02, c4=1.0626e-01, c5=1.0000e+00, c6=6.2832e+00
+     train=8.84e-13  test=8.97e-13  ood=6.72e-12
+  29. [Mature] <<<FORMULA>>>c0*v**2 + c1*v + c2 + c3*v**3 + c4*cos(c5*t + c6)<<<END_FORMULA>>>
+     params: c0=5.3303e-08, c1=-1.4532e+00, c2=-6.3509e-10, c3=8.0703e-02, c4=1.0626e-01, c5=1.0000e+00, c6=-1.5708e+00
+     train=8.84e-13  test=8.97e-13  ood=6.72e-12
+  30. [Mature] <<<FORMULA>>>c0*v + c1*v**3 + c2*sin(c3*t + c4)**3 + c5*sin(c3*t + c4) + c6*v/(c7*v**2 + 1)<<<END_FORMULA>>>
+     params: c0=-1.4533e+00, c1=8.1338e-02, c2=-4.2503e-01, c3=3.3333e-01, c4=6.2832e+00, c5=3.1877e-01, c6=1.3323e-04, c7=4.8797e+00
+     train=8.82e-13  test=8.98e-13  ood=6.72e-12
+  31. [Mature] <<<FORMULA>>>c0*v + c1*v**3 + c2*cos(c3*t + c4)**3 + c5*cos(c3*t + c4) + c6*v**5<<<END_FORMULA>>>
+     params: c0=-1.4532e+00, c1=8.0688e-02, c2=-4.2503e-01, c3=3.3333e-01, c4=-1.5708e+00, c5=3.1877e-01, c6=3.0594e-03
+     train=8.82e-13  test=8.98e-13  ood=6.72e-12
+  32. [Mature] <<<FORMULA>>>c0*v + c1*v**3 + c2*cos(c3*t + c4) + c5*t*v**2<<<END_FORMULA>>>
+     params: c0=-1.4532e+00, c1=8.0703e-02, c2=-1.0626e-01, c3=1.0000e+00, c4=1.5708e+00, c5=-6.4648e-09
+     train=8.84e-13  test=8.98e-13  ood=6.72e-12
+  33. [Mature] <<<FORMULA>>>c0*v + c1*v**3 + c2*cos(c3*t + c4) + c5*cos(c6*exp(c7*v))<<<END_FORMULA>>>
+     params: c0=-1.4532e+00, c1=8.0710e-02, c2=1.0626e-01, c3=1.0000e+00, c4=-1.5708e+00, c5=-1.7329e-09, c6=7.6267e-01, c7=1.1144e+02
+     train=8.83e-13  test=8.98e-13  ood=6.72e-12
+  34. [Mature] <<<FORMULA>>>c0*v + c1*v**3 + c2*cos(c3*t + c4)**3 + c5*cos(c3*t + c4) + c6*v*Abs(v)<<<END_FORMULA>>>
+     params: c0=-1.4532e+00, c1=8.0737e-02, c2=-4.2503e-01, c3=3.3333e-01, c4=-1.5708e+00, c5=3.1877e-01, c6=-3.1670e-06
+     train=8.82e-13  test=8.98e-13  ood=6.72e-12
+  35. [Mature] <<<FORMULA>>>c0*v + c1*v**3 + c2*sin(c3*t + c4)**3 + c5*sin(c3*t + c4) + c6*v*Abs(v)<<<END_FORMULA>>>
+     params: c0=-1.4532e+00, c1=8.0737e-02, c2=-4.2503e-01, c3=3.3333e-01, c4=6.2832e+00, c5=3.1877e-01, c6=-3.1672e-06
+     train=8.82e-13  test=8.98e-13  ood=6.72e-12
+  36. [Mature] <<<FORMULA>>>c0*v + c1*v**3 + c2*sin(c3*t + c4)**3 + c5*sin(c3*t + c4) + c6*exp(c7*v**2)*sin(c3*t + c4)<<<END_FORMULA>>>
+     params: c0=-1.4532e+00, c1=8.0702e-02, c2=-4.2503e-01, c3=3.3333e-01, c4=6.2832e+00, c5=3.1877e-01, c6=-1.4989e-09, c7=-1.2844e+03
+     train=8.82e-13  test=8.98e-13  ood=6.72e-12
+  37. [Mature] <<<FORMULA>>>c0*v + c1*v**3 + c2*cos(c3*t + c4)**3 + c5*cos(c3*t + c4) + c6*t*v<<<END_FORMULA>>>
+     params: c0=-1.4532e+00, c1=8.0702e-02, c2=-4.2503e-01, c3=3.3333e-01, c4=5.2360e-01, c5=3.1877e-01, c6=2.5209e-09
+     train=8.82e-13  test=8.98e-13  ood=6.74e-12
+  38. [Mature] <<<FORMULA>>>c0*v + c1*v**3 + c2*v**3 + c3*cos(c4*t + c5)**3 + c6*cos(c4*t + c5) + c7*v<<<END_FORMULA>>>
+     params: c0=-7.2660e-01, c1=4.0351e-02, c2=4.0351e-02, c3=-4.2503e-01, c4=3.3333e-01, c5=-1.5708e+00, c6=3.1877e-01, c7=-7.2660e-01
+     train=8.82e-13  test=8.98e-13  ood=6.72e-12
+  39. [Mature] <<<FORMULA>>>c0*v + c1*v**3 + c2*v**3 + c3*sin(c4*t + c5) + c6*sin(c4*t + c5)**3 + c7*v<<<END_FORMULA>>>
+     params: c0=-7.2660e-01, c1=4.0351e-02, c2=4.0351e-02, c3=3.1877e-01, c4=3.3333e-01, c5=6.2832e+00, c6=-4.2503e-01, c7=-7.2660e-01
+     train=8.82e-13  test=8.98e-13  ood=6.72e-12
+  40. [Mature] <<<FORMULA>>>c0*v + c1*v**3 + c2*sin(c3*t + c4) + c5*sin(c3*t + c4)**3<<<END_FORMULA>>>
+     params: c0=-1.4532e+00, c1=8.0702e-02, c2=3.1877e-01, c3=3.3333e-01, c4=6.2832e+00, c5=-4.2503e-01
+     train=8.82e-13  test=8.98e-13  ood=6.72e-12
+  41. [Mature] <<<FORMULA>>>c0*v + c1*v**3 + c2*cos(c3*t + c4)**3 + c5*cos(c3*t + c4)<<<END_FORMULA>>>
+     params: c0=-1.4532e+00, c1=8.0702e-02, c2=-4.2503e-01, c3=3.3333e-01, c4=-1.5708e+00, c5=3.1877e-01
+     train=8.82e-13  test=8.98e-13  ood=6.72e-12
+  42. [Mature] <<<FORMULA>>>c0*v + c1*v**3 + c2*cos(c3*t + c4) + c5*log(c6*exp(c7*v**2) + 1)<<<END_FORMULA>>>
+     params: c0=-1.4532e+00, c1=8.0702e-02, c2=1.0626e-01, c3=1.0000e+00, c4=-1.5708e+00, c5=-8.0005e-10, c6=1.9201e+00, c7=-6.0454e+02
+     train=8.84e-13  test=8.98e-13  ood=6.72e-12
+  43. [Mature] <<<FORMULA>>>c0*v + c1*v**3 + c2*sin(c3*t + c4)**3 + c5*sin(c3*t + c4) + c6*v*cos(c3*t) + c7*v*sin(c3*t + c8)*cos(c3*t + c8)<<<END_FORMULA>>>
+     params: c0=-1.4532e+00, c1=8.0702e-02, c2=-4.2503e-01, c3=3.3333e-01, c4=6.2832e+00, c5=3.1877e-01, c6=-2.6150e-09, c7=-1.2998e-08, c8=4.4832e+00
+     train=8.82e-13  test=8.98e-13  ood=6.72e-12
+  44. [Mature] <<<FORMULA>>>c0*v + c1*sin(c2*t + c3)**3 + c4 + c5*v**3 + c6*sin(c2*t + c7)<<<END_FORMULA>>>
+     params: c0=-1.4532e+00, c1=-4.2503e-01, c2=3.3333e-01, c3=6.2832e+00, c4=-3.7657e-10, c5=8.0702e-02, c6=3.1877e-01, c7=6.2832e+00
+     train=8.81e-13  test=8.98e-13  ood=6.72e-12
+  45. [Mature] <<<FORMULA>>>c0*v + c1*v**3 + c2*cos(c3*t + c4) + c5*v/(c6*v**2 + 1)<<<END_FORMULA>>>
+     params: c0=-1.4532e+00, c1=8.0745e-02, c2=-1.0626e-01, c3=1.0000e+00, c4=-4.7124e+00, c5=7.5315e-07, c6=7.7633e+01
+     train=8.84e-13  test=8.98e-13  ood=6.72e-12
+  46. [Mature] <<<FORMULA>>>c0*v + c1*v**3 + c2*cos(c3*t + c4) + c5*v**5<<<END_FORMULA>>>
+     params: c0=-1.4532e+00, c1=8.0691e-02, c2=1.0626e-01, c3=1.0000e+00, c4=-1.5708e+00, c5=2.5287e-03
+     train=8.84e-13  test=8.98e-13  ood=6.72e-12
+  47. [Mature] <<<FORMULA>>>c0*v + c1*sin(c2*t + c3) + c4*v**3 + c5*v**5<<<END_FORMULA>>>
+     params: c0=-1.4532e+00, c1=-1.0626e-01, c2=1.0000e+00, c3=3.1416e+00, c4=8.0691e-02, c5=2.5287e-03
+     train=8.84e-13  test=8.98e-13  ood=6.72e-12
+  48. [Mature] <<<FORMULA>>>c0*sin(c1*t + c2) + c3*v*exp(c4*v**2) + c5*v**5<<<END_FORMULA>>>
+     params: c0=-1.0626e-01, c1=1.0000e+00, c2=3.1416e+00, c3=-1.4532e+00, c4=-5.5527e-02, c5=4.7692e-03
+     train=8.84e-13  test=8.98e-13  ood=6.72e-12
+  49. [Mature] <<<FORMULA>>>c0*sin(c1*t + c2) + c3*sin(c1*t + c4)**3 + c5*sin(c6*t + c7)**3 + c8*v + c9*v**3<<<END_FORMULA>>>
+     params: c0=1.0626e-01, c1=1.0000e+00, c2=2.1812e-08, c3=1.1779e-08, c4=4.8533e+00, c5=3.4324e-09, c6=5.6911e-01, c7=7.8673e-01, c8=-1.4532e+00, c9=8.0745e-02
+     train=8.81e-13  test=8.98e-13  ood=6.72e-12
+  50. [Mature] <<<FORMULA>>>c0*v + c1*v*Abs(v) + c2*sin(c3*t + c4) + c5*v**3<<<END_FORMULA>>>
+     params: c0=-1.4532e+00, c1=-3.1496e-06, c2=-1.0626e-01, c3=1.0000e+00, c4=3.1416e+00, c5=8.0738e-02
+     train=8.84e-13  test=8.98e-13  ood=6.72e-12
+  51. [Mature] <<<FORMULA>>>c0*v + c1*v*Abs(v) + c2*v**3 + c3*sin(c4*t + c5) + c6*v<<<END_FORMULA>>>
+     params: c0=-7.2660e-01, c1=-3.1496e-06, c2=8.0738e-02, c3=1.0626e-01, c4=1.0000e+00, c5=6.2832e+00, c6=-7.2660e-01
+     train=8.84e-13  test=8.98e-13  ood=6.72e-12
+  52. [Mature] <<<FORMULA>>>c0*v + c1*v**3 + c2*cos(c3*t + c4) + c5*v*Abs(v)<<<END_FORMULA>>>
+     params: c0=-1.4532e+00, c1=8.0738e-02, c2=-1.0626e-01, c3=1.0000e+00, c4=1.5708e+00, c5=-3.1496e-06
+     train=8.84e-13  test=8.98e-13  ood=6.72e-12
+  53. [Mature] <<<FORMULA>>>c0*v + c1*v**3 + c2*sin(c3*t + c4) + c5*v<<<END_FORMULA>>>
+     params: c0=-7.2660e-01, c1=8.0702e-02, c2=1.0626e-01, c3=1.0000e+00, c4=6.2832e+00, c5=-7.2660e-01
+     train=8.84e-13  test=8.98e-13  ood=6.72e-12
+  54. [Mature] <<<FORMULA>>>c0*cos(c1*t + c2) + c3*v + c4*v**3<<<END_FORMULA>>>
+     params: c0=-1.0626e-01, c1=1.0000e+00, c2=1.5708e+00, c3=-1.4532e+00, c4=8.0702e-02
+     train=8.84e-13  test=8.98e-13  ood=6.72e-12
+  55. [Mature] <<<FORMULA>>>c0*v + c1*v**3 + c2*sin(c3*t + c4)<<<END_FORMULA>>>
+     params: c0=-1.4532e+00, c1=8.0702e-02, c2=1.0626e-01, c3=1.0000e+00, c4=6.2832e+00
+     train=8.84e-13  test=8.98e-13  ood=6.72e-12
+  56. [Mature] <<<FORMULA>>>c0*v + c1*sin(c2*t + c3) + c4*v**3 + c5*sin(c2*t + c3)<<<END_FORMULA>>>
+     params: c0=-1.4532e+00, c1=5.3128e-02, c2=1.0000e+00, c3=6.2832e+00, c4=8.0702e-02, c5=5.3128e-02
+     train=8.84e-13  test=8.98e-13  ood=6.72e-12
+  57. [Mature] <<<FORMULA>>>c0*v + c1*v**3 + c2*cos(c3*t + c4) + c5*v**3<<<END_FORMULA>>>
+     params: c0=-1.4532e+00, c1=4.0351e-02, c2=1.0626e-01, c3=1.0000e+00, c4=-1.5708e+00, c5=4.0351e-02
+     train=8.84e-13  test=8.98e-13  ood=6.72e-12
+  58. [Mature] <<<FORMULA>>>c0*sin(c1*t + c2) + c3*v*exp(c4*v**2)<<<END_FORMULA>>>
+     params: c0=-1.0626e-01, c1=1.0000e+00, c2=3.1416e+00, c3=-1.4532e+00, c4=-5.5542e-02
+     train=8.84e-13  test=8.98e-13  ood=6.72e-12
+  59. [Mature] <<<FORMULA>>>c0*sin(c1*t + c2) + c3*sin(c1*t + c4)**3 + c5*v + c6*v**3 + c7*v**5<<<END_FORMULA>>>
+     params: c0=-3.1877e-01, c1=3.3333e-01, c2=1.0472e+00, c3=-4.2503e-01, c4=4.1888e+00, c5=-1.4532e+00, c6=8.0688e-02, c7=2.9900e-03
+     train=8.81e-13  test=8.98e-13  ood=6.72e-12
+  60. [Mature] <<<FORMULA>>>c0*sin(c1*t + c2) + c3*cos(c1*t + c4)**3 + c5*v + c6*v**3<<<END_FORMULA>>>
+     params: c0=-3.1877e-01, c1=3.3333e-01, c2=5.2360e+00, c3=-4.2503e-01, c4=5.2360e-01, c5=-1.4532e+00, c6=8.0702e-02
+     train=8.81e-13  test=8.99e-13  ood=6.72e-12
+  61. [Mature] <<<FORMULA>>>c0*sin(c1*t + c2) + c3*sin(c1*t + c4)**3 + c5*v*exp(c6*v**2) + c7*v**3<<<END_FORMULA>>>
+     params: c0=3.1877e-01, c1=3.3333e-01, c2=4.1888e+00, c3=-4.2503e-01, c4=4.1888e+00, c5=-1.4532e+00, c6=9.6855e-03, c7=9.4777e-02
+     train=8.81e-13  test=8.99e-13  ood=6.72e-12
+  62. [Mature] <<<FORMULA>>>c0*sin(c1*t + c2) + c3*sin(c1*t + c4)**3 + c5*v*exp(c6*v**2) + c7*v*Abs(v)<<<END_FORMULA>>>
+     params: c0=3.1877e-01, c1=3.3333e-01, c2=4.1888e+00, c3=-4.2503e-01, c4=4.1888e+00, c5=-1.4532e+00, c6=-5.5574e-02, c7=-4.2746e-06
+     train=8.81e-13  test=8.99e-13  ood=6.72e-12
+  63. [Mature] <<<FORMULA>>>c0*sin(c1*t + c2) + c3*sin(c1*t + c4)**3 + c5*v*exp(c6*v**2) + c7*cos(c1*t + c8)<<<END_FORMULA>>>
+     params: c0=-7.6745e+00, c1=3.3333e-01, c2=2.3822e+00, c3=-4.2503e-01, c4=4.1888e+00, c5=-1.4532e+00, c6=-5.5541e-02, c7=-7.6064e+00, c8=-2.2894e+00
+     train=8.81e-13  test=8.99e-13  ood=6.72e-12
+  64. [Mature] <<<FORMULA>>>c0*sin(c1*t + c2) + c3*sin(c1*t + c4)**3 + c5*v*exp(c6*v**2)<<<END_FORMULA>>>
+     params: c0=3.1877e-01, c1=3.3333e-01, c2=4.1888e+00, c3=-4.2503e-01, c4=4.1888e+00, c5=-1.4532e+00, c6=-5.5541e-02
+     train=8.81e-13  test=8.99e-13  ood=6.72e-12
+  65. [Mature] <<<FORMULA>>>c0*v + c1*v*Abs(v) + c2*sin(c3*t + c4) + c5*v**3 + c6*v**5<<<END_FORMULA>>>
+     params: c0=-1.4532e+00, c1=-1.4626e-05, c2=1.0626e-01, c3=1.0000e+00, c4=6.2832e+00, c5=8.0973e-02, c6=-2.3267e-02
+     train=8.84e-13  test=8.99e-13  ood=6.72e-12
+  66. [Mature] <<<FORMULA>>>c0*sin(c1*t + c2) + c3*sin(c1*t + c4)**3 + c5*v/(c6*v**2 + 1)<<<END_FORMULA>>>
+     params: c0=3.1877e-01, c1=3.3333e-01, c2=4.1888e+00, c3=-4.2503e-01, c4=4.1888e+00, c5=-1.4532e+00, c6=5.5548e-02
+     train=8.81e-13  test=8.99e-13  ood=6.72e-12
+  67. [Mature] <<<FORMULA>>>c0*sin(c1*t + c2) + c3*cos(c1*t + c4)**3 + c5*v*exp(c6*v**2) + c7*v + c8*v**3<<<END_FORMULA>>>
+     params: c0=3.1877e-01, c1=3.3333e-01, c2=6.2832e+00, c3=4.2503e-01, c4=1.5708e+00, c5=1.0293e-07, c6=-2.5662e+03, c7=-1.4532e+00, c8=8.0707e-02
+     train=8.81e-13  test=8.99e-13  ood=6.72e-12
+  68. [Mature] <<<FORMULA>>>c0*v + c1*v**3 + c2*sin(c3*t + c4)**3 + c5*sin(c3*t + c4) + c6*log(c7*exp(c8*v) + 1)<<<END_FORMULA>>>
+     params: c0=-1.4532e+00, c1=8.0702e-02, c2=4.2503e-01, c3=3.3333e-01, c4=5.2360e+00, c5=-3.1877e-01, c6=-1.6761e-10, c7=4.4525e+00, c8=-1.8882e+01
+     train=8.82e-13  test=8.99e-13  ood=6.73e-12
+  69. [Mature] <<<FORMULA>>>c0*v + c1*v**3 + c2*cos(c3*t + c4)**3 + c5*cos(c3*t + c4) + c6*v**3*sin(c3*t + c4)<<<END_FORMULA>>>
+     params: c0=-1.4532e+00, c1=8.0702e-02, c2=-4.2503e-01, c3=3.3333e-01, c4=5.2360e-01, c5=3.1877e-01, c6=-9.8130e-06
+     train=8.82e-13  test=8.99e-13  ood=6.73e-12
+  70. [Mature] <<<FORMULA>>>c0*v + c1*v**3 + c2*sin(c3*t + c4)**3 + c5*sin(c3*t + c4)**2*cos(c6*t + c7) + c8*sin(c3*t + c4)<<<END_FORMULA>>>
+     params: c0=-1.4532e+00, c1=8.0703e-02, c2=-4.2503e-01, c3=3.3333e-01, c4=4.1888e+00, c5=-2.9343e-07, c6=1.0427e-03, c7=-1.5795e+00, c8=3.1877e-01
+     train=8.81e-13  test=8.99e-13  ood=6.79e-12
+  71. [Mature] <<<FORMULA>>>c0*v + c1*v**3 + c2*sin(c3*t + c4)**3 + c5*sin(c3*t + c4) + c6*sin(c7*sin(c3*t + c4) + c8)<<<END_FORMULA>>>
+     params: c0=-1.4532e+00, c1=8.0702e-02, c2=4.2503e-01, c3=3.3333e-01, c4=1.0472e+00, c5=-3.1877e-01, c6=-6.0159e-09, c7=2.7286e+00, c8=3.7429e+00
+     train=8.81e-13  test=8.99e-13  ood=6.72e-12
+  72. [Mature] <<<FORMULA>>>c0*v + c1*v**3 + c2*cos(c3*t + c4)**3 + c5*cos(c3*t + c4) + c6*exp(c7*v**2)<<<END_FORMULA>>>
+     params: c0=-1.4532e+00, c1=8.0702e-02, c2=-4.2503e-01, c3=3.3333e-01, c4=5.2360e-01, c5=3.1877e-01, c6=-6.2348e-10, c7=-8.5150e+02
+     train=8.82e-13  test=8.99e-13  ood=6.73e-12
+  73. [Mature] <<<FORMULA>>>c0*v + c1*v**3 + c2*sin(c3*t + c4)**3 + c5*sin(c3*t + c4) + c6*v**2*sin(c3*t + c4)<<<END_FORMULA>>>
+     params: c0=-1.4532e+00, c1=8.0703e-02, c2=4.2503e-01, c3=3.3333e-01, c4=5.2360e+00, c5=-3.1877e-01, c6=7.2389e-07
+     train=8.82e-13  test=8.99e-13  ood=6.73e-12
+  74. [Mature] <<<FORMULA>>>c0*v + c1*v**3 + c2*cos(c3*t + c4)**3 + c5*cos(c3*t + c4) + c6*v**2*cos(c3*t + c4)<<<END_FORMULA>>>
+     params: c0=-1.4532e+00, c1=8.0703e-02, c2=-4.2503e-01, c3=3.3333e-01, c4=5.2360e-01, c5=3.1877e-01, c6=-7.2389e-07
+     train=8.82e-13  test=8.99e-13  ood=6.73e-12
+  75. [Mature] <<<FORMULA>>>c0*v + c1*v**3 + c2*sin(c3*t + c4)**3 + c5*sin(c3*t + c4) + c6*cos(c7*exp(c8*v))<<<END_FORMULA>>>
+     params: c0=-1.4532e+00, c1=8.0700e-02, c2=4.2503e-01, c3=3.3333e-01, c4=5.2360e+00, c5=-3.1877e-01, c6=-2.6335e-10, c7=9.1905e-01, c8=-6.4522e+01
+     train=8.82e-13  test=8.99e-13  ood=6.73e-12
+  76. [Mature] <<<FORMULA>>>c0*v*cos(c1*t) + c2*v*sin(c3 + c4*t) + c5*sin(c1*t + c6) + c7*v**3 + c8<<<END_FORMULA>>>
+     params: c0=3.1285e-08, c1=1.0000e+00, c2=1.4532e+00, c3=4.7120e+00, c4=2.6491e-05, c5=-1.0626e-01, c6=3.1416e+00, c7=8.0704e-02, c8=-2.7133e-10
+     train=8.81e-13  test=8.99e-13  ood=6.84e-12
+  77. [Mature] <<<FORMULA>>>c0*v + c1*v**3 + c2*sin(c3*t + c4)**3 + c5*sin(c3*t + c4) + c6*v**2*cos(c3*t + c4)<<<END_FORMULA>>>
+     params: c0=-1.4532e+00, c1=8.0702e-02, c2=-4.2503e-01, c3=3.3333e-01, c4=2.0944e+00, c5=3.1877e-01, c6=4.6863e-07
+     train=8.82e-13  test=8.99e-13  ood=6.72e-12
+  78. [Mature] <<<FORMULA>>>c0*v + c1*v**3 + c2*cos(c3*t + c4)**3 + c5*cos(c3*t + c4) + c6*v**2*sin(c3*t + c4)<<<END_FORMULA>>>
+     params: c0=-1.4532e+00, c1=8.0702e-02, c2=-4.2503e-01, c3=3.3333e-01, c4=5.2360e-01, c5=3.1877e-01, c6=-4.6863e-07
+     train=8.82e-13  test=8.99e-13  ood=6.72e-12
+  79. [Mature] <<<FORMULA>>>c0*v + c1*v**3 + c2*cos(c3*t + c4)**3 + c5*cos(c3*t + c4) + c6*v/(c7*v**2 + 1)<<<END_FORMULA>>>
+     params: c0=-1.4532e+00, c1=8.0792e-02, c2=-4.2503e-01, c3=3.3333e-01, c4=5.2360e-01, c5=3.1877e-01, c6=3.1061e-06, c7=3.3532e+01
+     train=8.82e-13  test=8.99e-13  ood=6.73e-12
+  80. [Mature] <<<FORMULA>>>c0*sin(c1*t + c2) + c3*sin(c1*t + c4)**3 + c5*v*exp(c6*v**2) + c7*sin(c8*t + c9)<<<END_FORMULA>>>
+     params: c0=1.0626e-01, c1=1.0000e+00, c2=4.1420e-08, c3=9.7315e-09, c4=5.4207e+00, c5=-1.4532e+00, c6=-5.5520e-02, c7=-3.0077e-09, c8=4.5299e-01, c9=1.7031e+00
+     train=8.81e-13  test=8.99e-13  ood=6.72e-12
+  81. [Mature] <<<FORMULA>>>c0*v*cos(c1*t) + c2*sin(c1*t + c3)**3 + c4*sin(c1*t + c3) + c5*v**3 + c6*v<<<END_FORMULA>>>
+     params: c0=-7.4417e-09, c1=3.3333e-01, c2=4.2503e-01, c3=5.2360e+00, c4=-3.1877e-01, c5=8.0702e-02, c6=-1.4532e+00
+     train=8.82e-13  test=9.00e-13  ood=6.73e-12
+  82. [Mature] <<<FORMULA>>>c0*v*sin(c1 + c2*t) + c3*sin(c4*t + c5) + c6*v**3 + c7*v**2*cos(c4*t + c8)<<<END_FORMULA>>>
+     params: c0=-1.4532e+00, c1=1.5703e+00, c2=2.8167e-05, c3=-1.0626e-01, c4=1.0000e+00, c5=3.1416e+00, c6=8.0198e-02, c7=-3.0554e-05, c8=9.0577e-01
+     train=8.81e-13  test=9.00e-13  ood=6.84e-12
+  83. [Mature] <<<FORMULA>>>c0*v**2*sin(c1*t + c2) + c3*cos(c1*t) + c4*cos(c5*t + c6) + c7*v + c8*v**3<<<END_FORMULA>>>
+     params: c0=-9.4348e-07, c1=2.6416e-01, c2=4.5653e+00, c3=-5.9972e-09, c4=-1.0626e-01, c5=1.0000e+00, c6=-4.7124e+00, c7=-1.4532e+00, c8=8.0700e-02
+     train=8.79e-13  test=9.00e-13  ood=6.74e-12
+  84. [Mature] <<<FORMULA>>>c0*sin(c1*t + c2) + c3*sin(c1*t + c4)**3 + c5*v*exp(c6*v**2) + c7*cos(c8*log(c9*t**2 + 1))<<<END_FORMULA>>>
+     params: c0=1.0626e-01, c1=1.0000e+00, c2=6.2832e+00, c3=3.6427e-08, c4=5.6180e+00, c5=-1.4532e+00, c6=-5.5430e-02, c7=4.7223e-09, c8=4.2205e+00, c9=2.3717e-03
+     train=8.77e-13  test=9.00e-13  ood=6.75e-12
+  85. [Mature] <<<FORMULA>>>c0*v + c1*v**3 + c2*cos(c3*t + c4)**3 + c5*cos(c3*t + c4) + c6*v*sin(c7*t + c8)<<<END_FORMULA>>>
+     params: c0=-1.4532e+00, c1=8.0699e-02, c2=-4.2503e-01, c3=3.3333e-01, c4=-1.5708e+00, c5=3.1877e-01, c6=5.8673e-08, c7=1.8042e+00, c8=3.3269e+00
+     train=8.80e-13  test=9.01e-13  ood=6.72e-12
+  86. [Mature] <<<FORMULA>>>c0*v + c1*v**3 + c2*cos(c3*t + c4) + c5*v*cos(c6*t + c7)<<<END_FORMULA>>>
+     params: c0=-1.4532e+00, c1=8.0704e-02, c2=-1.0626e-01, c3=1.0000e+00, c4=-4.7124e+00, c5=-7.3387e-07, c6=3.6241e-02, c7=-5.6721e-01
+     train=8.82e-13  test=9.01e-13  ood=6.82e-12
+  87. [Mature] <<<FORMULA>>>c0*sin(c1*t + c2) + c3*sin(c1*t + c4)**3 + c5*v*exp(c6*v**2) + c7*t*sin(c8*t + c9)<<<END_FORMULA>>>
+     params: c0=-1.0626e-01, c1=1.0000e+00, c2=3.1416e+00, c3=-1.9781e-08, c4=5.8081e+00, c5=-1.4532e+00, c6=-5.5598e-02, c7=2.2968e-10, c8=3.5401e-01, c9=1.7907e+00
+     train=8.76e-13  test=9.01e-13  ood=6.75e-12
+  88. [Mature] <<<FORMULA>>>c0*v + c1*v**3 + c2*sin(c3*t + c4)**3 + c5*sin(c3*t + c4)**5 + c6*sin(c3*t + c4)<<<END_FORMULA>>>
+     params: c0=-1.4532e+00, c1=8.0701e-02, c2=-2.1251e+00, c3=2.0000e-01, c4=6.2832e+00, c5=1.7001e+00, c6=5.3128e-01
+     train=8.78e-13  test=9.02e-13  ood=6.73e-12
+  89. [Mature] <<<FORMULA>>>c0*v + c1*v**3 + c2*cos(c3*t + c4) + c5*sin(c6*log(c7*t**2 + 1) + c8)<<<END_FORMULA>>>
+     params: c0=-1.4532e+00, c1=8.0700e-02, c2=1.0626e-01, c3=1.0000e+00, c4=-1.5708e+00, c5=-5.0310e-09, c6=2.6132e+00, c7=2.6943e-01, c8=1.5281e+00
+     train=8.78e-13  test=9.02e-13  ood=6.76e-12
+  90. [Mature] <<<FORMULA>>>c0*v + c1*v**3 + c2*cos(c3*t + c4) + c5*v**2*sin(c6*t + c7)<<<END_FORMULA>>>
+     params: c0=-1.4532e+00, c1=8.0703e-02, c2=-1.0626e-01, c3=1.0000e+00, c4=1.5708e+00, c5=1.2675e-06, c6=8.3079e-01, c7=5.5322e+00
+     train=8.82e-13  test=9.02e-13  ood=6.74e-12
+  91. [Mature] <<<FORMULA>>>c0*sin(c1*t + c2) + c3*sin(c1*t + c4)**3 + c5*v + c6*v**3 + c7*sin(c8*t + c9)<<<END_FORMULA>>>
+     params: c0=1.0626e-01, c1=1.0000e+00, c2=2.1469e-07, c3=-2.3854e-08, c4=1.6035e+00, c5=-1.4532e+00, c6=8.0805e-02, c7=-2.8645e-09, c8=1.1862e+00, c9=4.1900e-01
+     train=8.81e-13  test=9.02e-13  ood=6.74e-12
+  92. [Mature] <<<FORMULA>>>c0*v + c1*v**3 + c2*sin(c3*t + c4) + c5*cos(c3*t + c6) + c7*sin(c8*t + c9)<<<END_FORMULA>>>
+     params: c0=-1.4532e+00, c1=8.0702e-02, c2=1.1522e-10, c3=1.6243e-01, c4=8.4254e-01, c5=-4.8535e-09, c6=3.0557e+00, c7=-1.0626e-01, c8=1.0000e+00, c9=3.1416e+00
+     train=8.78e-13  test=9.03e-13  ood=6.76e-12
+  93. [Mature] <<<FORMULA>>>c0*v + c1*v**3 + c2*cos(c3*t + c4) + c5*sin(c6 + c7*t)<<<END_FORMULA>>>
+     params: c0=-1.4532e+00, c1=8.0702e-02, c2=-1.0626e-01, c3=1.0000e+00, c4=1.5708e+00, c5=-4.9395e-09, c6=4.6012e+00, c7=1.6287e-01
+     train=8.78e-13  test=9.03e-13  ood=6.76e-12
+  94. [Mature] <<<FORMULA>>>c0*v + c1*v**3 + c2*cos(c3*t + c4) + c5*cos(c6*t + c7)<<<END_FORMULA>>>
+     params: c0=-1.4532e+00, c1=8.0702e-02, c2=-1.0626e-01, c3=1.0000e+00, c4=-4.7124e+00, c5=-4.9344e-09, c6=1.6322e-01, c7=-3.2599e+00
+     train=8.78e-13  test=9.03e-13  ood=6.76e-12
+  95. [Mature] <<<FORMULA>>>c0*sin(c1*t + c2) + c3*sin(c1*t + c4)**3 + c5*v + c6*v**3 + c7*cos(c8*t + c9)<<<END_FORMULA>>>
+     params: c0=4.1487e-09, c1=8.1119e-01, c2=4.5816e-02, c3=2.8341e-09, c4=4.7668e+00, c5=-1.4532e+00, c6=8.0704e-02, c7=-1.0626e-01, c8=1.0000e+00, c9=-4.7124e+00
+     train=8.79e-13  test=9.06e-13  ood=6.77e-12
+  96. [Mature] <<<FORMULA>>>c0*v + c1*v**3 + c2*cos(c3*t + c4)**3 + c5*cos(c3*t + c4) + c6*t*cos(c3*t + c4)<<<END_FORMULA>>>
+     params: c0=-1.4532e+00, c1=8.0698e-02, c2=-4.2503e-01, c3=3.3333e-01, c4=5.2360e-01, c5=3.1877e-01, c6=5.7207e-10
+     train=8.75e-13  test=9.06e-13  ood=6.90e-12
+  97. [Mature] <<<FORMULA>>>c0*v + c1*v**3 + c2*cos(c3*t + c4)**3 + c5*cos(c3*t + c4) + c6*cos(c7*t + c8)<<<END_FORMULA>>>
+     params: c0=-1.4532e+00, c1=8.0701e-02, c2=1.6788e-08, c3=2.6514e-01, c4=-2.7029e+00, c5=-8.7123e-09, c6=-1.0626e-01, c7=1.0000e+00, c8=-4.7124e+00
+     train=8.75e-13  test=9.09e-13  ood=6.73e-12
+  98. [Mature] <<<FORMULA>>>c0*v + c1*v**3 + c2*cos(c3*t + c4)**3 + c5*cos(c3*t + c4) + c6*sin(c7*t + c8)<<<END_FORMULA>>>
+     params: c0=-1.4532e+00, c1=8.0697e-02, c2=-5.1284e-05, c3=4.3229e-03, c4=1.5016e+00, c5=1.7993e-07, c6=-1.0626e-01, c7=1.0000e+00, c8=3.1416e+00
+     train=8.74e-13  test=9.09e-13  ood=7.81e-12
+  99. [Mature] <<<FORMULA>>>c0*v**2*sin(c1*t + c2) + c3*cos(c1*t) + c4*v + c5*v**3 + c6*sin(c7*t + c8)<<<END_FORMULA>>>
+     params: c0=-2.8052e-06, c1=8.5272e-01, c2=4.1830e+00, c3=-9.9241e-09, c4=-1.4532e+00, c5=8.0699e-02, c6=-1.0626e-01, c7=1.0000e+00, c8=3.1416e+00
+     train=8.77e-13  test=9.10e-13  ood=6.86e-12
+  100. [Mature] <<<FORMULA>>>c0*v + c1*v**3 + c2*cos(c3*t + c4) + c5*exp(c6*sin(c7*t + c8))<<<END_FORMULA>>>
+     params: c0=-1.4532e+00, c1=8.0696e-02, c2=-1.0626e-01, c3=1.0000e+00, c4=1.5708e+00, c5=1.7692e-10, c6=-4.9982e+00, c7=1.3468e-01, c8=5.8181e+00
+     train=8.76e-13  test=9.11e-13  ood=7.60e-12
+============================================================
+
+============================================================
+Final search results
+============================================================
+Best expression     : c0*v*cos(c1*t) + c2*sin(c1*t + c3) + c4*v**3 + c5*v*sin(c1*t + c6)*cos(c1*t + c6) + c7*v + c8*t*v
+Structure desc      : top-level additive combination, contains transcendental functions sin/cos, contains powers, 4 additive terms, complex structure (depth 5)
+Fitted params       : c0=2.9042e-08, c1=1.0000e+00, c2=-1.0626e-01, c3=3.1416e+00, c4=8.0878e-02, c5=-6.4564e-07, c6=4.9956e+00, c7=-1.4532e+00, c8=2.7940e-09
+Train NMSE          : 8.82e-13
+Test NMSE           : 8.94e-13
+OOD Test NMSE       : 6.73e-12
+
+============================================================
+GT Equivalence Verification (PO3)
+============================================================
+GT: F0*sin(t) - beta*sin(v) - c0*beta*v
+Candidate formulas: 100
+
+I need to determine if any candidate formula can match the GT: `F0*sin(t) - beta*sin(v) - c0*beta*v`, which numerically is:
+
+`0.106257*sin(t) - 0.484397*sin(v) - 0.968794*v`
+
+The key components are:
+1. A `sin(t)` term (linear in t, no frequency parameter needed beyond 1)
+2. A `-sin(v)` term (sine of the variable v)
+3. A linear `-v` term
+
+The critical challenge is the `-beta*sin(v)` term. Most candidates don't have `sin(v)` — they have polynomial terms in v or `exp` terms in v.
+
+Let me check candidates that contain `sin(v)` or could produce it:
+
+**Candidate 11**: `c0*sin(c1*t + c2) + c3*sin(c1*t + c4)**3 + c5*sin(c6*v + c7)`
+- Set c6=1, c7=0: `c5*sin(v)` ✓
+- For the t part: `c0*sin(c1*t + c2) + c3*sin(c1*t + c4)**3`. With c1=1, this gives `c0*sin(t+c2) + c3*sin(t+c4)^3`. We need this to equal `0.106257*sin(t)`. Set c3=0 to kill the cubic term, then c0*sin(t+c2) with c2=0 gives `c0*sin(t)`. ✓
+- For v part: `c5*sin(v)` handles `-0.484397*sin(v)` ✓
+- But we're missing the linear `-0.968794*v` term! There's no `v` term available. ✗
+
+**Candidate 26**: `c0*sin(c1*t + c2) + c3*sin(c4*v + c5)`
+- Same issue — no linear v term. ✗
+
+**Candidate 27**: `c0*sin(c1*v + c2) + c3*cos(c4*t + c5) + c6*v**3`
+- `c0*sin(c1*v + c2)`: with c1=1, c2=0 gives `c0*sin(v)` ✓
+- `c3*cos(c4*t + c5)`: with c4=1, c5=-π/2 gives `c3*sin(t)` ✓
+- But only `v**3`, no linear `v` term. ✗
+
+Now, can any candidate approximate `-sin(v)` using available terms? The Taylor expansion: `-sin(v) ≈ -v + v³/6 - v⁵/120 + ...`
+
+So `-beta*sin(v) - 2*beta*v = -beta*(sin(v) + 2v) ≈ -beta*(3v - v³/6 + v⁵/120 - ...)`
+
+This is NOT a polynomial, so polynomial approximations won't be exact.
+
+**Candidate 58**: `c0*sin(c1*t + c2) + c3*v*exp(c4*v**2)`
+- `c3*v*exp(c4*v²)`: Can this equal `-0.484397*sin(v) - 0.968794*v`? No, `v*exp(c4*v²)` cannot equal `sin(v) + av` for all v.
+
+**Candidate 64**: `c0*sin(c1*t + c2) + c3*sin(c1*t + c4)**3 + c5*v*exp(c6*v**2)`
+- Same issue with the v-dependent part.
+
+None of the candidates contain both `sin(v)` (or equivalent) AND a linear `v` term. The candidates with `sin(v)` lack the linear term, and the candidates with polynomial/exponential v terms cannot exactly reproduce `sin(v)`.
+
+Let me double-check candidate 11 more carefully — could the sin³ term somehow help? No, it's sin of t, not v.
+
+After thorough analysis, no candidate can exactly match the GT because the GT requires both `sin(v)` and a linear `v` term, and no candidate provides both.
+
+[NO MATCH]
+
+Conclusion: No match
+============================================================
+
+GT Equivalence Verification (PO3)
+============================================================
+GT: F0*sin(t) - beta*sin(v) - c0*beta*v
+Candidates evaluated: 100
+Matched candidate IDs: []
+Matched candidates: []
+
+I need to determine which candidates can be made equivalent to the Ground Truth:
+
+**GT: F0*sin(t) - beta*sin(v) - c0*beta*v = 0.106257*sin(t) - 0.484397*sin(v) - 0.968794*v**
+
+The key components are:
+1. A term proportional to `sin(t)` 
+2. A term proportional to `sin(v)` (the Taylor series: v - v³/6 + v⁵/120 - ...)
+3. A term proportional to `v`
+
+Combined, the v-dependent part is: `-0.484397*sin(v) - 0.968794*v = -0.484397*(v - v³/6 + v⁵/120 - ...) - 0.968794*v = -1.453191*v + 0.080733*v³ - 0.004037*v⁵ + ...`
+
+This is **not** a polynomial in v — it's `sin(v)` plus a linear term. So candidates using polynomial approximations (v, v³, v⁵) cannot be exact matches unless they reproduce the full infinite series.
+
+Let me check candidates that contain `sin(v)`:
+
+**Candidate 26:** `c0*sin(c1*t + c2) + c3*sin(c4*v + c5)`
+Set c1=1, c2=0, c0=0.106257, c4=1, c5=0, c3=-0.484397. This gives 0.106257*sin(t) - 0.484397*sin(v). But we're missing the -0.968794*v term. We can't get a linear v term from this. **NO MATCH**
+
+**Candidate 27:** `c0*sin(c1*v + c2) + c3*cos(c4*t + c5) + c6*v**3`
+This has sin(c1*v + c2) + cos in t + v³. Set c1=1, c2=0, c0=-0.484397 gives -0.484397*sin(v). Set c4=1, c5=pi/2 gives c3*cos(t+pi/2) = -c3*sin(t), so c3=-0.106257. But we need -0.968794*v and this candidate has v³ but no standalone v term. **NO MATCH**
+
+**Candidate 11:** `c0*sin(c1*t + c2) + c3*sin(c1*t + c4)**3 + c5*sin(c6*v + c7)`
+The t-dependent part: c0*sin(t+c2) + c3*sin(t+c4)³. This can represent sin(t) with appropriate constants. The v part: c5*sin(c6*v + c7). This gives sin(v) but no standalone linear v term. **NO MATCH**
+
+Now, candidates with `v*exp(c*v²)`: The function v*exp(c*v²) for c<0 is NOT equal to sin(v) for all v. **These cannot match.**
+
+Candidates with polynomial v terms (v, v³, v⁵) cannot exactly reproduce sin(v) which requires an infinite series.
+
+Candidates with `v*Abs(v)` — this is an even-parity-breaking term, not equivalent to sin(v).
+
+Candidates with `v/(c*v²+1)` — rational function, not sin(v).
+
+**No candidate contains both sin(v) (or equivalent) AND sin(t) AND a linear v term.**
+
+Let me verify there's no clever way to get sin(v) from other constructions... None of the candidates have sin(v) combined with a linear v term and sin(t).
+
+After careful analysis of all 100 candidates, none can exactly reproduce the GT expression `-0.968794*v + 0.106257*sin(t) - 0.484397*sin(v)` because none contain the necessary `sin(v)` combined with a linear `v` term and `sin(t)`.
+
+Candidate 1-100 verdict: [NO MATCH] for all.
+
+Candidate 1 verdict: [NO MATCH]
+Candidate 2 verdict: [NO MATCH]
+Candidate 3 verdict: [NO MATCH]
+Candidate 4 verdict: [NO MATCH]
+Candidate 5 verdict: [NO MATCH]
+Candidate 6 verdict: [NO MATCH]
+Candidate 7 verdict: [NO MATCH]
+Candidate 8 verdict: [NO MATCH]
+Candidate 9 verdict: [NO MATCH]
+Candidate 10 verdict: [NO MATCH]
+Candidate 11 verdict: [NO MATCH]
+Candidate 12 verdict: [NO MATCH]
+Candidate 13 verdict: [NO MATCH]
+Candidate 14 verdict: [NO MATCH]
+Candidate 15 verdict: [NO MATCH]
+Candidate 16 verdict: [NO MATCH]
+Candidate 17 verdict: [NO MATCH]
+Candidate 18 verdict: [NO MATCH]
+Candidate 19 verdict: [NO MATCH]
+Candidate 20 verdict: [NO MATCH]
+Candidate 21 verdict: [NO MATCH]
+Candidate 22 verdict: [NO MATCH]
+Candidate 23 verdict: [NO MATCH]
+Candidate 24 verdict: [NO MATCH]
+Candidate 25 verdict: [NO MATCH]
+Candidate 26 verdict: [NO MATCH]
+Candidate 27 verdict: [NO MATCH]
+Candidate 28 verdict: [NO MATCH]
+Candidate 29 verdict: [NO MATCH]
+Candidate 30 verdict: [NO MATCH]
+Candidate 31 verdict: [NO MATCH]
+Candidate 32 verdict: [NO MATCH]
+Candidate 33 verdict: [NO MATCH]
+Candidate 34 verdict: [NO MATCH]
+Candidate 35 verdict: [NO MATCH]
+Candidate 36 verdict: [NO MATCH]
+Candidate 37 verdict: [NO MATCH]
+Candidate 38 verdict: [NO MATCH]
+Candidate 39 verdict: [NO MATCH]
+Candidate 40 verdict: [NO MATCH]
+Candidate 41 verdict: [NO MATCH]
+Candidate 42 verdict: [NO MATCH]
+Candidate 43 verdict: [NO MATCH]
+Candidate 44 verdict: [NO MATCH]
+Candidate 45 verdict: [NO MATCH]
+Candidate 46 verdict: [NO MATCH]
+Candidate 47 verdict: [NO MATCH]
+Candidate 48 verdict: [NO MATCH]
+Candidate 49 verdict: [NO MATCH]
+Candidate 50 verdict: [NO MATCH]
+Candidate 51 verdict: [NO MATCH]
+Candidate 52 verdict: [NO MATCH]
+Candidate 53 verdict: [NO MATCH]
+Candidate 54 verdict: [NO MATCH]
+Candidate 55 verdict: [NO MATCH]
+Candidate 56 verdict: [NO MATCH]
+Candidate 57 verdict: [NO MATCH]
+Candidate 58 verdict: [NO MATCH]
+Candidate 59 verdict: [NO MATCH]
+Candidate 60 verdict: [NO MATCH]
+Candidate 61 verdict: [NO MATCH]
+Candidate 62 verdict: [NO MATCH]
+Candidate 63 verdict: [NO MATCH]
+Candidate 64 verdict: [NO MATCH]
+Candidate 65 verdict: [NO MATCH]
+Candidate 66 verdict: [NO MATCH]
+Candidate 67 verdict: [NO MATCH]
+Candidate 68 verdict: [NO MATCH]
+Candidate 69 verdict: [NO MATCH]
+Candidate 70 verdict: [NO MATCH]
+Candidate 71 verdict: [NO MATCH]
+Candidate 72 verdict: [NO MATCH]
+Candidate 73 verdict: [NO MATCH]
+Candidate 74 verdict: [NO MATCH]
+Candidate 75 verdict: [NO MATCH]
+Candidate 76 verdict: [NO MATCH]
+Candidate 77 verdict: [NO MATCH]
+Candidate 78 verdict: [NO MATCH]
+Candidate 79 verdict: [NO MATCH]
+Candidate 80 verdict: [NO MATCH]
+Candidate 81 verdict: [NO MATCH]
+Candidate 82 verdict: [NO MATCH]
+Candidate 83 verdict: [NO MATCH]
+Candidate 84 verdict: [NO MATCH]
+Candidate 85 verdict: [NO MATCH]
+Candidate 86 verdict: [NO MATCH]
+Candidate 87 verdict: [NO MATCH]
+Candidate 88 verdict: [NO MATCH]
+Candidate 89 verdict: [NO MATCH]
+Candidate 90 verdict: [NO MATCH]
+Candidate 91 verdict: [NO MATCH]
+Candidate 92 verdict: [NO MATCH]
+Candidate 93 verdict: [NO MATCH]
+Candidate 94 verdict: [NO MATCH]
+Candidate 95 verdict: [NO MATCH]
+Candidate 96 verdict: [NO MATCH]
+Candidate 97 verdict: [NO MATCH]
+Candidate 98 verdict: [NO MATCH]
+Candidate 99 verdict: [NO MATCH]
+Candidate 100 verdict: [NO MATCH]
+
+Matched candidate IDs: []
+
+[NO MATCH]
+
+Conclusion: No match
+============================================================
+

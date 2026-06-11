@@ -1,0 +1,83 @@
+=== Verification Report for MatSci0 ===
+Target File: matsci/MatSci0/openevolve_output/best/best_program.py
+--------------------------------------------------
+[verify] Equation name: MatSci0
+[verify] GT symbolic expression: c0*epsilon*(-c1*(T - c2) + c3) - c4*(T - c5) + epsilon**c6*c7*(T - c8)
+[verify] Feature variables: epsilon;T
+[verify] Processing 1 candidate Python snippet(s)
+[verify] Calling LLM for equivalence check...
+[LLMClient] Requests mode, URL: https://llm-gateway.example.com/api/google/v1/publishers/anthropic/models/claude-opus-4-6:rawPredict, model: claude-opus-4-6
+[API Warning] Empty response received. Full response: {'model': 'claude-opus-4-6', 'id': 'msg_vrtx_01HvNw3Q2iiebHU6HQpf7cLe', 'type': 'message', 'role': 'assistant', 'content': [{'type': 'text', 'text': "# Analysis of Candidate 1\n\n## Step 1: Translate the Ground Truth\n\nThe GT expression (with constants substituted):\n\n$$\\sigma = 31.12 \\cdot \\epsilon \\cdot (-0.05295(T - 316.19) + 1) - 0.2255(T - 316.19) + 3.629 \\cdot \\epsilon^{0.5976} \\cdot (T - 316.19)$$\n\nLet me expand this:\n\n$$\\sigma = 31.12 \\cdot \\epsilon \\cdot (1 - 0.05295T + 16.74) - 0.2255T + 0.2255 \\cdot 316.19 + 3.629 \\cdot \\epsilon^{0.5976} \\cdot T - 3.629 \\cdot 316.19 \\cdot \\epsilon^{0.5976}$$\n\nWait, let me be more careful:\n\n$$\\sigma = 31.12\\epsilon(1 - 0.05295(T - 316.19)) - 0.2255(T - 316.19) + 3.629\\epsilon^{0.5976}(T - 316.19)$$\n\nExpanding:\n- Term 1: $31.12\\epsilon - 31.12 \\cdot 0.05295 \\cdot \\epsilon \\cdot T + 31.12 \\cdot 0.05295 \\cdot 316.19 \\cdot \\epsilon$\n  $= 31.12\\epsilon - 1.6478\\epsilon T + 521.0\\epsilon$\n  $= 552.12\\epsilon - 1.6478\\epsilon T$\n\n- Term 2: $-0.2255T + 71.30$\n\n- Term 3: $3.629\\epsilon^{0.5976}T - 1147.4\\epsilon^{0.5976}$\n\nSo the GT has basis functions: $\\epsilon$, $\\epsilon T$, $T$, constant, $\\epsilon^{0.5976}T$, $\\epsilon^{0.5976}$.\n\n## Step 2: Translate the Candidate Code\n\nThe candidate computes (assuming $\\epsilon \\geq 0$ so $|eps| = eps$, $sgn = 1$):\n\n$$\\text{strain\\_term} = p_0\\epsilon + p_1\\epsilon^n + p_6\\tanh(k\\epsilon)$$\n\nwhere $n = p_2^2 + 0.01$, $k = p_5^2 + 0.01$.\n\n$$\\text{thermal\\_mult} = 1 + p_3 T + p_4 T^2 \\cdot 10^{-4}$$\n\n$$\\text{result} = \\text{strain\\_term} \\cdot \\text{thermal\\_mult} + p_7\\epsilon^{0.5}T + p_8\\epsilon T^2 \\cdot 10^{-3} + p_9 T$$\n\n## Step 3: Check for Equivalence\n\nThe GT has basis functions: $\\epsilon$, $\\epsilon T$, $T$, $1$ (constant), $\\epsilon^{0.5976}T$, $\\epsilon^{0.5976}$.\n\nThe candidate has:\n- From strain_term × thermal_mult: terms involving $\\epsilon$, $\\epsilon T$, $\\epsilon T^2$, $\\epsilon^n$, $\\epsilon^n T$, $\\epsilon^n T^2$, $\\tanh(k\\epsilon)$, $\\tanh(k\\epsilon)T$, $\\tanh(k\\epsilon)T^2$\n- Additional: $\\epsilon^{0.5}T$, $\\epsilon T^2$, $T$\n\n**Key issues:**\n\n1. **The GT has $\\epsilon^{0.5976}$ terms**, but the candidate only has $\\epsilon^{0.5}$ (fixed exponent). The exponent $n$ from the power term could be set to 0.5976, but then $\\epsilon^n$ gets multiplied by thermal_mult which introduces $\\epsilon^{0.5976}$, $\\epsilon^{0.5976}T$, and $\\epsilon^{0.5976}T^2$. The $T^2$ term is unwanted — we'd need $p_4 = 0$ to eliminate it. With $p_4 = 0$, we get $\\epsilon^{0.5976}(1 + p_3 T)$, which gives $\\epsilon^{0.5976}$ and $\\epsilon^{0.5976}T$. ✓\n\n2. **The $\\tanh(k\\epsilon)$ term** cannot be expressed as a polynomial in $\\epsilon$. Setting $p_6 = 0$ eliminates it. ✓\n\n3. **The $\\epsilon^{0.5}T$ term** ($p_7\\epsilon^{0.5}T$) — the GT doesn't have $\\epsilon^{0.5}T$, it has $\\epsilon^{0.5976}T$. Set $p_7 = 0$. ✓\n\n4. **Constant term**: The GT has a constant. The candidate has no standalone constant term (no parameter that's just added). The candidate has $p_9 T$ but no constant. The GT requires a constant ~71.30. **There's no way to generate a constant term in the candidate.**\n\n5. **$\\epsilon T^2$ terms** appear in the candidate but not GT. Set $p_8 = 0$ and $p_4 = 0$. ✓\n\nThe candidate **cannot produce a standalone constant term**, which the GT requires. This is a fundamental mismatch.\n\n[NO MATCH]"}], 'stop_reason': 'end_turn', 'stop_sequence': None, 'stop_details': None, 'usage': {'input_tokens': 1760, 'cache_creation_input_tokens': 0, 'cache_read_input_tokens': 0, 'cache_creation': {'ephemeral_5m_input_tokens': 0, 'ephemeral_1h_input_tokens': 0}, 'output_tokens': 1404}}
+
+============================================================
+GT Equivalence Verification (MatSci0)
+============================================================
+GT: c0*epsilon*(-c1*(T - c2) + c3) - c4*(T - c5) + epsilon**c6*c7*(T - c8)
+Candidate snippets: 1
+
+# Analysis of Candidate 1
+
+## Step 1: Translate the Ground Truth
+
+The GT expression (with constants substituted):
+
+$$\sigma = 31.12 \cdot \epsilon \cdot (-0.05295(T - 316.19) + 1) - 0.2255(T - 316.19) + 3.629 \cdot \epsilon^{0.5976} \cdot (T - 316.19)$$
+
+Let me expand this:
+
+$$\sigma = 31.12 \cdot \epsilon \cdot (1 - 0.05295T + 16.74) - 0.2255T + 0.2255 \cdot 316.19 + 3.629 \cdot \epsilon^{0.5976} \cdot T - 3.629 \cdot 316.19 \cdot \epsilon^{0.5976}$$
+
+Wait, let me be more careful:
+
+$$\sigma = 31.12\epsilon(1 - 0.05295(T - 316.19)) - 0.2255(T - 316.19) + 3.629\epsilon^{0.5976}(T - 316.19)$$
+
+Expanding:
+- Term 1: $31.12\epsilon - 31.12 \cdot 0.05295 \cdot \epsilon \cdot T + 31.12 \cdot 0.05295 \cdot 316.19 \cdot \epsilon$
+  $= 31.12\epsilon - 1.6478\epsilon T + 521.0\epsilon$
+  $= 552.12\epsilon - 1.6478\epsilon T$
+
+- Term 2: $-0.2255T + 71.30$
+
+- Term 3: $3.629\epsilon^{0.5976}T - 1147.4\epsilon^{0.5976}$
+
+So the GT has basis functions: $\epsilon$, $\epsilon T$, $T$, constant, $\epsilon^{0.5976}T$, $\epsilon^{0.5976}$.
+
+## Step 2: Translate the Candidate Code
+
+The candidate computes (assuming $\epsilon \geq 0$ so $|eps| = eps$, $sgn = 1$):
+
+$$\text{strain\_term} = p_0\epsilon + p_1\epsilon^n + p_6\tanh(k\epsilon)$$
+
+where $n = p_2^2 + 0.01$, $k = p_5^2 + 0.01$.
+
+$$\text{thermal\_mult} = 1 + p_3 T + p_4 T^2 \cdot 10^{-4}$$
+
+$$\text{result} = \text{strain\_term} \cdot \text{thermal\_mult} + p_7\epsilon^{0.5}T + p_8\epsilon T^2 \cdot 10^{-3} + p_9 T$$
+
+## Step 3: Check for Equivalence
+
+The GT has basis functions: $\epsilon$, $\epsilon T$, $T$, $1$ (constant), $\epsilon^{0.5976}T$, $\epsilon^{0.5976}$.
+
+The candidate has:
+- From strain_term × thermal_mult: terms involving $\epsilon$, $\epsilon T$, $\epsilon T^2$, $\epsilon^n$, $\epsilon^n T$, $\epsilon^n T^2$, $\tanh(k\epsilon)$, $\tanh(k\epsilon)T$, $\tanh(k\epsilon)T^2$
+- Additional: $\epsilon^{0.5}T$, $\epsilon T^2$, $T$
+
+**Key issues:**
+
+1. **The GT has $\epsilon^{0.5976}$ terms**, but the candidate only has $\epsilon^{0.5}$ (fixed exponent). The exponent $n$ from the power term could be set to 0.5976, but then $\epsilon^n$ gets multiplied by thermal_mult which introduces $\epsilon^{0.5976}$, $\epsilon^{0.5976}T$, and $\epsilon^{0.5976}T^2$. The $T^2$ term is unwanted — we'd need $p_4 = 0$ to eliminate it. With $p_4 = 0$, we get $\epsilon^{0.5976}(1 + p_3 T)$, which gives $\epsilon^{0.5976}$ and $\epsilon^{0.5976}T$. ✓
+
+2. **The $\tanh(k\epsilon)$ term** cannot be expressed as a polynomial in $\epsilon$. Setting $p_6 = 0$ eliminates it. ✓
+
+3. **The $\epsilon^{0.5}T$ term** ($p_7\epsilon^{0.5}T$) — the GT doesn't have $\epsilon^{0.5}T$, it has $\epsilon^{0.5976}T$. Set $p_7 = 0$. ✓
+
+4. **Constant term**: The GT has a constant. The candidate has no standalone constant term (no parameter that's just added). The candidate has $p_9 T$ but no constant. The GT requires a constant ~71.30. **There's no way to generate a constant term in the candidate.**
+
+5. **$\epsilon T^2$ terms** appear in the candidate but not GT. Set $p_8 = 0$ and $p_4 = 0$. ✓
+
+The candidate **cannot produce a standalone constant term**, which the GT requires. This is a fundamental mismatch.
+
+[NO MATCH]
+
+Conclusion: No match
+============================================================
+

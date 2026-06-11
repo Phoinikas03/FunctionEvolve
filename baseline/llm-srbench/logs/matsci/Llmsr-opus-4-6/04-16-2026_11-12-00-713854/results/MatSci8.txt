@@ -1,0 +1,75 @@
+
+============================================================
+GT Equivalence Verification (MatSci8)
+============================================================
+GT: c0*epsilon*(-c1*(T - c2) + c3) + epsilon**c4*c5*(T - c6)
+Candidates evaluated: 1
+
+# Analysis of Candidate 1
+
+## Ground Truth (GT) Simplified
+
+Let me first simplify the GT expression:
+
+$$\text{GT} = 23.788 \cdot \epsilon \cdot (-0.05042(T - 330.2) + 1) + 5.2295 \cdot \epsilon^{0.9585} \cdot (T - 330.2)$$
+
+Let me expand this:
+$$= 23.788 \cdot \epsilon \cdot (1 - 0.05042T + 0.05042 \cdot 330.2) + 5.2295 \cdot \epsilon^{0.9585} \cdot (T - 330.2)$$
+$$= 23.788 \cdot \epsilon \cdot (1 + 16.646 - 0.05042T) + 5.2295 \cdot \epsilon^{0.9585} \cdot (T - 330.2)$$
+$$= 23.788 \cdot \epsilon \cdot (17.646 - 0.05042T) + 5.2295 \cdot \epsilon^{0.9585} \cdot (T - 330.2)$$
+
+The GT has these basis function components:
+- $\epsilon$ (linear in epsilon)
+- $\epsilon \cdot T$ (cross term)
+- $\epsilon^{0.9585} \cdot T$ (fractional power times T)
+- $\epsilon^{0.9585}$ (fractional power alone)
+
+## Candidate 1 Analysis
+
+The candidate implements:
+$$\sigma = \left[E\epsilon + B \cdot \text{sign}(\epsilon)(1 - e^{-k|\epsilon|}) + C \cdot \text{sign}(\epsilon) \cdot |\epsilon|^n\right] \cdot \text{thermal\_factor} + \alpha \cdot (T - T_{ref})$$
+
+This involves:
+1. **Exponential terms** in $\epsilon$: $(1 - e^{-k|\epsilon|})$ — this is fundamentally non-polynomial in $\epsilon$
+2. **Piecewise thermal factor** with `np.clip` and `np.where` — this creates a piecewise function
+3. **Johnson-Cook style** thermal softening with $(T^*)^m$ terms
+
+### Key structural differences:
+
+The GT is a **polynomial-like** expression in $\epsilon$ and $T$ (with fractional powers of $\epsilon$). Specifically:
+- GT has terms: $\epsilon$, $\epsilon T$, $\epsilon^{0.9585}$, $\epsilon^{0.9585} T$
+
+The candidate has:
+- An exponential term $e^{-k|\epsilon|}$ which cannot be reduced to polynomial/power-law form
+- A piecewise thermal factor involving clipping and conditional branches
+- The thermal factor multiplies the entire strain term, creating complex cross-products
+
+**Can we zero out the exponential?** If we set $B = 0$, the strain term becomes:
+$$E\epsilon + C \cdot \text{sign}(\epsilon) \cdot |\epsilon|^n$$
+
+For $\epsilon \geq 0$ (domain constraint), this becomes $E\epsilon + C\epsilon^n$.
+
+The thermal factor for the relevant temperature range: if we can arrange $T_{\text{scale}}$ to be very large, then $T^* \approx 0$ and $\text{thermal\_factor} \approx 1$. But then we lose the $\epsilon \cdot T$ coupling that GT requires.
+
+Alternatively, if $m = 1$: thermal_factor = $1 - (T - T_{ref})/T_{scale}$, and the output becomes:
+$$(E\epsilon + C\epsilon^n)(1 - (T-T_{ref})/T_{scale}) + \alpha(T - T_{ref})$$
+
+Expanding: $E\epsilon - E\epsilon(T-T_{ref})/T_{scale} + C\epsilon^n - C\epsilon^n(T-T_{ref})/T_{scale} + \alpha(T-T_{ref})$
+
+This gives basis functions: $\epsilon$, $\epsilon T$, $\epsilon^n$, $\epsilon^n T$, $T$, and constants.
+
+The GT has: $\epsilon$, $\epsilon T$, $\epsilon^{0.9585}$, $\epsilon^{0.9585} T$ — **no standalone $T$ term or constant term**.
+
+The candidate has an $\alpha(T - T_{ref})$ term that is independent of $\epsilon$. The GT has no such term. We could set $\alpha = 0$, but then we need the $\epsilon^n T$ term to match $\epsilon^{0.9585} T$, which works with $n = 0.9585$.
+
+With $\alpha = 0$, $B = 0$, $m = 1$, $n = 0.9585$, and appropriate clipping behavior (assuming temperatures are in the valid range), the candidate becomes:
+$$(E\epsilon + C\epsilon^{0.9585})(1 - (T-T_{ref})/T_{scale})$$
+
+This gives: $E\epsilon + C\epsilon^{0.9585} - (E/T_{scale})\epsilon(T-T_{ref}) - (C/T_{scale})\epsilon^{0.9585}(T-T_{ref})$
+
+The ratio of coefficients for $\epsilon$ vs $\epsilon T$ and $\epsilon^{0.9585}$ vs $\epsilon^{0.9585}T$ are **locked** (both divided by same $T_{scale}$). In the GT, these ratios are different. Checking: GT ratio for $\epsilon$ terms: $-0.05042$; GT ratio for $\epsilon^{0.9585}$ terms: the coefficient of $\epsilon^{0.9585}$ alone is $-5.2295 \times 330.2 = -1726.8$ and of $\epsilon^{0.9585}T$ is $5.2295$, giving ratio $5.2295/(-1726.8) \neq -0.05042$. The ratios don't match, so this structure **cannot** reproduce the GT.
+
+[NO MATCH]
+
+Conclusion: No match
+============================================================

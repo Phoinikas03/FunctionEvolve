@@ -1,0 +1,146 @@
+=== Verification Report for MatSci5 ===
+Target File: matsci/MatSci5/openevolve_output/best/best_program.py
+--------------------------------------------------
+[verify] Equation name: MatSci5
+[verify] GT symbolic expression: c0*epsilon*(-c1*(T - c2) + c3) + c4*epsilon**c5*exp(-c6/(c7*T)) + epsilon**c8*c9*(T - c10)
+[verify] Feature variables: epsilon;T
+[verify] Processing 1 candidate Python snippet(s)
+[verify] Calling LLM for equivalence check...
+[LLMClient] Requests mode, URL: https://llm-gateway.example.com/api/google/v1/publishers/anthropic/models/claude-opus-4-6:rawPredict, model: claude-opus-4-6
+[API Warning] Empty response received. Full response: {'model': 'claude-opus-4-6', 'id': 'msg_vrtx_014zj1QgHAvaoXEwTbq7DMhk', 'type': 'message', 'role': 'assistant', 'content': [{'type': 'text', 'text': "# Analysis of Candidate 1\n\n## Step 1: Translate the Ground Truth\n\nThe GT expression is:\n$$\\sigma = 61.35 \\cdot \\epsilon \\cdot (-0.05077(T - 278.15) + 1) + 98.58 \\cdot \\epsilon^{0.3178} \\cdot e^{-49.46/(8.314T)} + 2.304 \\cdot \\epsilon^{1.450} \\cdot (T - 278.15)$$\n\nThis consists of three terms:\n1. A linear-in-ε term with linear T dependence\n2. A fractional power of ε times an Arrhenius exponential in T\n3. A power of ε times linear T dependence\n\n## Step 2: Translate the Candidate Code\n\nLet me trace through the code carefully:\n\n```python\neps = x[:, 0]  # epsilon\nT = x[:, 1]    # T\n\neps_abs = |eps| + 1e-12  ≈ eps (for eps ≥ 0)\nn_exp = clip(params[4], 0.01, 5.0)\n\npower_term = eps^n_exp\n\neffective_rate = params[5] + params[9] * T\nsat_arg = clip(effective_rate * eps, -20, 20)\nsat_term = 1 - exp(-sat_arg)\n\nstrain_term = params[0] + params[1]*eps + params[2]*eps^n_exp + params[3]*(1 - exp(-(params[5] + params[9]*T)*eps))\n\ntemp_exp = exp(-params[6]*T)\ntemp_term = exp(-params[6]*T) + params[7]*T\n\nresult = strain_term * temp_term + params[8]\n```\n\nSo the mathematical formula is:\n$$f = \\left[p_0 + p_1\\epsilon + p_2\\epsilon^{p_4} + p_3(1 - e^{-(p_5 + p_9 T)\\epsilon})\\right] \\cdot \\left[e^{-p_6 T} + p_7 T\\right] + p_8$$\n\n## Step 3: Compare Structure\n\nExpanding the candidate:\n$$f = (p_0 + p_3) \\cdot e^{-p_6 T} + (p_0 + p_3) \\cdot p_7 T + p_1 \\epsilon \\cdot e^{-p_6 T} + p_1 \\epsilon \\cdot p_7 T + p_2 \\epsilon^{p_4} \\cdot e^{-p_6 T} + p_2 \\epsilon^{p_4} \\cdot p_7 T - p_3 e^{-(p_5+p_9 T)\\epsilon} \\cdot e^{-p_6 T} - p_3 e^{-(p_5+p_9 T)\\epsilon} \\cdot p_7 T + p_8$$\n\nThe GT has:\n- Terms: $\\epsilon \\cdot T$, $\\epsilon$, $\\epsilon^{0.318} \\cdot e^{-c/T}$, $\\epsilon^{1.45} \\cdot T$, $\\epsilon^{1.45}$\n\nKey differences:\n1. **GT has $e^{-c/T}$ (Arrhenius)** while the candidate has $e^{-p_6 T}$ (linear exponential in T). These are fundamentally different: $e^{-a/T} \\neq e^{-bT}$ for any constants.\n\n2. **GT has no saturation/Voce term** like $1 - e^{-(\\cdot)\\epsilon}$, which introduces exponential-in-epsilon terms. The GT only has power-law terms in epsilon.\n\n3. The candidate's multiplicative structure `strain_term * temp_term` creates cross-terms involving $e^{-p_6 T}$ multiplied by various epsilon terms, none of which match the GT's $e^{-c/T}$ structure.\n\nEven if we try to zero out the saturation term (set $p_3 = 0$), we get:\n$$f = (p_0 + p_1\\epsilon + p_2\\epsilon^{p_4})(e^{-p_6 T} + p_7 T) + p_8$$\n\nThis still has $e^{-p_6 T}$ instead of $e^{-c/T}$, and the multiplicative coupling creates terms like $p_1 \\epsilon \\cdot e^{-p_6 T}$ which don't appear in the GT.\n\nSetting $p_6 = 0$ to eliminate the exponential gives $e^0 = 1$, so temp_term = $1 + p_7 T$, yielding:\n$$f = (p_0 + p_1\\epsilon + p_2\\epsilon^{p_4})(1 + p_7 T) + p_8$$\n\nBut this has no $e^{-c/T}$ term at all, which is essential in the GT.\n\nThere is no way to recover the Arrhenius term $\\epsilon^{0.318} \\cdot e^{-49.46/(8.314T)}$ from this candidate.\n\n[NO MATCH]"}], 'stop_reason': 'end_turn', 'stop_sequence': None, 'stop_details': None, 'usage': {'input_tokens': 1738, 'cache_creation_input_tokens': 0, 'cache_read_input_tokens': 0, 'cache_creation': {'ephemeral_5m_input_tokens': 0, 'ephemeral_1h_input_tokens': 0}, 'output_tokens': 1313}}
+
+============================================================
+GT Equivalence Verification (MatSci5)
+============================================================
+GT: c0*epsilon*(-c1*(T - c2) + c3) + c4*epsilon**c5*exp(-c6/(c7*T)) + epsilon**c8*c9*(T - c10)
+Candidate snippets: 1
+
+# Analysis of Candidate 1
+
+## Step 1: Translate the Ground Truth
+
+The GT expression is:
+$$\sigma = 61.35 \cdot \epsilon \cdot (-0.05077(T - 278.15) + 1) + 98.58 \cdot \epsilon^{0.3178} \cdot e^{-49.46/(8.314T)} + 2.304 \cdot \epsilon^{1.450} \cdot (T - 278.15)$$
+
+This consists of three terms:
+1. A linear-in-ε term with linear T dependence
+2. A fractional power of ε times an Arrhenius exponential in T
+3. A power of ε times linear T dependence
+
+## Step 2: Translate the Candidate Code
+
+Let me trace through the code carefully:
+
+```python
+eps = x[:, 0]  # epsilon
+T = x[:, 1]    # T
+
+eps_abs = |eps| + 1e-12  ≈ eps (for eps ≥ 0)
+n_exp = clip(params[4], 0.01, 5.0)
+
+power_term = eps^n_exp
+
+effective_rate = params[5] + params[9] * T
+sat_arg = clip(effective_rate * eps, -20, 20)
+sat_term = 1 - exp(-sat_arg)
+
+strain_term = params[0] + params[1]*eps + params[2]*eps^n_exp + params[3]*(1 - exp(-(params[5] + params[9]*T)*eps))
+
+temp_exp = exp(-params[6]*T)
+temp_term = exp(-params[6]*T) + params[7]*T
+
+result = strain_term * temp_term + params[8]
+```
+
+So the mathematical formula is:
+$$f = \left[p_0 + p_1\epsilon + p_2\epsilon^{p_4} + p_3(1 - e^{-(p_5 + p_9 T)\epsilon})\right] \cdot \left[e^{-p_6 T} + p_7 T\right] + p_8$$
+
+## Step 3: Compare Structure
+
+Expanding the candidate:
+$$f = (p_0 + p_3) \cdot e^{-p_6 T} + (p_0 + p_3) \cdot p_7 T + p_1 \epsilon \cdot e^{-p_6 T} + p_1 \epsilon \cdot p_7 T + p_2 \epsilon^{p_4} \cdot e^{-p_6 T} + p_2 \epsilon^{p_4} \cdot p_7 T - p_3 e^{-(p_5+p_9 T)\epsilon} \cdot e^{-p_6 T} - p_3 e^{-(p_5+p_9 T)\epsilon} \cdot p_7 T + p_8$$
+
+The GT has:
+- Terms: $\epsilon \cdot T$, $\epsilon$, $\epsilon^{0.318} \cdot e^{-c/T}$, $\epsilon^{1.45} \cdot T$, $\epsilon^{1.45}$
+
+Key differences:
+1. **GT has $e^{-c/T}$ (Arrhenius)** while the candidate has $e^{-p_6 T}$ (linear exponential in T). These are fundamentally different: $e^{-a/T} \neq e^{-bT}$ for any constants.
+
+2. **GT has no saturation/Voce term** like $1 - e^{-(\cdot)\epsilon}$, which introduces exponential-in-epsilon terms. The GT only has power-law terms in epsilon.
+
+3. The candidate's multiplicative structure `strain_term * temp_term` creates cross-terms involving $e^{-p_6 T}$ multiplied by various epsilon terms, none of which match the GT's $e^{-c/T}$ structure.
+
+Even if we try to zero out the saturation term (set $p_3 = 0$), we get:
+$$f = (p_0 + p_1\epsilon + p_2\epsilon^{p_4})(e^{-p_6 T} + p_7 T) + p_8$$
+
+This still has $e^{-p_6 T}$ instead of $e^{-c/T}$, and the multiplicative coupling creates terms like $p_1 \epsilon \cdot e^{-p_6 T}$ which don't appear in the GT.
+
+Setting $p_6 = 0$ to eliminate the exponential gives $e^0 = 1$, so temp_term = $1 + p_7 T$, yielding:
+$$f = (p_0 + p_1\epsilon + p_2\epsilon^{p_4})(1 + p_7 T) + p_8$$
+
+But this has no $e^{-c/T}$ term at all, which is essential in the GT.
+
+There is no way to recover the Arrhenius term $\epsilon^{0.318} \cdot e^{-49.46/(8.314T)}$ from this candidate.
+
+[NO MATCH]
+
+Conclusion: No match
+============================================================
+
+
+GT Equivalence Verification (MatSci5)
+============================================================
+GT: c0*epsilon*(-c1*(T - c2) + c3) + c4*epsilon**c5*exp(-c6/(c7*T)) + epsilon**c8*c9*(T - c10)
+Candidates evaluated: 2
+Matched candidate IDs: []
+Matched candidates: []
+
+I need to analyze whether the candidates can be made equivalent to the Ground Truth (GT).
+
+## Ground Truth Analysis
+
+The GT expression is:
+$$f(\epsilon, T) = 61.35\epsilon(-0.0508(T - 278.15) + 1) + 98.58\epsilon^{0.318}\exp(-49.46/(8.314T)) + 2.304\epsilon^{1.450}(T - 278.15)$$
+
+Let me expand this:
+- **Term 1**: Linear in ε, linear in T: $61.35\epsilon \cdot (-0.0508T + 0.0508 \cdot 278.15 + 1) = 61.35\epsilon(15.128 - 0.0508T)$
+  This gives: $a_1\epsilon + a_2\epsilon T$ (linear in ε, with T dependence)
+- **Term 2**: $98.58\epsilon^{0.318}\exp(-5.949/T)$ — a power of ε times a Boltzmann-type exponential in 1/T
+- **Term 3**: $2.304\epsilon^{1.450}(T - 278.15)$ — a power of ε times linear T
+
+The basis functions are: $\epsilon$, $\epsilon T$, $\epsilon^{0.318}\exp(-c/T)$, $\epsilon^{1.450}T$, $\epsilon^{1.450}$.
+
+## Candidate 1 & 2 Analysis (they appear identical)
+
+Both candidates compute:
+$$\text{result} = \text{strain\_term} \times \text{temp\_term} + p_8$$
+
+where:
+- $\text{strain\_term} = p_0 + p_1\epsilon + p_2\epsilon^{n} + p_3(1 - e^{-(p_5 + p_9 T)\epsilon})$
+- $\text{temp\_term} = e^{-p_6 T} + p_7 T$
+
+So the result is:
+$$(p_0 + p_1\epsilon + p_2\epsilon^{n} + p_3(1 - e^{-(p_5 + p_9 T)\epsilon}))(e^{-p_6 T} + p_7 T) + p_8$$
+
+**Key structural differences from GT:**
+
+1. **GT has $\exp(-c/T)$** (Arrhenius/Boltzmann form), but the candidate has $\exp(-p_6 T)$ (exponential in T, not 1/T). These are fundamentally different functions and cannot be made equivalent by any constant choice.
+
+2. **GT has no saturation term** like $1 - \exp(-(a+bT)\epsilon)$. The GT uses pure power laws in ε. The saturation function $1-e^{-x}$ behaves like $x$ for small $x$ and approaches 1 for large $x$, which is structurally different from $\epsilon^{0.318}$ or $\epsilon^{1.450}$.
+
+3. Even if we try to zero out the saturation term ($p_3 = 0$), we'd have $(p_0 + p_1\epsilon + p_2\epsilon^n)(e^{-p_6 T} + p_7 T) + p_8$. This produces cross-terms like $p_0 e^{-p_6 T}$, $p_1\epsilon e^{-p_6 T}$, $p_2\epsilon^n e^{-p_6 T}$, $p_0 p_7 T$, $p_1 p_7 \epsilon T$, $p_2 p_7 \epsilon^n T$. None of these can produce $\exp(-c/T)$, which is required by the GT.
+
+4. Setting $p_6 = 0$ would make $e^{-p_6 T} = 1$, giving $(p_0 + p_1\epsilon + p_2\epsilon^n)(1 + p_7 T) + p_8$. This could produce terms like $\epsilon$, $\epsilon T$, $\epsilon^n$, $\epsilon^n T$, constants, and $T$. But it **cannot** produce the $\exp(-c/T)$ term that appears in the GT.
+
+The $\exp(-c/T)$ term in the GT is essential and cannot be generated by any parameter choice in the candidate.
+
+Candidate 1 verdict: [NO MATCH]
+Candidate 2 verdict: [NO MATCH]
+
+Matched candidate IDs: []
+
+[NO MATCH]
+
+Conclusion: No match
+============================================================
+

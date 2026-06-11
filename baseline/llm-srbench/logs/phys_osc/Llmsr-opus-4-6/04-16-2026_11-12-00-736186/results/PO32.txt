@@ -1,0 +1,73 @@
+
+============================================================
+GT Equivalence Verification (PO32)
+============================================================
+GT: F0*sin(t) - alpha*v**c0 - beta*exp(-Abs(v))*v - omega0**c1*x**c2
+Candidates evaluated: 1
+
+# Analysis of Candidate 1
+
+## Ground Truth (GT)
+The GT expression is:
+$$f(x,t,v) = -0.0907v^3 - 0.5945 \cdot v \cdot e^{-|v|} - 2.9429 \cdot x^3 + 0.5691 \cdot \sin(t)$$
+
+The key basis functions in GT are:
+1. $v^3$ — cubic velocity term
+2. $v \cdot e^{-|v|}$ — velocity times exponential of absolute velocity
+3. $x^3$ — cubic position term
+4. $\sin(t)$ — sinusoidal driving force
+
+## Candidate 1 Analysis
+
+The candidate implements:
+$$f = p_0 x + p_1 x^3 + p_2 x^2 + p_3 v + p_4 x^2 v + p_5 \cos(p_6 t + p_7) + p_8 v|v| + p_9$$
+
+The basis functions in the candidate are:
+1. $x$ — linear restoring
+2. $x^3$ — cubic nonlinearity ✓ (matches GT's $x^3$ term)
+3. $x^2$ — quadratic position
+4. $v$ — linear damping
+5. $x^2 v$ — van der Pol damping
+6. $\cos(p_6 t + p_7)$ — periodic driving (can match $\sin(t)$ by setting $p_6=1, p_7=\pi/2$) ✓
+7. $v|v|$ — quadratic drag
+8. constant offset
+
+Now let me check if the remaining GT terms can be matched:
+
+### Can we zero out unwanted candidate terms?
+Yes, we can set $p_0 = 0$ (no $x$ term), $p_2 = 0$ (no $x^2$ term), $p_4 = 0$ (no $x^2 v$ term), $p_9 = 0$ (no offset).
+
+### Remaining candidate terms after zeroing:
+$$f = p_1 x^3 + p_3 v + p_5 \cos(t + \pi/2) + p_8 v|v|$$
+$$= p_1 x^3 + p_3 v + p_5 \sin(t) + p_8 v|v|$$
+
+### Remaining GT terms to match:
+$$-0.0907 v^3 - 0.5945 \cdot v \cdot e^{-|v|} - 2.9429 x^3 + 0.5691 \sin(t)$$
+
+### Comparison of basis functions:
+
+- **$x^3$**: ✓ Both have it.
+- **$\sin(t)$**: ✓ Both have it.
+- **$v^3$** (GT) vs **nothing** (Candidate): The GT has $v^3$ but the candidate has no $v^3$ term. ✗
+- **$v \cdot e^{-|v|}$** (GT) vs **nothing** (Candidate): The GT has $v \cdot e^{-|v|}$ but the candidate has no such term. ✗
+- **$v$** (Candidate) vs **nothing** (GT): Extra term, can be zeroed by setting $p_3 = 0$.
+- **$v|v|$** (Candidate) vs **nothing** (GT): Extra term, can be zeroed by setting $p_8 = 0$.
+
+After zeroing the extra candidate terms, we'd have:
+$$f = p_1 x^3 + p_5 \sin(t)$$
+
+But the GT requires:
+$$-0.0907 v^3 - 0.5945 \cdot v \cdot e^{-|v|} - 2.9429 x^3 + 0.5691 \sin(t)$$
+
+The candidate is **missing** both $v^3$ and $v \cdot e^{-|v|}$ terms. These are linearly independent basis functions that cannot be constructed from the candidate's available terms ($v$, $v|v|$, $x^2 v$, etc.).
+
+Specifically:
+- $v^3 \neq$ any linear combination of $v$ and $v|v|$ (since $v|v| = v^2 \cdot \text{sign}(v)$, which differs from $v^3$)
+- $v \cdot e^{-|v|}$ is an exponential function that cannot be represented by polynomial/algebraic terms
+
+The candidate fundamentally lacks the necessary basis functions to match the GT.
+
+[NO MATCH]
+
+Conclusion: No match
+============================================================

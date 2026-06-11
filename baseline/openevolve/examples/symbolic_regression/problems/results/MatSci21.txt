@@ -1,0 +1,81 @@
+=== Verification Report for MatSci21 ===
+Target File: matsci/MatSci21/openevolve_output/best/best_program.py
+--------------------------------------------------
+[verify] Equation name: MatSci21
+[verify] GT symbolic expression: c0*epsilon**c1 - c2*(T - c3) + epsilon**c4*c5*(T - c6)
+[verify] Feature variables: epsilon;T
+[verify] Processing 1 candidate Python snippet(s)
+[verify] Calling LLM for equivalence check...
+[LLMClient] Requests mode, URL: https://llm-gateway.example.com/api/google/v1/publishers/anthropic/models/claude-opus-4-6:rawPredict, model: claude-opus-4-6
+[API Warning] Empty response received. Full response: {'model': 'claude-opus-4-6', 'id': 'msg_vrtx_01Gm48H41nR1Hap775wH7rz8', 'type': 'message', 'role': 'assistant', 'content': [{'type': 'text', 'text': "# Analysis of Candidate 1\n\n## Step 1: Translate the Python Code to Mathematical Expression\n\nLet me carefully trace through the code:\n\n- `eps = ε`, `T = T`\n- `abs_eps = |ε| + 1e-12` (essentially `|ε|` for practical purposes)\n- `n_exp = clip(p2 + p6*T, 0.05, 4.0)` — a temperature-dependent exponent\n- `power_term = p1 * |ε|^n_exp`\n- `voce_arg = clip(-p9 * |ε|, -50, 0)`\n- `voce_term = p8 * (1 - exp(-p9 * |ε|))`\n- `hardening = power_term + voce_term`\n- `temp_factor = p3 * exp(-p4 * T) + p5`\n- `result = p0 * ε * temp_factor + hardening * sign(ε) * temp_factor + p7`\n\nSo the mathematical expression is:\n\n$$\\sigma = \\left[p_0 \\cdot \\varepsilon + \\left(p_1 \\cdot |\\varepsilon|^{n_{exp}} + p_8(1 - e^{-p_9|\\varepsilon|})\\right) \\cdot \\text{sign}(\\varepsilon)\\right] \\cdot \\left(p_3 e^{-p_4 T} + p_5\\right) + p_7$$\n\nwhere $n_{exp} = p_2 + p_6 T$ (subject to clipping).\n\n## Step 2: Compare with Ground Truth\n\nThe GT expression is:\n$$\\sigma_{GT} = 28.58 \\cdot \\varepsilon^2 - 0.2857 \\cdot (T - 281.87) + 4.278 \\cdot \\varepsilon^3 \\cdot (T - 281.87)$$\n\nThis expands to:\n$$\\sigma_{GT} = 28.58\\varepsilon^2 - 0.2857T + 80.55 + 4.278\\varepsilon^3 T - 1205.9\\varepsilon^3$$\n\nThe GT is a polynomial in ε and T with terms: $\\varepsilon^2$, $T$, $\\varepsilon^3$, $\\varepsilon^3 T$, and a constant.\n\n## Step 3: Check if the Candidate Can Match\n\nThe candidate has the structure:\n$$[p_0 \\varepsilon + f(\\varepsilon) \\cdot \\text{sign}(\\varepsilon)] \\cdot g(T) + p_7$$\n\nwhere $g(T) = p_3 e^{-p_4 T} + p_5$.\n\n**Key issues:**\n\n1. **Exponential in T:** The candidate has $e^{-p_4 T}$ as part of the temperature dependence. The GT has only polynomial (linear) dependence on T. Setting $p_3 = 0$ would eliminate the exponential, leaving $g(T) = p_5$ (a constant). But then there's no T-dependence in the multiplicative factor, and we'd need the constant offset $p_7$ to provide T-dependence — but $p_7$ is just a constant, not T-dependent.\n\n   If $p_3 = 0$: $\\sigma = [p_0 \\varepsilon + f(\\varepsilon)] \\cdot p_5 + p_7$, which has NO T-dependence at all. But GT has T-dependent terms.\n\n   If $p_3 \\neq 0$: We get exponential T-dependence, which cannot match polynomial T-dependence (linear independence of $e^{-p_4 T}$ and $T$).\n\n2. **Voce term:** Contains $e^{-p_9|\\varepsilon|}$, an exponential in ε. Setting $p_8 = 0$ eliminates it.\n\n3. **Variable exponent:** $n_{exp} = p_2 + p_6 T$ makes the exponent T-dependent. For the GT, we need fixed exponents (2 and 3). A T-dependent exponent $|ε|^{p_2 + p_6 T} = |ε|^{p_2} \\cdot |ε|^{p_6 T}$, which introduces $|ε|^{p_6 T}$ — this is not polynomial and cannot match the GT structure.\n\n4. **Even if we set $p_6 = 0$** (fixed exponent), the structure becomes $[p_0 \\varepsilon + p_1 |\\varepsilon|^{p_2} \\text{sign}(\\varepsilon)] \\cdot g(T) + p_7$. With non-negative ε, this is $(p_0 \\varepsilon + p_1 \\varepsilon^{p_2}) \\cdot g(T) + p_7$. This gives at most two power-law terms in ε multiplied by the SAME function of T. But the GT has $\\varepsilon^2$ with a constant coefficient and $\\varepsilon^3$ multiplied by $(T - c)$, requiring DIFFERENT T-dependencies for different ε powers.\n\nThe candidate's structure fundamentally cannot produce different T-dependencies for different powers of ε, which the GT requires.\n\n## Conclusion\n\nThe candidate cannot be made equivalent to the GT.\n\n[NO MATCH]"}], 'stop_reason': 'end_turn', 'stop_sequence': None, 'stop_details': None, 'usage': {'input_tokens': 1686, 'cache_creation_input_tokens': 0, 'cache_read_input_tokens': 0, 'cache_creation': {'ephemeral_5m_input_tokens': 0, 'ephemeral_1h_input_tokens': 0}, 'output_tokens': 1350}}
+
+============================================================
+GT Equivalence Verification (MatSci21)
+============================================================
+GT: c0*epsilon**c1 - c2*(T - c3) + epsilon**c4*c5*(T - c6)
+Candidate snippets: 1
+
+# Analysis of Candidate 1
+
+## Step 1: Translate the Python Code to Mathematical Expression
+
+Let me carefully trace through the code:
+
+- `eps = ε`, `T = T`
+- `abs_eps = |ε| + 1e-12` (essentially `|ε|` for practical purposes)
+- `n_exp = clip(p2 + p6*T, 0.05, 4.0)` — a temperature-dependent exponent
+- `power_term = p1 * |ε|^n_exp`
+- `voce_arg = clip(-p9 * |ε|, -50, 0)`
+- `voce_term = p8 * (1 - exp(-p9 * |ε|))`
+- `hardening = power_term + voce_term`
+- `temp_factor = p3 * exp(-p4 * T) + p5`
+- `result = p0 * ε * temp_factor + hardening * sign(ε) * temp_factor + p7`
+
+So the mathematical expression is:
+
+$$\sigma = \left[p_0 \cdot \varepsilon + \left(p_1 \cdot |\varepsilon|^{n_{exp}} + p_8(1 - e^{-p_9|\varepsilon|})\right) \cdot \text{sign}(\varepsilon)\right] \cdot \left(p_3 e^{-p_4 T} + p_5\right) + p_7$$
+
+where $n_{exp} = p_2 + p_6 T$ (subject to clipping).
+
+## Step 2: Compare with Ground Truth
+
+The GT expression is:
+$$\sigma_{GT} = 28.58 \cdot \varepsilon^2 - 0.2857 \cdot (T - 281.87) + 4.278 \cdot \varepsilon^3 \cdot (T - 281.87)$$
+
+This expands to:
+$$\sigma_{GT} = 28.58\varepsilon^2 - 0.2857T + 80.55 + 4.278\varepsilon^3 T - 1205.9\varepsilon^3$$
+
+The GT is a polynomial in ε and T with terms: $\varepsilon^2$, $T$, $\varepsilon^3$, $\varepsilon^3 T$, and a constant.
+
+## Step 3: Check if the Candidate Can Match
+
+The candidate has the structure:
+$$[p_0 \varepsilon + f(\varepsilon) \cdot \text{sign}(\varepsilon)] \cdot g(T) + p_7$$
+
+where $g(T) = p_3 e^{-p_4 T} + p_5$.
+
+**Key issues:**
+
+1. **Exponential in T:** The candidate has $e^{-p_4 T}$ as part of the temperature dependence. The GT has only polynomial (linear) dependence on T. Setting $p_3 = 0$ would eliminate the exponential, leaving $g(T) = p_5$ (a constant). But then there's no T-dependence in the multiplicative factor, and we'd need the constant offset $p_7$ to provide T-dependence — but $p_7$ is just a constant, not T-dependent.
+
+   If $p_3 = 0$: $\sigma = [p_0 \varepsilon + f(\varepsilon)] \cdot p_5 + p_7$, which has NO T-dependence at all. But GT has T-dependent terms.
+
+   If $p_3 \neq 0$: We get exponential T-dependence, which cannot match polynomial T-dependence (linear independence of $e^{-p_4 T}$ and $T$).
+
+2. **Voce term:** Contains $e^{-p_9|\varepsilon|}$, an exponential in ε. Setting $p_8 = 0$ eliminates it.
+
+3. **Variable exponent:** $n_{exp} = p_2 + p_6 T$ makes the exponent T-dependent. For the GT, we need fixed exponents (2 and 3). A T-dependent exponent $|ε|^{p_2 + p_6 T} = |ε|^{p_2} \cdot |ε|^{p_6 T}$, which introduces $|ε|^{p_6 T}$ — this is not polynomial and cannot match the GT structure.
+
+4. **Even if we set $p_6 = 0$** (fixed exponent), the structure becomes $[p_0 \varepsilon + p_1 |\varepsilon|^{p_2} \text{sign}(\varepsilon)] \cdot g(T) + p_7$. With non-negative ε, this is $(p_0 \varepsilon + p_1 \varepsilon^{p_2}) \cdot g(T) + p_7$. This gives at most two power-law terms in ε multiplied by the SAME function of T. But the GT has $\varepsilon^2$ with a constant coefficient and $\varepsilon^3$ multiplied by $(T - c)$, requiring DIFFERENT T-dependencies for different ε powers.
+
+The candidate's structure fundamentally cannot produce different T-dependencies for different powers of ε, which the GT requires.
+
+## Conclusion
+
+The candidate cannot be made equivalent to the GT.
+
+[NO MATCH]
+
+Conclusion: No match
+============================================================
+

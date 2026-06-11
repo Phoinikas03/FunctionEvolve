@@ -1,0 +1,86 @@
+
+============================================================
+GT Equivalence Verification (BPG18)
+============================================================
+GT: c0*P*sin(c1*t) + c2*(c3 - P/c4)*P + c5*P
+Candidates evaluated: 1
+
+# Analysis of Candidate 1
+
+## Step 1: Deduce the mathematical formula from the code
+
+The candidate computes:
+
+```
+r_effective = params[0] + params[3] * sin(params[4] * t + params[5])
+logistic = r_effective * P + params[1] * P²
+allee = params[6] * P²
+offset = params[2]
+output = logistic + allee + offset
+```
+
+Expanding:
+```
+output = (params[0] + params[3] * sin(params[4] * t + params[5])) * P + params[1] * P² + params[6] * P² + params[2]
+```
+
+Simplifying:
+```
+output = params[0] * P + params[3] * P * sin(params[4] * t + params[5]) + (params[1] + params[6]) * P² + params[2]
+```
+
+So the candidate formula is:
+$$f(t, P) = a_0 \cdot P + a_3 \cdot P \cdot \sin(a_4 \cdot t + a_5) + (a_1 + a_6) \cdot P^2 + a_2$$
+
+## Step 2: Write out the Ground Truth
+
+$$GT = 0.4771 \cdot P \cdot \sin(0.7761 \cdot t) + 0.4455 \cdot (1 - P/51.06) \cdot P + 0.4455 \cdot P$$
+
+Expanding:
+$$GT = 0.4771 \cdot P \cdot \sin(0.7761 \cdot t) + 0.4455 \cdot P - 0.4455/51.06 \cdot P^2 + 0.4455 \cdot P$$
+
+$$GT = 0.4771 \cdot P \cdot \sin(0.7761 \cdot t) + 0.8909 \cdot P - 0.008726 \cdot P^2$$
+
+So the GT has the form:
+$$GT = c_{\sin} \cdot P \cdot \sin(\omega \cdot t) + c_{lin} \cdot P + c_{quad} \cdot P^2$$
+
+## Step 3: Compare basis functions
+
+**GT basis functions:** $P \cdot \sin(\omega t)$, $P$, $P^2$
+
+**Candidate basis functions:** $P \cdot \sin(\omega t + \phi)$, $P$, $P^2$, and a **constant term** $a_2$
+
+### Checking each term:
+
+1. **Constant term ($a_2$):** The GT has no constant term. We can set $a_2 = 0$ (params[2] = 0). ✓
+
+2. **Linear term in P ($a_0 \cdot P$):** Can match $0.8909 \cdot P$ by setting $a_0 = 0.8909$. ✓
+
+3. **Quadratic term ($(a_1 + a_6) \cdot P^2$):** Can match $-0.008726 \cdot P^2$ by choosing $a_1 + a_6 = -0.008726$. ✓
+
+4. **Sinusoidal term ($a_3 \cdot P \cdot \sin(a_4 \cdot t + a_5)$):** The GT has $\sin(\omega t)$ with no phase shift. We can set $a_5 = 0$ (params[5] = 0), making this $a_3 \cdot P \cdot \sin(a_4 \cdot t)$. Then set $a_3 = 0.4771$ and $a_4 = 0.7761$. ✓
+
+## Step 4: Verify equivalence
+
+With the parameter assignments:
+- params[0] = 0.8909
+- params[1] = any value such that params[1] + params[6] = -0.008726
+- params[2] = 0
+- params[3] = 0.4771
+- params[4] = 0.7761
+- params[5] = 0
+- params[6] = -0.008726 - params[1]
+
+The candidate becomes:
+$$f = 0.8909 \cdot P + 0.4771 \cdot P \cdot \sin(0.7761 \cdot t) - 0.008726 \cdot P^2$$
+
+This is **exactly** the GT expression.
+
+## Conclusion
+
+The candidate has all the necessary basis functions and can be made exactly equivalent to the GT by appropriate choice of free constants.
+
+[MATCH FOUND]
+
+Conclusion: Match found
+============================================================

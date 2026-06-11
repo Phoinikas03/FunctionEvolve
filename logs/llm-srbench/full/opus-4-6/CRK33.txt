@@ -1,0 +1,1568 @@
+Code version: 9ddc8db+dirty
+Run config: dataset=chem_react, equation=CRK33
+optimizer=Hybrid, max_steps=30, n_seeds=20
+Degenerated components: none
+  generator: mode=requests, model=claude-opus-4-6, base_url=https://llm-gateway.example.com/api/google/v1/publishers/anthropic/models/claude-opus-4-6:rawPredict, api_key=REDACTED_API_KEY, anthropic_version=vertex-2023-10-16, temperature=0.8, max_tokens=16384
+  selector: mode=requests, model=claude-opus-4-6, base_url=https://llm-gateway.example.com/api/google/v1/publishers/anthropic/models/claude-opus-4-6:rawPredict, api_key=REDACTED_API_KEY, anthropic_version=vertex-2023-10-16, temperature=0.3, max_tokens=16384
+  mutator: mode=requests, model=claude-opus-4-6, base_url=https://llm-gateway.example.com/api/google/v1/publishers/anthropic/models/claude-opus-4-6:rawPredict, api_key=REDACTED_API_KEY, anthropic_version=vertex-2023-10-16, temperature=0.7, max_tokens=16384
+Log file: /home/xaa5sgh/symregression/logs/full/opus-4-6/2026-03-29/CRK33_20260329_102628.txt
+=== Dataset: CRK33 (chem_react) ===
+Symbols     : ['dA_dt', 't', 'A']
+Features    : ['t', 'A']
+Reference   : -0.11846873325639269*sqrt(A(t)) - 0.11846873325639269*A(t)**2 + 0.11846873325639269_t*sin(log(A(t) + 1))
+Train set   : X=(4000, 2), y=(4000,)
+Test set    : X=(500, 2), y=(500,)
+OOD test set: X=(500, 2), y=(500,)
+
+[Ground Truth] Expression: -0.11846873325639269*sqrt(A(t)) - 0.11846873325639269*A(t)**2 + 0.11846873325639269_t*sin(log(A(t) + 1))
+[Ground Truth] Normalized: -0.11846873325639269*sqrt(A) - 0.11846873325639269*A**2 + 0.11846873325639269*_t*sin(log(A + 1))
+[Ground Truth] Fitted params: _t=7.1444e+00
+[Ground Truth] train=2.43e-13  test=1.91e-13  ood=2.89e-08
+
+[Early stop threshold] Auto-set based on GT*1.05: train<2.55e-13
+Generating domain knowledge...
+Domain knowledge ready:
+
+## Domain Knowledge (LLM-generated)
+**Domain**: chemical reaction kinetics
+**Analysis**: This task models the rate of concentration change in a chemical reaction. The rate dA/dt is most commonly a function of concentration A through power-law rate expressions, though time-dependent forcing or complex mechanisms may introduce explicit t-dependence.
+
+**Common formula structures in this domain**:
+- Zero-order kinetics: dA_dt = c0 (constant rate, independent of concentration)
+- First-order kinetics: dA_dt = c0 * A (rate proportional to concentration)
+- Second-order kinetics: dA_dt = c0 * A**2 (rate proportional to squared concentration)
+- nth-order kinetics: dA_dt = c0 * A**c1 (general power-law rate expression)
+- Mixed-order kinetics: dA_dt = c0 * A + c1 * A**2 (combination of first and second order)
+- Michaelis-Menten type: dA_dt = c0 * A / (c1 + A) (saturation kinetics)
+- Reversible first-order: dA_dt = c0 * A + c1 (forward and reverse reaction with constant product)
+- Autocatalytic: dA_dt = c0 * A * (c1 - A) (logistic-type autocatalysis)
+- Inhibition kinetics: dA_dt = c0 * A / (c1 + A**2) (substrate inhibition)
+- Langmuir-Hinshelwood: dA_dt = c0 * A / (c1 + A)**2 (surface reaction kinetics)
+- Time-modulated rate: dA_dt = c0 * A * exp(c1 * t) (time-dependent rate constant)
+- Polynomial rate: dA_dt = c0 + c1 * A + c2 * A**2 + c3 * A**3 (general polynomial in concentration)
+- Fractional order with offset: dA_dt = c0 * A**c1 + c2 (fractional order with constant source/sink)
+- Cooperative kinetics: dA_dt = c0 * A**c1 / (c2 + A**c1) (Hill-type cooperative binding)
+
+**Formula structure heuristic features**:
+- Oscillation damping envelope → Exponential decay envelope f(x)*exp(-c*Abs(x)) for symmetric damped oscillation, Gaussian envelope f(x)*exp(-c*x**2) for localized wave packets
+- Saturation/clipping effects → Rational fraction x/(1+x), tanh; for variables with alternating positive/negative in oscillatory systems, selectively apply Abs
+- Growth/decay → Exponential growth exp(c*t), Logistic 1/(1+exp(-c*x)), power law x**c
+- Threshold/activation behavior → Max(x-c, 0), piecewise functions
+- Coupling/cross effects → Product terms between variables x*y, power-law coupling x**c1 * y**c2
+- Negative rate constants indicate consumption/decay of reactant, positive indicate production — sign of leading coefficient reveals reaction direction
+- Integer or half-integer power of concentration often corresponds to elementary reaction steps or radical mechanisms (e.g., A**0.5 suggests radical chain)
+- Rate expressions that are ratios of polynomials in A suggest enzyme-catalyzed or surface-catalyzed reactions with adsorption/desorption equilibria
+- If dA_dt depends only on A and not explicitly on t, the system is autonomous, suggesting a closed chemical system with time-invariant conditions
+- Quadratic terms like A*(c-A) indicate autocatalytic or logistic-type mechanisms where product catalyzes its own formation
+- Multiple additive terms with different powers of A suggest parallel reaction pathways or competing mechanisms
+- Explicit time dependence in the rate law may indicate external perturbation (e.g., photolysis with varying light intensity, temperature ramps)
+- A rate law that changes sign at a specific concentration value indicates an equilibrium point where forward and reverse rates balance
+
+Calling LLM to generate initial seed formulas...
+Initializing 20 seed nodes (including preprocessing variants)...
+
+    ↳ Seed degenerated (simplified): c2=1.000e-06->small coeff,c2*t->0
+    ↳ Seed degenerated (simplified): c0=-3.0000->snapped to -3; c0=-3.0000->snapped to -3
+  [Seed] A*c0 + c1
+         params: c0=-3.1293e-01, c1=7.0977e-01
+         description: Simple linear function of A with negative slope (-0.313) and positive intercept (0.710). This is a basic affine model; NMSE of 0.031 indicates a reasonable but limited linear approximation to the data.
+         train=3.13e-02  test=3.21e-02  ood=1.73e+02
+  [Seed] A**2*c0 + A*c1 + c2
+         params: c0=-1.9184e-01, c1=3.8108e-01, c2=1.1847e-01
+         description: Quadratic polynomial in A with a concave-down parabola (c0=-0.192), positive linear term (0.381), and positive intercept (0.185). Excellent fit (NMSE ~3.4e-5) suggests the target function is well-approximated by a degree-2 polynomial in A.
+         train=3.41e-05  test=3.47e-05  ood=1.13e-01
+  [Seed] c0*exp(A*c1)
+         params: c0=5.9700e+00, c1=-2.4993e+00
+         description: Exponential decay in A with amplitude 5.97 and decay rate -2.50. Poor fit (NMSE=0.315) indicates the target is not purely exponential in A; the rapid decay likely fails to capture the polynomial-like curvature of the data.
+         train=3.15e-01  test=2.77e-01  ood=1.22e+04
+  [Seed] A**c0*c1
+         params: c0=-3.8449e+00, c1=5.2598e-01
+         description: Power-law model A^(-3.84) scaled by 0.526, representing a steep inverse power of A. Very poor fit (NMSE=0.407) suggests the data does not follow a simple power-law relationship.
+         train=4.07e-01  test=3.60e-01  ood=1.44e+04
+  [Seed] c0*log(A*c1 + 1)
+         params: c0=8.2149e-03, c1=5.0000e+00
+         description: Logarithmic model with a very small amplitude (c0≈0.008) and c1=5. The tiny coefficient makes the output nearly zero everywhere, and NMSE>1 indicates this structure completely fails to capture the data's behavior.
+         train=1.03e+00  test=1.03e+00  ood=1.17e+04
+  [Seed] A*c0/(A + c1)
+         params: c0=1.7015e-02, c1=-9.6730e-01
+         description: Rational function (Michaelis-Menten type) with c1≈-0.967, placing a near-singularity close to A≈1. The small numerator coefficient (0.017) and poor fit (NMSE=0.769) indicate fundamental structural mismatch with the data.
+         train=7.69e-01  test=6.97e-01  ood=2.45e+04
+  [Seed] c0*sqrt(A**2 + c1)
+         params: c0=5.2101e-03, c1=1.2261e+01
+         description: Square root of a shifted quadratic with very small scaling (c0≈0.005) and large offset (c1≈12.3). Effectively approximates a near-constant ~0.018, yielding NMSE>1 and indicating complete failure to model the data.
+         train=1.02e+00  test=1.02e+00  ood=1.30e+04
+  [Seed] A**2*c0 + A*c1
+         params: c0=-2.2866e-01, c1=5.1654e-01
+         description: Quadratic polynomial without intercept: concave-down parabola (c0=-0.229) plus positive linear term (0.517). Good fit (NMSE=1.2e-3) but noticeably worse than the full quadratic with intercept (Formula 2), indicating the intercept term matters.
+         train=1.24e-03  test=1.28e-03  ood=5.65e+00
+  [Seed] [Degenerated] A*c0 + c1*sin(c2*t + c3)
+         params: c0=-3.0125e-01, c1=2.9711e+02, c2=1.0000e-06, c3=3.1393e+00
+         description: top-level additive combination, contains transcendental functions sin, 2 additive terms, complex structure (depth 5)
+         train=2.74e-02  test=2.83e-02  ood=9.03e+02
+  [Seed] A*c0/(A**2 + c1)
+         params: c0=5.7389e-02, c1=-8.8821e-01
+         description: Rational function with quadratic denominator and c1≈-0.888, creating singularities near A≈±0.943. Poor fit (NMSE=0.674) and near-singular behavior indicate structural mismatch.
+         train=6.74e-01  test=5.97e-01  ood=2.62e+04
+  [Seed] A**3*c0 + A**2*c1 + A*c2
+         params: c0=2.4920e-02, c1=-3.2194e-01, c2=6.0029e-01
+         description: Cubic polynomial in A without intercept: small cubic term (0.025), dominant quadratic (-0.322) and linear (0.600) terms. Exceptional fit (NMSE~2e-6) suggests the cubic correction significantly improves upon the quadratic model, and the data passes near the origin.
+         train=1.95e-06  test=1.83e-06  ood=7.28e-03
+  [Seed] A*c0/(A + c1)**2
+         params: c0=2.7589e-02, c1=-7.7195e-01
+         description: Rational function with squared denominator and c1≈-0.772, creating a second-order pole near A≈0.77. Poor fit (NMSE=0.562) indicates this rational form cannot capture the polynomial-like target.
+         train=5.62e-01  test=4.92e-01  ood=2.19e+04
+  [Seed] [Degenerated] A**c0*c1/(A**c0 + c2)
+         params: c0=-3.0000e+00, c1=4.7236e+00, c2=1.2261e+01
+         description: top-level product form, contains fractions, 1 additive terms, moderate structure
+         train=4.81e-01  test=4.09e-01  ood=3.05e+04
+  [Seed] A*c0*exp(c1*t)
+         params: c0=1.6870e-01, c1=-1.8523e-01
+         description: Product of linear A (scaled by 0.169) and exponential decay in t (rate -0.185). This is the first formula involving variable t; moderate fit (NMSE=0.226) suggests separable A·f(t) structure partially captures the data but misses nonlinear A-dependence.
+         train=2.26e-01  test=2.10e-01  ood=2.97e+00
+  [Seed] A**c0*c1 + c2
+         params: c0=3.3720e+00, c1=-2.1781e-02, c2=3.4025e-01
+         description: Power law A^3.37 with small negative coefficient (-0.0218) plus offset 0.340. The small power-law coefficient makes this approximately constant (~0.34) with a minor high-order correction. NMSE=4.1e-4 shows decent fit, effectively acting like a polynomial approximation.
+         train=4.10e-04  test=4.44e-04  ood=8.08e-01
+  [Seed] A**3*c0 + A**2*c1
+         params: c0=-1.4629e-01, c1=3.3008e-01
+         description: Cubic-quadratic polynomial without linear or constant terms. The quadratic term (0.330) dominates at small A while the cubic (-0.146) provides correction. Moderate fit (NMSE=0.061) is much worse than including the linear term (Formula 10).
+         train=6.08e-02  test=6.71e-02  ood=1.76e+02
+  [Seed] A*c0*exp(A*c1)
+         params: c0=1.0783e+01, c1=-3.1237e+00
+         description: Product of linear A (scaled by 10.78) and exponential decay in A (rate -3.12). This creates a peaked function (maximum near A≈0.32). Poor fit (NMSE=0.293) indicates this peaked exponential form doesn't match the data well.
+         train=2.93e-01  test=2.56e-01  ood=1.21e+04
+  [Seed] A*c0/(A + c1) + A*c2
+         params: c0=2.0417e+01, c1=7.5909e+00, c2=-2.0727e+00
+         description: Additive combination of a rational term A·20.4/(A+7.59) and a linear term A·(-2.07). Near-perfect fit (NMSE~8e-8) suggests this 3-parameter rational-linear hybrid captures the target almost exactly; the rational term contributes a saturating component while the linear term provides the dominant trend.
+         train=8.08e-08  test=6.40e-08  ood=3.62e-04
+  [Seed] A**3*c0 + A**2*c1 + A**2*c2 + A*c3
+         params: c0=2.4920e-02, c1=3.9222e+00, c2=-4.2441e+00, c3=6.0029e-01
+         description: Structurally redundant with Formula 10: the two A² terms combine as A²*(3.922-4.244)=A²*(-0.322), yielding identical coefficients (c0=0.025, effective c1=-0.322, c3=0.600) and identical NMSE~2e-6. This is effectively a cubic polynomial A³·0.025 - A²·0.322 + A·0.600.
+         train=1.95e-06  test=1.83e-06  ood=7.28e-03
+  [Seed] A**c0*c1*exp(c2*t)
+         params: c0=-6.1849e-01, c1=3.8503e-01, c2=-1.8523e-01
+         description: Product of power law A^(-0.618) (inverse square-root-like), scale factor 0.385, and exponential decay in t (rate -0.185). This two-variable separable model achieves NMSE=0.048, substantially better than the linear-in-A version (Formula 12), suggesting A^(-0.6) better captures A-dependence than linear A when combined with exp(-0.185t).
+         train=4.84e-02  test=4.17e-02  ood=3.05e+00
+
+Evolution tree initialization complete: EvolutionTree(total=20, evaluated=20, best_test=0.0000)
+
+============================================================
+Evolution tree search started
+Mature threshold  train<2.55e-13
+============================================================
+
+============================================================
+Step 1/30
+============================================================
+
+  [Selector] Selected 5 parents:
+
+  [1/5] Parent: A*c0/(A + c1) + A*c2
+    params: c0=2.0417e+01, c1=7.5909e+00, c2=-2.0727e+00
+    train=8.08e-08  test=6.40e-08  ood=3.62e-04
+    rationale: Near-perfect fit (NMSE~0) with rational-linear hybrid structure. Mutations may discover simpler equivalent forms or confirm this as the true functional form. 3 params, moderate complexity.
+
+  [2/5] Parent: A**2*c0 + A*c1 + c2
+    params: c0=-1.9184e-01, c1=3.8108e-01, c2=1.1847e-01
+    train=3.41e-05  test=3.47e-05  ood=1.13e-01
+    rationale: Simple quadratic polynomial with excellent NMSE=3.4e-5. Good base for mutations that could add rational corrections, exponential terms, or t-dependence to bridge the gap to the best formula.
+
+  [3/5] Parent: A**c0*c1 + c2
+    params: c0=3.3720e+00, c1=-2.1781e-02, c2=3.4025e-01
+    train=4.10e-04  test=4.44e-04  ood=8.08e-01
+    rationale: Compact power-law structure (only 7 operators) with NMSE=4.1e-4. Structurally distinct from polynomials and rationals. Mutations could introduce t-dependence or additive polynomial terms.
+
+  [4/5] Parent: A*c0*exp(c1*t)
+    params: c0=1.6870e-01, c1=-1.8523e-01
+    train=2.26e-01  test=2.10e-01  ood=2.97e+00
+    rationale: Key formula involving time variable t with separable A·exp(t) structure. NMSE=0.226 has significant room for improvement. Mutations adding nonlinear A-dependence or additive terms could dramatically improve fit.
+
+  [5/5] Parent: A**2*c0 + A*c1
+    params: c0=-2.2866e-01, c1=5.1654e-01
+    train=1.24e-03  test=1.28e-03  ood=5.65e+00
+    rationale: Simplest well-performing formula (2 params, NMSE=1.2e-3). Excellent mutation candidate — adding an intercept, rational correction, or t-dependent term could yield large improvements from a minimal base.
+
+  [Mutation] Programmatic deletion: 2, Programmatic addition: 16
+
+  [Mutation] Programmatic deletion: 3, Programmatic addition: 16
+
+  [Mutation] Programmatic deletion: 7, Programmatic addition: 16
+
+  [Mutation] Programmatic deletion: 9, Programmatic addition: 16
+
+  [Mutation] Programmatic deletion: 6, Programmatic addition: 16
+  [Mutation] LLM suggestions: 20
+  [Mutation] After dedup: 38 unique candidates (raw 39)
+  [Mutation] LLM suggestions: 20
+  [Mutation] After dedup: 41 unique candidates (raw 45)
+  [Mutation] LLM suggestions: 20
+  [Mutation] After dedup: 35 unique candidates (raw 38)
+  [Mutation] LLM suggestions: 20
+  [Mutation] After dedup: 39 unique candidates (raw 42)
+  [Mutation] LLM suggestions: 20
+  [Mutation] After dedup: 39 unique candidates (raw 43)
+
+  [Unified eval] 181 candidates, pool workers=16, timeout=120s
+    Parent tags: P1=A*c0*exp(c1*t)  P2=A*c0/(A + c1) + A*c2  P3=A**c0*c1 + c2  P4=A**2*c0 + A*c1 + c2  P5=A**2*c0 + A*c1
+    [P1|[Deletion] Remove multiplicative factor exp(c1*t)]: test=1.07e+00  train=1.06e+00  ood=8.38e+03  → A*c0
+    ✗ [P1|[Deletion] Unwrap exp() -> c1*t]: overfitting (c0=2.572e-05->small coeff,A*c0*t->0; no feature variables after simplification->overfitting)  -> A*c0*t
+  ★ [P1|[Deletion] Remove multiplicative factor A]: test=6.04e-02  train=7.68e-02  ood=3.01e+00  → c0*exp(c1*t)
+  ★ [P1|[Add] linear term +c4*A+c5]: test=1.22e-02  train=1.25e-02  ood=1.55e+02  → A*c0*exp(c1*t) + A*c2 + c3
+  ★ [P1|[Add] sinusoidal term +c6*sin(c7*t+c8)]: test=2.80e-02  train=2.72e-02  ood=9.80e+02  → A*c0*exp(c1*t) + c2*sin(c3*t + c4)
+    ↳ degenerate simplified (c3=1.043e-06->small coeff,c3*t->0): A*c0*exp(c1*t) + c2*sin(c3*t + c4) -> A*c0*exp(c1*t) + c2
+  ★ [P1|[Add] linear term +c2*t+c3]: test=2.80e-02  train=2.72e-02  ood=9.80e+02  → A*c0*exp(c1*t) + c2*t + c3
+    ↳ degenerate simplified (c2=5.974e-04->small coeff,c2*t->0): A*c0*exp(c1*t) + c2*t + c3 -> A*c0*exp(c1*t) + c2
+  ★ [P1|[Add] sinusoidal term +c9*sin(c10*A+c11)]: test=2.79e-06  train=2.92e-06  ood=5.09e-02  → A*c0*exp(c1*t) + c2*sin(A*c3 + c4)
+    ↳ degenerate simplified (c1=7.161e-06->small coeff,c1*t->0): A*c0*exp(c1*t) + c2*sin(A*c3 + c4) -> A*c0 + c1*sin(A*c2 + c3)
+  ★ [P1|[Add] power term +c12*t**c13]: test=2.75e-02  train=4.89e-02  ood=1.15e+03  → A*c0*exp(c1*t) + c2*t**c3
+    ↳ degenerate simplified (c3=0.0000->snapped to 0; c1=4.842e-04->small coeff,c1*t->0): A*c0*exp(c1*t) + c2*t**c3 -> A*c0 + c1
+  ★ [P1|[Add] rational fraction +(c32*t+c33)/(c34*A+c35)]: test=2.80e-02  train=2.72e-02  ood=9.80e+02  → A*c0*exp(c1*t) + c2*t/(A*c3 + c4) + c5/(A*c3 + c4)
+  ★ [P1|[Add] rational fraction +(c24*t+c25)/(c26*t+c27)]: test=8.73e-03  train=1.01e-02  ood=1.06e+03  → A*c0*exp(c1*t) + c2*t/(c3*t + c4) + c5/(c3*t + c4)
+    ↳ degenerate simplified (c1=4.461e-04->small coeff,c1*t->0): A*c0*exp(c1*t) + c2*t/(c3*t + c4) + c5/(c3*t + c4) -> A*c0/(c1*t + c2) + A*c3*t/(c1*t + c2) + c4*t/(c1*t + c2) + c5/(c1*t + c2)
+  ★ [P1|[Add] logarithmic term +c20*log(1+c21*t)]: test=1.91e-01  train=2.07e-01  ood=3.57e+03  → A*c0*exp(c1*t) + c2*log(c3*t + 1)
+  ★ [P1|[Add] exponential term +c16*exp(c17*t)]: test=1.05e-02  train=1.01e-02  ood=3.83e+03  → A*c0*exp(c1*t) + c2*exp(c3*t)
+  ★ [P1|[Add] rational fraction +(c28*A+c29)/(c30*A+c31)]: test=5.61e-08  train=6.14e-08  ood=1.31e-03  → A*c0*exp(c1*t) + A*c2/(A*c3 + c4) + c5/(A*c3 + c4)
+    ↳ degenerate simplified (c1=7.589e-08->small coeff,c1*t->0): A*c0*exp(c1*t) + A*c2/(A*c3 + c4) + c5/(A*c3 + c4) -> A**2*c0/(A*c1 + c2) + A*c3/(A*c1 + c2) + A*c4/(A*c1 + c2) + c5/(A*c1 + c2)
+  ★ [P1|[Add] power term +c14*A**c15]: test=3.20e-06  train=2.99e-06  ood=5.36e-02  → A*c0*exp(c1*t) + A**c2*c3
+    ↳ degenerate simplified (c1=1.354e-06->small coeff,c1*t->0): A*c0*exp(c1*t) + A**c2*c3 -> A*c0 + A**c1*c2
+  ★ [P1|[Add] logarithmic term +c22*log(1+c23*A)]: test=4.94e-08  train=5.11e-08  ood=8.11e-04  → A*c0*exp(c1*t) + c2*log(A*c3 + 1)
+    ↳ degenerate simplified (c1=4.606e-08->small coeff,c1*t->0): A*c0*exp(c1*t) + c2*log(A*c3 + 1) -> A*c0 + c1*log(A*c2 + 1)
+  ★ [P1|[Add] exponential term +c18*exp(c19*A)]: test=2.81e-02  train=2.73e-02  ood=9.39e+02  → A*c0*exp(c1*t) + c2*exp(A*c3)
+    ↳ degenerate simplified (c3=3.065e-04->small coeff,A*c3->0; c1=4.345e-04->small coeff,c1*t->0): A*c0*exp(c1*t) + c2*exp(A*c3) -> A*c0 + c1
+  ★ [P1|[Add] rational fraction +(c36*A+c37)/(c38*t+c39)]: test=4.97e-03  train=4.93e-03  ood=1.16e+02  → A*c0*exp(c1*t) + A*c2/(c3*t + c4) + c5/(c3*t + c4)
+  ★ [P1|[Add] power-law coupling +c40*(t+c41)**c42*A]: test=1.87e-03  train=1.91e-03  ood=5.87e+00  → A*c0*exp(c1*t) + A*c2*(c3 + t)**c4
+    ↳ degenerate simplified (c4=-5.0000->snapped to -5): A*c0*exp(c1*t) + A*c2*(c3 + t)**c4 -> A*c0*exp(c1*t) + A*c2/(c3 + t)**5
+  ★ [P1|[Add] power-law coupling +c43*(A+c44)**c45*t]: test=6.78e-02  train=5.66e-02  ood=2.70e+00  → A*c0*exp(c1*t) + c2*t*(A + c3)**c4
+    ↳ degenerate simplified (c4=3.0000->snapped to 3): A*c0*exp(c1*t) + c2*t*(A + c3)**c4 -> A*c0*exp(c1*t) + c2*t*(A + c3)**3
+  ★ [P1|[LLM] A: Added composite log-exp term to capture saturation-like behavior in concentration]: test=2.42e-04  train=2.33e-04  ood=5.32e+00  → A*c0*exp(c1*t) + c2*log(c3*exp(A*c4) + 1)
+    ↳ degenerate simplified (c1=-1.373e-05->small coeff,c1*t->0): A*c0*exp(c1*t) + c2*log(c3*exp(A*c4) + 1) -> A*c0 + c1*log(c2*exp(A*c3) + 1)
+  ★ [P1|[LLM] A: Added exp(sin(t)) composite for periodic modulation of rate]: test=4.71e-03  train=4.92e-03  ood=4.72e+04  → A*c0*exp(c1*t) + c2*exp(c3*sin(c4*t + c5))
+  ★ [P1|[LLM] A: Added sin(log(1+A)) composite to model oscillatory response in log-concentration space]: test=4.56e-08  train=5.00e-08  ood=1.08e-03  → A*c0*exp(c1*t) + c2*sin(c3*log(A*c4 + 1) + c5)
+    ↳ degenerate simplified (c3=4.315e-05->small coeff,c3*log(A*c4 + 1)->0; c1=5.354e-08->small coeff,c1*t->0): A*c0*exp(c1*t) + c2*sin(c3*log(A*c4 + 1) + c5) -> A*c0 + c1
+  ★ [P1|[LLM] A: Added log(1+A^2) composite to capture logarithmic saturation of quadratic kinetics]: test=5.18e-06  train=5.24e-06  ood=1.31e-01  → A*c0*exp(c1*t) + c2*log(A**2*c3 + 1)
+    ↳ degenerate simplified (c1=-2.744e-06->small coeff,c1*t->0): A*c0*exp(c1*t) + c2*log(A**2*c3 + 1) -> A*c0 + c1*log(A**2*c2 + 1)
+  ★ [P1|[LLM] B: Added product of A and cos(A) for concentration-dependent oscillatory modulation]: test=3.51e-04  train=3.37e-04  ood=6.38e+00  → A*c0*exp(c1*t) + A*c2*cos(A*c3)
+    ↳ degenerate simplified (c1=-7.081e-05->small coeff,c1*t->0): A*c0*exp(c1*t) + A*c2*cos(A*c3) -> A*c0 + A*c1*cos(A*c2)
+  ★ [P1|[LLM] B: Added product of sin(t) and A for oscillatory time-modulated first-order kinetics]: test=1.28e-01  train=1.41e-01  ood=1.49e+04  → A*c0*exp(c1*t) + A*c2*sin(c3*t + c4)
+    ↳ degenerate simplified (c3=1.004e-06->small coeff,c3*t->0): A*c0*exp(c1*t) + A*c2*sin(c3*t + c4) -> A*c0*exp(c1*t) + A*c2
+  ★ [P1|[LLM] A: Added exp(A^c) stretched exponential composite for nonlinear concentration dependence]: test=2.14e-05  train=2.09e-05  ood=5.26e-01  → A*c0*exp(c1*t) + c2*exp(A**c3*c4)
+    ↳ degenerate simplified (c1=1.546e-06->small coeff,c1*t->0): A*c0*exp(c1*t) + c2*exp(A**c3*c4) -> A*c0 + c1*exp(A**c2*c3)
+  ★ [P1|[LLM] C: Added autocatalytic logistic term, referencing autocatalytic from domain knowledge above: dA_dt = c0 * A * (c1 - A)]: test=7.00e-04  train=6.82e-04  ood=5.46e+00  → A**2*c0 + A*c1*exp(c2*t) + A*c3
+  ★ [P1|[LLM] C: Added second-order kinetics term, referencing second-order kinetics from domain knowledge above: dA_dt = c0 * A**2]: test=1.15e-03  train=1.10e-03  ood=3.20e+01  → A**2*c0 + A*c1*exp(c2*t)
+    ↳ degenerate simplified (c2=4.783e-05->small coeff,c2*t->0): A**2*c0 + A*c1*exp(c2*t) -> A**2*c0 + A*c1
+  ★ [P1|[LLM] C: Added Michaelis-Menten saturation term, referencing Michaelis-Menten type from domain knowledge above: dA_dt = c0 * A / (c1 + A)]: test=5.85e-08  train=7.16e-08  ood=2.45e-03  → A*c0*exp(c1*t) + A*c2/(A + c3)
+    ↳ degenerate simplified (c1=1.056e-07->small coeff,c1*t->0): A*c0*exp(c1*t) + A*c2/(A + c3) -> A**2*c0/(A + c1) + A*c2/(A + c1) + A*c3/(A + c1)
+  ★ [P1|[LLM] B: Added product of exp(t) and A^2 for time-modulated second-order kinetics]: test=5.90e-05  train=6.70e-05  ood=6.59e+00  → A**2*c0*exp(c1*t) + A*c2*exp(c3*t)
+  ★ [P1|[LLM] B: Added power-log product in A for nonlinear rate with logarithmic correction]: test=4.69e-08  train=5.05e-08  ood=1.01e-03  → A*c0*exp(c1*t) + A**c2*c3*log(A*c4 + 1)
+    ↳ degenerate simplified (c1=5.158e-08->small coeff,c1*t->0; c2=0.0004->snapped to 0): A*c0*exp(c1*t) + A**c2*c3*log(A*c4 + 1) -> A*c0 + c1*log(A*c2 + 1)
+  ★ [P1|[LLM] B: Added power-exponential product in A for strongly nonlinear rate expression]: test=7.50e-08  train=7.81e-08  ood=1.30e-03  → A*c0*exp(c1*t) + A**c2*c3*exp(A*c4)
+    ↳ degenerate simplified (c1=-2.481e-07->small coeff,c1*t->0): A*c0*exp(c1*t) + A**c2*c3*exp(A*c4) -> A*c0 + A**c1*c2*exp(A*c3)
+  ★ [P2|[Add] sinusoidal term +c10*sin(c11*A+c12)]: test=2.20e-13  train=2.88e-13  ood=2.90e-08  → A*c0/(A + c1) + A*c2 + c3*sin(A*c4 + c5)
+    ↳ degenerate simplified (c5=6.2574~2*pi->phase absorbed): A*c0/(A + c1) + A*c2 + c3*sin(A*c4 + c5) -> A**2*c0/(A + c1) + A*c2/(A + c1) + A*c3/(A + c1) + A*c4*sin(A*c5 + c6)/(A + c1) + c7*sin(A*c5 + c8)/(A + c1)
+  ★ [P1|[LLM] C: Added substrate inhibition term, referencing inhibition kinetics from domain knowledge above: dA_dt = c0 * A / (c1 + A**2)]: test=8.32e-05  train=8.06e-05  ood=1.79e+00  → A*c0*exp(c1*t) + A*c2/(A**2 + c3)
+    ↳ degenerate simplified (c1=1.231e-05->small coeff,c1*t->0): A*c0*exp(c1*t) + A*c2/(A**2 + c3) -> A**3*c0/(A**2 + c1) + A*c2/(A**2 + c1) + A*c3/(A**2 + c1)
+  ★ [P1|[LLM] C: Added cubic and quadratic terms, referencing polynomial rate from domain knowledge above: dA_dt = c0 + c1*A + c2*A**2 + c3*A**3]: test=1.68e-06  train=1.77e-06  ood=5.01e-02  → A**3*c0 + A**2*c1 + A*c2*exp(c3*t)
+    ↳ degenerate simplified (c3=-1.649e-06->small coeff,c3*t->0): A**3*c0 + A**2*c1 + A*c2*exp(c3*t) -> A**3*c0 + A**2*c1 + A*c2
+  ★ [P1|[LLM] C: Added Langmuir-Hinshelwood surface reaction term, referencing Langmuir-Hinshelwood from domain knowledge above: dA_dt = c0 * A / (c1 + A)**2]: test=1.03e-07  train=1.27e-07  ood=4.89e-03  → A*c0*exp(c1*t) + A*c2/(A + c3)**2
+    ↳ degenerate simplified (c1=2.025e-07->small coeff,c1*t->0): A*c0*exp(c1*t) + A*c2/(A + c3)**2 -> A*c0 + A*c1/(A + c2)**2
+  ★ [P1|[LLM] C: Added mixed-order kinetics with offset, referencing mixed-order kinetics and reversible first-order from domain knowledge above: dA_dt = c0*A + c1*A**2 and dA_dt = c0*A + c1]: test=2.16e-05  train=2.09e-05  ood=1.70e-01  → A**2*c0 + A*c1*exp(c2*t) + A*c3 + c4
+  ★ [P1|[LLM] C: Added Hill-type cooperative kinetics, referencing cooperative kinetics from domain knowledge above: dA_dt = c0 * A**c1 / (c2 + A**c1)]: test=5.46e-08  train=5.85e-08  ood=1.13e-03  → A*c0*exp(c1*t) + A**c2*c3/(A**c2 + c4)
+    ↳ degenerate simplified (c1=6.966e-08->small coeff,c1*t->0; c2=0.9980->snapped to 1; c2=0.9980->snapped to 1): A*c0*exp(c1*t) + A**c2*c3/(A**c2 + c4) -> A**2*c0/(A + c1) + A*c2/(A + c1) + A*c3/(A + c1)
+    [P2|[Deletion] Remove multiplicative factor A]: test=1.51e-03  train=1.42e-03  ood=2.45e+00  → A*c0/(A + c1) + c2
+    [P2|[Deletion] Remove multiplicative factor c2]: test=1.28e-02  train=1.20e-02  ood=4.18e+01  → A*c0/(A + c1) + A
+  ★ [P1|[LLM] C: Added fractional order with constant source/sink, referencing fractional order with offset from domain knowledge above: dA_dt = c0 * A**c1 + c2]: test=3.13e-10  train=3.94e-10  ood=1.46e-05  → A*c0*exp(c1*t) + A**c2*c3 + c4
+    ↳ degenerate simplified (c1=-1.521e-08->small coeff,c1*t->0): A*c0*exp(c1*t) + A**c2*c3 + c4 -> A*c0 + A**c1*c2 + c3
+    [P2|[Deletion] Remove multiplicative factor A]: test=3.32e-02  train=3.23e-02  ood=1.80e+02  → A*c0 + c1/(A + c2)
+    [P2|[Deletion] Remove multiplicative factor c0]: test=1.92e-02  train=1.94e-02  ood=1.27e+02  → A*c0 + A/(A + c1)
+    [P2|[Deletion] Remove multiplicative factor 1/(A + c1)]: test=1.07e+00  train=1.06e+00  ood=8.38e+03  → A*c0 + A*c1
+    [P2|[Deletion] Remove exponent 1/(A + c1) -> A + c1]: test=1.28e-03  train=1.24e-03  ood=5.65e+00  → A**2*c0 + A*c1 + A*c2
+  ★ [P2|[Add] rational fraction +(c29*A+c30)/(c31*A+c32)]: test=1.11e-11  train=1.27e-11  ood=4.04e-08  → A*c0/(A + c1) + A*c2 + A*c3/(A*c4 + c5) + c6/(A*c4 + c5)
+    ↳ degenerate simplified (c4=1.000e-06->small coeff,A*c4->0; c4=1.000e-06->small coeff,A*c4->0): A*c0/(A + c1) + A*c2 + A*c3/(A*c4 + c5) + c6/(A*c4 + c5) -> A**2*c0/(A*c1 + c2) + A**2*c3/(A*c1 + c4) + A*c11/(A*c1 + c12) + A*c5/(A*c1 + c6) + A*c7/(A*c1 + c8) + A*c9/(A*c1 + c10) + c13/(A*c1 + c14)
+  ★ [P2|[Add] linear term +c5*A+c6]: test=5.98e-08  train=6.59e-08  ood=1.69e-04  → A*c0/(A + c1) + A*c2 + A*c3 + c4
+  ★ [P2|[Add] linear term +c3*t+c4]: test=5.62e-08  train=6.14e-08  ood=1.30e-03  → A*c0/(A + c1) + A*c2 + c3*t + c4
+    ↳ degenerate simplified (c3=-3.595e-07->small coeff,c3*t->0): A*c0/(A + c1) + A*c2 + c3*t + c4 -> A**2*c0/(A + c1) + A*c2/(A + c1) + A*c3/(A + c1) + A*c4/(A + c1) + c5/(A + c1)
+  ★ [P2|[Add] sinusoidal term +c7*sin(c8*t+c9)]: test=5.15e-08  train=6.05e-08  ood=6.22e-03  → A*c0/(A + c1) + A*c2 + c3*sin(c4*t + c5)
+    ↳ degenerate simplified (c3=1.192e-04->small coeff,c3*sin(c4*t + c5)->0): A*c0/(A + c1) + A*c2 + c3*sin(c4*t + c5) -> A**2*c0/(A + c1) + A*c2/(A + c1) + A*c3/(A + c1)
+  ★ [P2|[Add] power term +c13*t**c14]: test=5.58e-08  train=6.72e-08  ood=2.11e-03  → A*c0/(A + c1) + A*c2 + c3*t**c4
+    ↳ degenerate simplified (c3=-3.583e-05->small coeff,c3*t**c4->0): A*c0/(A + c1) + A*c2 + c3*t**c4 -> A**2*c0/(A + c1) + A*c2/(A + c1) + A*c3/(A + c1)
+  ★ [P2|[LLM] A: Added sin(log(1+A)) composite to capture oscillatory corrections on logarithmic concentration scale]: test=2.21e-13  train=2.67e-13  ood=2.87e-08  → A*c0/(A + c1) + A*c2 + c3*sin(c4*log(A*c5 + 1) + c6)
+    ↳ degenerate simplified (c6=3.1432~1*pi->phase absorbed): A*c0/(A + c1) + A*c2 + c3*sin(c4*log(A*c5 + 1) + c6) -> A**2*c0/(A + c1) + A*c2/(A + c1) + A*c3/(A + c1) + A*c4*sin(c5 + c6*log(A*c7 + 1))/(A + c1) + c8*sin(c6*log(A*c7 + 1) + c9)/(A + c1)
+  ★ [P2|[LLM] A: Added composite log-exp (softplus) term to capture smooth threshold behavior in concentration response]: test=6.47e-13  train=8.30e-13  ood=2.87e-08  → A*c0/(A + c1) + A*c2 + c3*log(c4*exp(A*c5) + 1)
+  ★ [P2|[LLM] B: Added power-log product term for mixed-order correction with logarithmic modulation]: test=2.55e-13  train=3.29e-13  ood=2.86e-08  → A*c0/(A + c1) + A*c2 + A**c3*c4*log(A*c5 + 1)
+    ↳ degenerate simplified (c3=0.0091->snapped to 0): A*c0/(A + c1) + A*c2 + A**c3*c4*log(A*c5 + 1) -> A**2*c0/(A + c1) + A*c2/(A + c1) + A*c3/(A + c1) + A*c4*log(A*c5 + 1)/(A + c1) + c6*log(A*c5 + 1)/(A + c1)
+  ★ [P2|[LLM] B: Added power-exponential product for high-concentration nonlinear correction]: test=7.06e-12  train=8.15e-12  ood=3.73e-08  → A*c0/(A + c1) + A*c2 + A**c3*c4*exp(A*c5)
+  ★ [P2|[Add] exponential term +c17*exp(c18*t)]: test=4.13e-08  train=4.44e-08  ood=3.99e-04  → A*c0/(A + c1) + A*c2 + c3*exp(c4*t)
+    ↳ degenerate simplified (c3=2.610e-04->small coeff,c3*exp(c4*t)->0): A*c0/(A + c1) + A*c2 + c3*exp(c4*t) -> A**2*c0/(A + c1) + A*c2/(A + c1) + A*c3/(A + c1)
+  ★ [P2|[Add] exponential term +c19*exp(c20*A)]: test=3.01e-10  train=3.39e-10  ood=6.80e-07  → A*c0/(A + c1) + A*c2 + c3*exp(A*c4)
+  ★ [P2|[Add] logarithmic term +c21*log(1+c22*t)]: test=5.43e-08  train=6.47e-08  ood=2.23e-03  → A*c0/(A + c1) + A*c2 + c3*log(c4*t + 1)
+    ↳ degenerate simplified (c3=-1.734e-05->small coeff,c3*log(c4*t + 1)->0): A*c0/(A + c1) + A*c2 + c3*log(c4*t + 1) -> A**2*c0/(A + c1) + A*c2/(A + c1) + A*c3/(A + c1)
+  ★ [P2|[Add] power term +c15*A**c16]: test=2.33e-10  train=2.77e-10  ood=6.18e-07  → A*c0/(A + c1) + A*c2 + A**c3*c4
+  ★ [P2|[Add] logarithmic term +c23*log(1+c24*A)]: test=4.53e-08  train=4.03e-08  ood=1.13e-06  → A*c0/(A + c1) + A*c2 + c3*log(A*c4 + 1)
+    ↳ degenerate simplified (c0=1.982e-06->small coeff,A*c0/(A + c1)->0): A*c0/(A + c1) + A*c2 + c3*log(A*c4 + 1) -> A*c0 + c1*log(A*c2 + 1)
+  ★ [P2|[Add] rational fraction +(c25*t+c26)/(c27*t+c28)]: test=3.20e-08  train=3.69e-08  ood=5.87e-04  → A*c0/(A + c1) + A*c2 + c3*t/(c4*t + c5) + c6/(c4*t + c5)
+  ★ [P2|[Add] rational fraction +(c33*t+c34)/(c35*A+c36)]: test=1.43e-09  train=1.68e-09  ood=3.11e-05  → A*c0/(A + c1) + A*c2 + c3*t/(A*c4 + c5) + c6/(A*c4 + c5)
+    ↳ degenerate simplified (c3=-8.252e-08->small coeff,c3*t/(A*c4 + c5)->0): A*c0/(A + c1) + A*c2 + c3*t/(A*c4 + c5) + c6/(A*c4 + c5) -> A*c0/(A + c1) + A*c2 + c3/(A*c4 + c5)
+  ★ [P2|[Add] rational fraction +(c37*A+c38)/(c39*t+c40)]: test=4.16e-08  train=4.16e-08  ood=3.80e-04  → A*c0/(A + c1) + A*c2 + A*c3/(c4*t + c5) + c6/(c4*t + c5)
+  ★ [P2|[Add] power-law coupling +c41*(t+c42)**c43*A]: test=4.06e-08  train=4.27e-08  ood=4.73e-04  → A*c0/(A + c1) + A*c2 + A*c3*(c4 + t)**c5
+    ↳ degenerate simplified (c5=-5.0000->snapped to -5): A*c0/(A + c1) + A*c2 + A*c3*(c4 + t)**c5 -> A*c0/(A + c1) + A*c2 + A*c3/(c4 + t)**5
+  ★ [P2|[Add] power-law coupling +c44*(A+c45)**c46*t]: test=2.64e-08  train=2.98e-08  ood=4.15e-03  → A*c0/(A + c1) + A*c2 + c3*t*(A + c4)**c5
+    ↳ degenerate simplified (c5=1.0000->snapped to 1; c3=-3.472e-04->small coeff,c3*t*(A + c4)->0): A*c0/(A + c1) + A*c2 + c3*t*(A + c4)**c5 -> A**2*c0/(A + c1) + A*c2/(A + c1) + A*c3/(A + c1)
+  ★ [P2|[LLM] A: Added exp(sin(t)) composite to model periodic time-modulated correction]: test=5.76e-08  train=6.28e-08  ood=7.31e-04  → A*c0/(A + c1) + A*c2 + c3*exp(c4*sin(c5*t + c6))
+  ★ [P2|[LLM] A: Added log(1+A^2) composite to capture logarithmic saturation at high concentration]: test=1.21e-08  train=1.40e-08  ood=4.19e-05  → A*c0/(A + c1) + A*c2 + c3*log(A**2*c4 + 1)
+  ★ [P2|[LLM] A: Added Gaussian-type exp(A^2) composite for nonlinear concentration correction]: test=9.11e-10  train=1.02e-09  ood=1.81e-06  → A*c0/(A + c1) + A*c2 + c3*exp(A**2*c4)
+  ★ [P2|[LLM] B: Added product of sin(t) and A for time-oscillatory modulation of first-order rate]: test=5.08e-08  train=5.93e-08  ood=6.51e-03  → A*c0/(A + c1) + A*c2 + A*c3*sin(c4*t + c5)
+    ↳ degenerate simplified (c4=2.098e-06->small coeff,c4*t->0): A*c0/(A + c1) + A*c2 + A*c3*sin(c4*t + c5) -> A**2*c0/(A + c1) + A**2*c2/(A + c1) + A*c3/(A + c1) + A*c4/(A + c1) + A*c5/(A + c1)
+  ★ [P3|[Add] sinusoidal term +c10*sin(c11*A+c12)]: test=1.78e-12  train=2.69e-12  ood=3.32e-08  → A**c0*c1 + c2*sin(A*c3 + c4) + c5
+  ★ [P2|[LLM] B: Added product of exp(t) and A for time-dependent exponential rate modulation]: test=4.03e-08  train=4.41e-08  ood=4.42e-04  → A*c0/(A + c1) + A*c2 + A*c3*exp(c4*t)
+    ↳ degenerate simplified (c3=1.203e-04->small coeff,A*c3*exp(c4*t)->0): A*c0/(A + c1) + A*c2 + A*c3*exp(c4*t) -> A**2*c0/(A + c1) + A*c2/(A + c1) + A*c3/(A + c1)
+  ★ [P2|[LLM] B: Added cos(A)*A^2 product to model oscillatory second-order correction]: test=4.46e-09  train=4.57e-09  ood=4.23e-06  → A**2*c0*cos(A*c1) + A*c2/(A + c3) + A*c4
+    ↳ degenerate simplified (c0=5.096e-04->small coeff,A**2*c0*cos(A*c1)->0): A**2*c0*cos(A*c1) + A*c2/(A + c3) + A*c4 -> A**2*c0/(A + c1) + A*c2/(A + c1) + A*c3/(A + c1)
+  ★ [P3|[Add] exponential term +c19*exp(c20*A)]: test=1.69e-11  train=1.90e-11  ood=7.24e-08  → A**c0*c1 + c2*exp(A*c3) + c4
+  ★ [P2|[LLM] C: Added second-order kinetics term, referencing mixed-order kinetics from domain knowledge above: dA_dt = c0 * A + c1 * A**2]: test=5.10e-08  train=5.19e-08  ood=8.32e-05  → A**2*c0 + A*c1/(A + c2) + A*c3
+  ★ [P2|[LLM] C: Added constant offset, referencing fractional order with offset from domain knowledge above: dA_dt = c0*A**c1 + c2]: test=5.98e-08  train=6.59e-08  ood=1.69e-04  → A*c0/(A + c1) + A*c2 + c3
+  ★ [P2|[LLM] C: Added cubic term, referencing polynomial rate from domain knowledge above: dA_dt = c0 + c1*A + c2*A**2 + c3*A**3]: test=5.02e-08  train=5.06e-08  ood=7.62e-05  → A**3*c0 + A*c1/(A + c2) + A*c3
+  ★ [P2|[LLM] C: Added substrate inhibition term, referencing inhibition kinetics from domain knowledge above: dA_dt = c0*A/(c1 + A**2)]: test=3.85e-09  train=4.14e-09  ood=9.87e-06  → A*c0/(A + c1) + A*c2 + A*c3/(A**2 + c4)
+  ★ [P2|[LLM] C: Added Hill-type cooperative term, referencing cooperative kinetics from domain knowledge above: dA_dt = c0*A**c1/(c2 + A**c1)]: test=1.38e-10  train=1.91e-10  ood=5.44e-08  → A*c0/(A + c1) + A*c2 + A**c3*c4/(A**c3 + c5)
+  ★ [P2|[LLM] C: Added autocatalytic logistic term, referencing autocatalytic kinetics from domain knowledge above: dA_dt = c0*A*(c1 - A)]: test=5.10e-08  train=5.19e-08  ood=8.32e-05  → A**2*c0 + A*c1/(A + c2) + A*c3 + A*c4
+  ★ [P2|[LLM] C: Added Langmuir-Hinshelwood correction, referencing Langmuir-Hinshelwood from domain knowledge above: dA_dt = c0*A/(c1 + A)**2]: test=2.03e-08  train=1.91e-08  ood=2.82e-06  → A*c0/(A + c1) + A*c2 + A*c3/(A + c4)**2
+    ↳ degenerate simplified (c0=1.226e-04->small coeff,A*c0/(A + c1)->0): A*c0/(A + c1) + A*c2 + A*c3/(A + c4)**2 -> A*c0 + A*c1/(A + c2)**2
+    [P3|[Deletion] Remove multiplicative factor c1]: test=1.07e-01  train=1.14e-01  ood=1.10e+03  → A**c0 + c1
+  ★ [P2|[LLM] C: Added polynomial correction terms, referencing polynomial rate from domain knowledge above: dA_dt = c0 + c1*A + c2*A**2 + c3*A**3]: test=6.72e-09  train=6.80e-09  ood=4.48e-06  → A**3*c0 + A**2*c1 + A*c2/(A + c3) + A*c4
+  ★ [P3|[Add] linear term +c3*t+c4]: test=4.25e-04  train=3.89e-04  ood=5.61e+00  → A**c0*c1 + c2 + c3*t
+    ↳ degenerate simplified (c3=2.368e-05->small coeff,c3*t->0): A**c0*c1 + c2 + c3*t -> A**c0*c1 + c2
+  ★ [P3|[Add] linear term +c5*A+c6]: test=3.48e-10  train=4.44e-10  ood=1.83e-06  → A*c0 + A**c1*c2 + c3
+  ★ [P3|[Add] sinusoidal term +c7*sin(c8*t+c9)]: test=3.93e-04  train=3.57e-04  ood=1.87e+01  → A**c0*c1 + c2 + c3*sin(c4*t + c5)
+    ↳ degenerate simplified (c4=7.131e-06->small coeff,c4*t->0): A**c0*c1 + c2 + c3*sin(c4*t + c5) -> A**c0*c1 + c2
+  ★ [P3|[Add] logarithmic term +c23*log(1+c24*A)]: test=7.90e-11  train=9.07e-11  ood=1.73e-07  → A**c0*c1 + c2 + c3*log(A*c4 + 1)
+  ★ [P3|[Add] rational fraction +(c29*A+c30)/(c31*A+c32)]: test=3.20e-11  train=3.66e-11  ood=8.00e-08  → A*c0/(A*c1 + c2) + A**c3*c4 + c5 + c6/(A*c1 + c2)
+  ★ [P3|[Add] rational fraction +(c33*t+c34)/(c35*A+c36)]: test=3.05e-11  train=3.48e-11  ood=6.05e-07  → A**c0*c1 + c2 + c3*t/(A*c4 + c5) + c6/(A*c4 + c5)
+    ↳ degenerate simplified (c3=-1.256e-07->small coeff,c3*t/(A*c4 + c5)->0): A**c0*c1 + c2 + c3*t/(A*c4 + c5) + c6/(A*c4 + c5) -> A*A**c0*c1/(A*c2 + c3) + A*c4/(A*c2 + c3) + A**c0*c5/(A*c2 + c3) + c6/(A*c2 + c3) + c7/(A*c2 + c3)
+  ★ [P3|[LLM] A: Added nested log-exp composite (softplus) to capture smooth threshold/saturation behavior in rate]: test=2.17e-12  train=3.29e-12  ood=3.40e-08  → A**c0*c1 + c2 + c3*log(c4*exp(A*c5) + 1)
+  ★ [P3|[LLM] A: Added exp(A^c) composite for stretched exponential correction]: test=6.06e-13  train=8.50e-13  ood=2.90e-08  → A**c0*c1 + c2 + c3*exp(A**c4*c5)
+    ↳ degenerate simplified (c0=2.0000->snapped to 2): A**c0*c1 + c2 + c3*exp(A**c4*c5) -> A**2*c0 + c1 + c2*exp(A**c3*c4)
+  ★ [P3|[LLM] B: Added exponential times power-law product for nonlinear rate enhancement]: test=4.63e-12  train=5.75e-12  ood=3.15e-08  → A**c0*c1 + A**c2*c3*exp(A*c4) + c5
+    ↳ degenerate simplified (c0=2.0000->snapped to 2): A**c0*c1 + A**c2*c3*exp(A*c4) + c5 -> A**2*c0 + A**c1*c2*exp(A*c3) + c4
+  ★ [P3|[LLM] A: Added sin(log(1+A)) composite to capture oscillatory corrections on logarithmic scale]: test=2.01e-13  train=2.61e-13  ood=2.90e-08  → A**c0*c1 + c2 + c3*sin(c4*log(A*c5 + 1) + c6)
+    ↳ degenerate simplified (c0=2.0000->snapped to 2): A**c0*c1 + c2 + c3*sin(c4*log(A*c5 + 1) + c6) -> A**2*c0 + c1 + c2*sin(c3*log(A*c4 + 1) + c5)
+  ★ [P3|[Add] power term +c13*t**c14]: test=3.61e-04  train=3.19e-04  ood=1.16e+01  → A**c0*c1 + c2*t**c3 + c4
+  ★ [P3|[Add] power term +c15*A**c16]: test=2.05e-10  train=2.38e-10  ood=4.48e-07  → A**c0*c1 + A**c2*c3 + c4
+  ★ [P3|[Add] exponential term +c17*exp(c18*t)]: test=3.09e-04  train=2.83e-04  ood=2.13e+00  → A**c0*c1 + c2*exp(c3*t) + c4
+  ★ [P3|[LLM] C: Added Langmuir-Hinshelwood surface reaction term, referencing Langmuir-Hinshelwood from domain knowledge above: dA_dt = c0 * A / (c1 + A)**2]: test=6.46e-11  train=7.17e-11  ood=2.22e-07  → A*c0/(A + c1)**2 + A**c2*c3 + c4
+    ↳ degenerate simplified (c2=2.0000->snapped to 2): A*c0/(A + c1)**2 + A**c2*c3 + c4 -> A**2*c0 + A*c1/(A + c2)**2 + c3
+  ★ [P3|[LLM] C: Added Michaelis-Menten saturation term, referencing Michaelis-Menten type from domain knowledge above: dA_dt = c0 * A / (c1 + A)]: test=3.20e-11  train=3.66e-11  ood=8.00e-08  → A*c0/(A + c1) + A**c2*c3 + c4
+  ★ [P3|[LLM] C: Added polynomial rate correction terms, referencing polynomial rate from domain knowledge above: dA_dt = c0 + c1 * A + c2 * A**2 + c3 * A**3]: test=1.20e-12  train=1.82e-12  ood=3.21e-08  → A**3*c0 + A**2*c1 + A*c2 + A**c3*c4 + c5
+  ★ [P3|[LLM] C: Added Hill-type cooperative binding term, referencing cooperative kinetics from domain knowledge above: dA_dt = c0 * A**c1 / (c2 + A**c1)]: test=2.21e-13  train=2.80e-13  ood=2.86e-08  → A**c0*c1 + A**c2*c3/(A**c2 + c4) + c5
+  ★ [P3|[Add] logarithmic term +c21*log(1+c22*t)]: test=3.69e-04  train=3.41e-04  ood=1.15e+01  → A**c0*c1 + c2 + c3*log(c4*t + 1)
+  ★ [P3|[Add] rational fraction +(c25*t+c26)/(c27*t+c28)]: test=5.03e-05  train=5.88e-05  ood=3.84e+00  → A**c0*c1 + c2 + c3*t/(c4*t + c5) + c6/(c4*t + c5)
+  ★ [P3|[Add] power-law coupling +c44*(A+c45)**c46*t]: test=1.38e-06  train=1.73e-06  ood=3.66e-02  → A**c0*c1 + c2 + c3*t*(A + c4)**c5
+    ↳ degenerate simplified (c5=2.0000->snapped to 2): A**c0*c1 + c2 + c3*t*(A + c4)**c5 -> A**c0*c1 + c2 + c3*t*(A + c4)**2
+  ★ [P3|[LLM] A: Added multivariate log composite coupling concentration and time]: test=2.16e-09  train=2.66e-09  ood=1.12e-03  → A**c0*c1 + c2 + c3*log(A*c4 + c5*t + 1)
+    ↳ degenerate simplified (c5=1.000e-06->small coeff,c5*t->0): A**c0*c1 + c2 + c3*log(A*c4 + c5*t + 1) -> A**c0*c1 + c2 + c3*log(A*c4 + 1)
+  ★ [P3|[Add] rational fraction +(c37*A+c38)/(c39*t+c40)]: test=1.29e-10  train=1.56e-10  ood=2.21e-05  → A*c0/(c1*t + c2) + A**c3*c4 + c5 + c6/(c1*t + c2)
+  ★ [P3|[LLM] A: Added exp(sin(t)) composite for periodic time-modulated rate correction]: test=4.05e-04  train=3.72e-04  ood=1.05e+01  → A**c0*c1 + c2 + c3*exp(c4*sin(c5*t + c6))
+    ↳ degenerate simplified (c3=1.636e-05->small coeff,c3*exp(c4*sin(c5*t + c6))->0): A**c0*c1 + c2 + c3*exp(c4*sin(c5*t + c6)) -> A**c0*c1 + c2
+  ★ [P3|[Add] power-law coupling +c41*(t+c42)**c43*A]: test=2.87e-10  train=3.57e-10  ood=1.39e-05  → A*c0*(c1 + t)**c2 + A**c3*c4 + c5
+    ↳ degenerate simplified (c2=-0.0000->snapped to 0): A*c0*(c1 + t)**c2 + A**c3*c4 + c5 -> A*c0 + A**c1*c2 + c3
+  ★ [P3|[LLM] B: Added product of A and log(1+A) for sub-linear correction term]: test=4.51e-10  train=5.24e-10  ood=9.71e-07  → A*c0*log(A*c1 + 1) + A**c2*c3 + c4
+  ★ [P3|[LLM] B: Added power-law times exponential product for time-dependent rate modulation]: test=1.94e-10  train=2.25e-10  ood=4.17e-06  → A**c0*c1 + A**c2*c3*exp(c4*t) + c5
+    ↳ degenerate simplified (c4=9.929e-09->small coeff,c4*t->0): A**c0*c1 + A**c2*c3*exp(c4*t) + c5 -> A**c0*c1 + A**c2*c3 + c4
+  ★ [P3|[LLM] B: Added oscillatory time modulation multiplied by power of A]: test=2.51e-05  train=3.29e-05  ood=3.43e+00  → A**c0*c1 + A**c2*c3*sin(c4*t + c5) + c6
+    ↳ degenerate simplified (c2=-5.0000->snapped to -5): A**c0*c1 + A**c2*c3*sin(c4*t + c5) + c6 -> A**c0*c1 + c2 + c3*sin(c4*t + c5)/A**5
+  ★ [P3|[LLM] B: Added product of A and cos(t) for periodic external forcing modulation]: test=3.28e-10  train=4.15e-10  ood=1.39e-05  → A*c0*cos(c1*t) + A**c2*c3 + c4
+    ↳ degenerate simplified (c1=1.909e-05->small coeff,c1*t->0): A*c0*cos(c1*t) + A**c2*c3 + c4 -> A*c0 + A**c1*c2 + c3
+  ★ [P3|[LLM] C: Added second-order kinetics term, referencing second-order kinetics from domain knowledge above: dA_dt = c0 * A**2]: test=1.36e-07  train=1.51e-07  ood=3.93e-04  → A**2*c0 + A**c1*c2 + c3
+  ★ [P3|[LLM] C: Added mixed-order terms, referencing mixed-order kinetics from domain knowledge above: dA_dt = c0 * A + c1 * A**2]: test=1.92e-10  train=2.21e-10  ood=3.83e-07  → A**2*c0 + A*c1 + A**c2*c3 + c4
+  ★ [P4|[Add] rational fraction +(c29*A+c30)/(c31*A+c32)]: test=1.10e-11  train=1.27e-11  ood=4.32e-08  → A**2*c0 + A*c1 + A*c2/(A*c3 + c4) + c5 + c6/(A*c3 + c4)
+  ★ [P3|[LLM] C: Added substrate inhibition term, referencing inhibition kinetics from domain knowledge above: dA_dt = c0 * A / (c1 + A**2)]: test=8.56e-09  train=9.54e-09  ood=1.47e-05  → A*c0/(A**2 + c1) + A**c2*c3 + c4
+  ★ [P4|[Add] rational fraction +(c33*t+c34)/(c35*A+c36)]: test=1.05e-11  train=1.21e-11  ood=2.19e-07  → A**2*c0 + A*c1 + c2 + c3*t/(A*c4 + c5) + c6/(A*c4 + c5)
+    ↳ degenerate simplified (c3=-1.207e-08->small coeff,c3*t/(A*c4 + c5)->0): A**2*c0 + A*c1 + c2 + c3*t/(A*c4 + c5) + c6/(A*c4 + c5) -> A**3*c0/(A*c1 + c2) + A**2*c3/(A*c1 + c2) + A**2*c4/(A*c1 + c2) + A*c5/(A*c1 + c2) + A*c6/(A*c1 + c2) + c7/(A*c1 + c2) + c8/(A*c1 + c2)
+  ★ [P4|[Add] exponential term +c19*exp(c20*A)]: test=1.19e-11  train=1.36e-11  ood=6.26e-08  → A**2*c0 + A*c1 + c2*exp(A*c3) + c4
+  ★ [P4|[Add] logarithmic term +c23*log(1+c24*A)]: test=3.08e-11  train=3.54e-11  ood=7.99e-08  → A**2*c0 + A*c1 + c2 + c3*log(A*c4 + 1)
+  ★ [P4|[LLM] A: Added nested log-exp composite term to capture smooth saturation transition]: test=1.19e-11  train=1.36e-11  ood=6.29e-08  → A**2*c0 + A*c1 + c2 + c3*log(c4*exp(A*c5) + 1)
+    ↳ degenerate simplified (c4=1.090e-06->small coeff,c4*exp(A*c5)->0): A**2*c0 + A*c1 + c2 + c3*log(c4*exp(A*c5) + 1) -> A**2*c0 + A*c1 + c2
+    [P4|[Deletion] Remove additive term A*c1]: test=1.01e-02  train=9.40e-03  ood=3.81e+01  → A**2*c0 + c1
+    [P4|[Deletion] Remove multiplicative factor c1]: test=2.56e-02  train=2.47e-02  ood=1.19e+02  → A**2*c0 + A + c1
+  ★ [P4|[LLM] A: Added sin(log(1+A)) composite to capture nonlinear oscillatory corrections in concentration dependence]: test=1.92e-13  train=2.43e-13  ood=2.88e-08  → A**2*c0 + A*c1 + c2 + c3*sin(c4*log(A*c5 + 1) + c6)
+    [P4|[Deletion] Remove multiplicative factor c0]: test=1.23e+00  train=1.21e+00  ood=6.98e+03  → A**2 + A*c0 + c1
+  ★ [P4|[LLM] A: Added log of quadratic polynomial in A for logarithmic saturation correction]: test=2.28e-13  train=2.88e-13  ood=2.86e-08  → A**2*c0 + A*c1 + c2 + c3*log(A**2*c4 + A*c5 + 1)
+  ★ [P4|[LLM] A: Added exp(sin(A)) composite for bounded oscillatory modulation of rate]: test=7.27e-12  train=8.30e-12  ood=5.10e-08  → A**2*c0 + A*c1 + c2 + c3*exp(c4*sin(A*c5 + c6))
+  ★ [P4|[LLM] B: Added product of A and log(1+A) to model sub-linear concentration corrections]: test=7.90e-11  train=9.11e-11  ood=1.81e-07  → A**2*c0 + A*c1 + A*c2*log(A*c3 + 1) + c4
+    [P4|[Deletion] Remove exponent A**2 -> A]: test=3.21e-02  train=3.13e-02  ood=1.73e+02  → A*c0 + A*c1 + c2
+  ★ [P4|[LLM] B: Added exponential times power-law product in A for nonlinear rate enhancement]: test=4.26e-11  train=4.81e-11  ood=1.33e-07  → A**2*c0 + A*c1 + A**c2*c3*exp(A*c4) + c5
+    ↳ degenerate simplified (c2=1.0000->snapped to 1): A**2*c0 + A*c1 + A**c2*c3*exp(A*c4) + c5 -> A**2*c0 + A*c1 + A*c2*exp(A*c3) + c4
+  ★ [P4|[Add] linear term +c3*t+c4]: test=3.22e-05  train=3.14e-05  ood=7.19e-01  → A**2*c0 + A*c1 + c2 + c3*t
+    ↳ degenerate simplified (c3=8.478e-06->small coeff,c3*t->0): A**2*c0 + A*c1 + c2 + c3*t -> A**2*c0 + A*c1 + c2
+  ★ [P4|[Add] linear term +c5*A+c6]: test=3.47e-05  train=3.41e-05  ood=1.13e-01  → A**2*c0 + A*c1 + A*c2 + c3
+  ★ [P4|[Add] sinusoidal term +c7*sin(c8*t+c9)]: test=2.84e-05  train=2.73e-05  ood=2.25e+00  → A**2*c0 + A*c1 + c2 + c3*sin(c4*t + c5)
+    ↳ degenerate simplified (c4=1.291e-06->small coeff,c4*t->0): A**2*c0 + A*c1 + c2 + c3*sin(c4*t + c5) -> A**2*c0 + A*c1 + c2
+  ★ [P4|[Add] sinusoidal term +c10*sin(c11*A+c12)]: test=8.94e-10  train=9.91e-10  ood=1.83e-06  → A**2*c0 + A*c1 + c2*sin(A*c3 + c4) + c5
+  ★ [P4|[Add] power term +c13*t**c14]: test=2.77e-05  train=2.60e-05  ood=9.90e-01  → A**2*c0 + A*c1 + c2*t**c3 + c4
+  ★ [P4|[Add] exponential term +c17*exp(c18*t)]: test=2.16e-05  train=2.09e-05  ood=1.76e-01  → A**2*c0 + A*c1 + c2*exp(c3*t) + c4
+  ★ [P4|[LLM] C: Added Hill-type cooperative kinetics term, referencing cooperative kinetics from domain knowledge above: dA_dt = c0*A**c1/(c2 + A**c1)]: test=1.10e-11  train=1.27e-11  ood=4.32e-08  → A**2*c0 + A*c1 + A**c2*c3/(A**c2 + c4) + c5
+    ↳ degenerate simplified (c2=-1.0000->snapped to -1; c2=-1.0000->snapped to -1): A**2*c0 + A*c1 + A**c2*c3/(A**c2 + c4) + c5 -> A**3*c0/(A*c1 + 1) + A**2*c2/(A*c1 + 1) + A**2*c3/(A*c1 + 1) + A*c4/(A*c1 + 1) + A*c5/(A*c1 + 1) + c6/(A*c1 + 1) + c7/(A*c1 + 1)
+  ★ [P4|[LLM] C: Added Michaelis-Menten saturation term, referencing Michaelis-Menten type from domain knowledge above: dA_dt = c0*A/(c1 + A)]: test=1.10e-11  train=1.27e-11  ood=4.32e-08  → A**2*c0 + A*c1 + A*c2/(A + c3) + c4
+  ★ [P4|[Add] logarithmic term +c21*log(1+c22*t)]: test=2.81e-05  train=2.74e-05  ood=9.91e-01  → A**2*c0 + A*c1 + c2 + c3*log(c4*t + 1)
+    ↳ degenerate simplified (c3=3.410e-04->small coeff,c3*log(c4*t + 1)->0): A**2*c0 + A*c1 + c2 + c3*log(c4*t + 1) -> A**2*c0 + A*c1 + c2
+  ★ [P4|[Add] rational fraction +(c25*t+c26)/(c27*t+c28)]: test=5.87e-06  train=6.86e-06  ood=3.89e-01  → A**2*c0 + A*c1 + c2 + c3*t/(c4*t + c5) + c6/(c4*t + c5)
+  ★ [P4|[LLM] C: Added Langmuir-Hinshelwood surface kinetics term, referencing Langmuir-Hinshelwood from domain knowledge above: dA_dt = c0*A/(c1 + A)**2]: test=7.62e-13  train=9.44e-13  ood=2.85e-08  → A**2*c0 + A*c1 + A*c2/(A + c3)**2 + c4
+  ★ [P4|[Add] rational fraction +(c37*A+c38)/(c39*t+c40)]: test=1.77e-06  train=2.03e-06  ood=8.00e-02  → A**2*c0 + A*c1 + A*c2/(c3*t + c4) + c5 + c6/(c3*t + c4)
+  ★ [P4|[Add] power-law coupling +c41*(t+c42)**c43*A]: test=8.07e-07  train=8.94e-07  ood=2.00e-02  → A**2*c0 + A*c1 + A*c2*(c3 + t)**c4 + c5
+    ↳ degenerate simplified (c4=-5.0000->snapped to -5): A**2*c0 + A*c1 + A*c2*(c3 + t)**c4 + c5 -> A**2*c0 + A*c1 + A*c2/(c3 + t)**5 + c4
+  ★ [P4|[LLM] C: Added second-order saturation term combining second-order and Michaelis-Menten kinetics, referencing mixed-order kinetics from domain knowledge above: dA_dt = c0*A + c1*A**2 and Michaelis-Menten type: dA_dt = c0*A/(c1+A)]: test=1.10e-11  train=1.27e-11  ood=4.32e-08  → A**2*c0 + A**2*c1/(A + c2) + A*c3 + c4
+  ★ [P4|[LLM] C: Added inverse saturation correction for equilibrium approach, referencing reversible first-order from domain knowledge above: dA_dt = c0*A + c1 combined with rational fraction structure from Michaelis-Menten]: test=1.10e-11  train=1.27e-11  ood=4.32e-08  → A**2*c0 + A*c1 + c2 + c3/(A + c4)
+  ★ [P4|[Add] power-law coupling +c44*(A+c45)**c46*t]: test=4.91e-07  train=5.74e-07  ood=7.59e-03  → A**2*c0 + A*c1 + c2 + c3*t*(A + c4)**c5
+    ↳ degenerate simplified (c5=2.0000->snapped to 2): A**2*c0 + A*c1 + c2 + c3*t*(A + c4)**c5 -> A**2*c0 + A*c1 + c2 + c3*t*(A + c4)**2
+  ★ [P4|[LLM] A: Added exp(A^2) composite for Gaussian-type correction to rate law]: test=3.59e-09  train=3.96e-09  ood=6.38e-06  → A**2*c0 + A*c1 + c2 + c3*exp(A**2*c4)
+  ★ [P4|[LLM] B: Added power-law in A times exponential in t for time-modulated rate contribution]: test=1.83e-10  train=2.09e-10  ood=3.59e-06  → A**2*c0 + A*c1 + A**c2*c3*exp(c4*t) + c5
+    ↳ degenerate simplified (c4=7.380e-09->small coeff,c4*t->0): A**2*c0 + A*c1 + A**c2*c3*exp(c4*t) + c5 -> A**2*c0 + A*c1 + A**c2*c3 + c4
+  ★ [P4|[LLM] B: Added product of sin(t) and A for periodic external forcing modulation]: test=2.83e-05  train=2.72e-05  ood=2.30e+00  → A**2*c0 + A*c1 + A*c2*sin(c3*t + c4) + c5
+    ↳ degenerate simplified (c3=1.584e-06->small coeff,c3*t->0): A**2*c0 + A*c1 + A*c2*sin(c3*t + c4) + c5 -> A**2*c0 + A*c1 + A*c2 + c3
+  ★ [P4|[LLM] B: Added A^2*log(1+A) product for higher-order logarithmic correction]: test=2.63e-08  train=2.91e-08  ood=7.58e-05  → A**2*c0 + A**2*c1*log(A*c2 + 1) + A*c3 + c4
+  ★ [P5|[Add] rational fraction +(c28*A+c29)/(c30*A+c31)]: test=1.10e-11  train=1.27e-11  ood=4.32e-08  → A**2*c0 + A*c1 + A*c2/(A*c3 + c4) + c5/(A*c3 + c4)
+  ★ [P4|[LLM] C: Added cubic term for third-order kinetics, referencing polynomial rate from domain knowledge above: dA_dt = c0 + c1*A + c2*A**2 + c3*A**3]: test=1.89e-07  train=2.04e-07  ood=4.66e-04  → A**3*c0 + A**2*c1 + A*c2 + c3
+    [P4|[LLM] C: Added autocatalytic term, referencing autocatalytic from domain knowledge above: dA_dt = c0*A*(c1 - A)]: test=3.47e-05  train=3.41e-05  ood=1.13e-01  → A**2*c0 + A**2*c1 + A*c2 + A*c3 + c4
+  ★ [P4|[LLM] C: Added substrate inhibition term, referencing inhibition kinetics from domain knowledge above: dA_dt = c0*A/(c1 + A**2)]: test=2.61e-09  train=2.97e-09  ood=5.27e-06  → A**2*c0 + A*c1 + A*c2/(A**2 + c3) + c4
+    [P5|[Deletion] Remove additive term A*c1]: test=1.10e+00  train=1.09e+00  ood=5.08e+03  → A**2*c0
+    [P5|[Deletion] Remove multiplicative factor c1]: test=9.35e-01  train=9.51e-01  ood=5.09e+03  → A**2*c0 + A
+    [P5|[Deletion] Remove multiplicative factor c0]: test=3.04e+01  train=3.05e+01  ood=2.52e+05  → A**2 + A*c0
+  ★ [P5|[Add] sinusoidal term +c6*sin(c7*t+c8)]: test=2.84e-05  train=2.73e-05  ood=2.25e+00  → A**2*c0 + A*c1 + c2*sin(c3*t + c4)
+  ★ [P5|[Add] sinusoidal term +c9*sin(c10*A+c11)]: test=1.60e-09  train=1.77e-09  ood=2.90e-06  → A**2*c0 + A*c1 + c2*sin(A*c3 + c4)
+  ★ [P5|[Add] power term +c12*t**c13]: test=3.47e-05  train=3.41e-05  ood=1.13e-01  → A**2*c0 + A*c1 + c2*t**c3
+    ↳ degenerate simplified (c3=0.0000->snapped to 0): A**2*c0 + A*c1 + c2*t**c3 -> A**2*c0 + A*c1 + c2
+  ★ [P5|[Add] power term +c14*A**c15]: test=7.66e-08  train=7.94e-08  ood=1.46e-04  → A**2*c0 + A*c1 + A**c2*c3
+  ★ [P5|[Add] exponential term +c16*exp(c17*t)]: test=3.22e-05  train=3.14e-05  ood=7.18e-01  → A**2*c0 + A*c1 + c2*exp(c3*t)
+    ↳ degenerate simplified (c3=7.234e-05->small coeff,c3*t->0): A**2*c0 + A*c1 + c2*exp(c3*t) -> A**2*c0 + A*c1 + c2
+  ★ [P5|[Add] exponential term +c18*exp(c19*A)]: test=6.49e-07  train=6.85e-07  ood=1.35e-03  → A**2*c0 + A*c1 + c2*exp(A*c3)
+  ★ [P5|[LLM] A: Added sin(log()) composite to capture oscillatory corrections in concentration dependence]: test=2.15e-13  train=2.85e-13  ood=2.91e-08  → A**2*c0 + A*c1 + c2*sin(c3*log(A*c4 + 1) + c5)
+  ★ [P5|[LLM] B: Added power-log product to capture fractional-order with logarithmic correction]: test=5.66e-12  train=6.41e-12  ood=3.81e-08  → A**2*c0 + A*c1 + A**c2*c3*log(A*c4 + 1)
+  ★ [P5|[Add] logarithmic term +c20*log(1+c21*t)]: test=1.09e-03  train=1.04e-03  ood=2.54e+01  → A**2*c0 + A*c1 + c2*log(c3*t + 1)
+  ★ [P5|[Add] logarithmic term +c22*log(1+c23*A)]: test=5.24e-08  train=5.34e-08  ood=8.72e-05  → A**2*c0 + A*c1 + c2*log(A*c3 + 1)
+  ★ [P5|[Add] rational fraction +(c24*t+c25)/(c26*t+c27)]: test=5.87e-06  train=6.86e-06  ood=3.89e-01  → A**2*c0 + A*c1 + c2*t/(c3*t + c4) + c5/(c3*t + c4)
+  ★ [P5|[Add] rational fraction +(c32*t+c33)/(c34*A+c35)]: test=1.73e-06  train=1.77e-06  ood=2.65e-02  → A**2*c0 + A*c1 + c2*t/(A*c3 + c4) + c5/(A*c3 + c4)
+    ↳ degenerate simplified (c2=1.800e-06->small coeff,c2*t/(A*c3 + c4)->0): A**2*c0 + A*c1 + c2*t/(A*c3 + c4) + c5/(A*c3 + c4) -> A**3*c0/(A*c1 + c2) + A**2*c3/(A*c1 + c2) + A**2*c4/(A*c1 + c2) + A*c5/(A*c1 + c2) + c6/(A*c1 + c2)
+  ★ [P5|[Add] rational fraction +(c36*A+c37)/(c38*t+c39)]: test=2.51e-05  train=2.36e-05  ood=2.62e-01  → A**2*c0 + A*c1 + A*c2/(c3*t + c4) + c5/(c3*t + c4)
+  ★ [P5|[Add] power-law coupling +c40*(t+c41)**c42*A]: test=1.07e-04  train=1.14e-04  ood=1.11e+00  → A**2*c0 + A*c1 + A*c2*(c3 + t)**c4
+    ↳ degenerate simplified (c4=-5.0000->snapped to -5): A**2*c0 + A*c1 + A*c2*(c3 + t)**c4 -> A**2*c0 + A*c1 + A*c2/(c3 + t)**5
+  ★ [P5|[Add] power-law coupling +c43*(A+c44)**c45*t]: test=3.32e-05  train=4.28e-05  ood=1.08e+01  → A**2*c0 + A*c1 + c2*t*(A + c3)**c4
+    ↳ degenerate simplified (c4=1.0000->snapped to 1): A**2*c0 + A*c1 + c2*t*(A + c3)**c4 -> A**2*c0 + A*c1 + A*c2*t + c3*t
+  ★ [P5|[LLM] C: Added Hill-type cooperative term, referencing cooperative kinetics from domain knowledge: dA_dt = c0*A**c1/(c2+A**c1)]: test=1.95e-11  train=2.24e-11  ood=6.73e-08  → A**2*c0 + A*c1 + A**c2*c3/(A**c2 + c4)
+  ★ [P5|[LLM] A: Added nested log-exp composite term to capture saturation-like nonlinearity]: test=1.47e-08  train=1.58e-08  ood=2.07e-05  → A**2*c0 + A*c1 + c2*log(c3*exp(A*c4) + 1)
+  ★ [P5|[LLM] A: Added exp(sin()) composite for periodic time-modulated contribution]: test=2.84e-05  train=2.74e-05  ood=2.24e+00  → A**2*c0 + A*c1 + c2*exp(c3*sin(c4*t + c5))
+    ↳ degenerate simplified (c2=7.772e-04->small coeff,c2*exp(c3*sin(c4*t + c5))->0): A**2*c0 + A*c1 + c2*exp(c3*sin(c4*t + c5)) -> A**2*c0 + A*c1
+  ★ [P5|[LLM] A: Added log(1+A^2) composite to model logarithmic saturation at high concentration]: test=3.20e-09  train=3.01e-09  ood=4.02e-07  → A**2*c0 + A*c1 + c2*log(A**2*c3 + 1)
+  ★ [P5|[LLM] A: Added exp(A^2) composite for Gaussian-like concentration dependence]: test=1.24e-06  train=1.29e-06  ood=2.32e-03  → A**2*c0 + A*c1 + c2*exp(A**2*c3)
+  ★ [P5|[LLM] B: Added product of A and log(1+A) to model sub-quadratic growth corrections]: test=5.38e-08  train=5.50e-08  ood=9.17e-05  → A**2*c0 + A*c1 + A*c2*log(A*c3 + 1)
+  ★ [P5|[LLM] B: Added product of sin(t) and A for time-periodic modulation of first-order rate]: test=9.58e-04  train=9.17e-04  ood=9.80e+01  → A**2*c0 + A*c1 + A*c2*sin(c3*t + c4)
+    ↳ degenerate simplified (c3=1.003e-06->small coeff,c3*t->0): A**2*c0 + A*c1 + A*c2*sin(c3*t + c4) -> A**2*c0 + A*c1 + A*c2
+  ★ [P5|[LLM] C: Added Langmuir-Hinshelwood term, referencing Langmuir-Hinshelwood from domain knowledge: dA_dt = c0*A/(c1+A)**2]: test=4.97e-08  train=5.04e-08  ood=7.91e-05  → A**2*c0 + A*c1 + A*c2/(A + c3)**2
+  ★ [P5|[LLM] B: Added power-exponential product for concentration-activated kinetics]: test=2.76e-10  train=3.07e-10  ood=5.21e-07  → A**2*c0 + A*c1 + A**c2*c3*exp(A*c4)
+  ★ [P5|[LLM] C: Added autocatalytic logistic term, referencing autocatalytic from domain knowledge: dA_dt = c0*A*(c1-A)]: test=1.28e-03  train=1.24e-03  ood=5.65e+00  → A**2*c0 + A**2*c1 + A*c2 + A*c3
+  ★ [P5|[LLM] C: Added substrate inhibition term, referencing inhibition kinetics from domain knowledge: dA_dt = c0*A/(c1+A**2)]: test=7.11e-08  train=7.66e-08  ood=1.86e-04  → A**2*c0 + A*c1 + A*c2/(A**2 + c3)
+  ★ [P5|[LLM] C: Added second-order saturation term, combining second-order kinetics with Michaelis-Menten saturation from domain knowledge: dA_dt = c0*A**2 and c0*A/(c1+A)]: test=5.10e-08  train=5.19e-08  ood=8.32e-05  → A**2*c0 + A**2*c1/(A + c2) + A*c3
+  ★ [P5|[LLM] C: Added half-order radical term, referencing nth-order kinetics from domain knowledge: dA_dt = c0*A**c1 with c1=0.5 for radical chain mechanisms]: test=2.14e-05  train=2.09e-05  ood=6.52e-02  → A**0.5*c0 + A**2*c1 + A*c2
+  [Degenerate simplification] Evaluating 75 simplified formulas
+
+  [Unified eval] 39 candidates, skipped 1 (params>10), pool workers=16, timeout=120s
+    Parent tags: P1=A*c0*exp(c1*t)  P2=A*c0/(A + c1) + A*c2  P3=A**c0*c1 + c2  P4=A**2*c0 + A*c1 + c2  P5=A**2*c0 + A*c1
+  ★ [P1|[P1|[Degenerated] [LLM] C: Added Michaelis-Menten saturation term, referencing Michaelis-Menten type from domain knowledge above: dA_dt = c0 * A / (c1 + A)]]: test=6.40e-08  train=8.08e-08  ood=3.62e-04  → A**2*c0/(A + c1) + A*c2/(A + c1) + A*c3/(A + c1)
+  ★ [P1|[P1|[Degenerated] [Add] rational fraction +(c24*t+c25)/(c26*t+c27)]]: test=4.37e-05  train=4.98e-05  ood=3.20e+00  → A*c0/(c1*t + c2) + A*c3*t/(c1*t + c2) + c4*t/(c1*t + c2) + c5/(c1*t + c2)
+  ★ [P1|[P1|[Degenerated] [Add] sinusoidal term +c9*sin(c10*A+c11)]]: test=2.94e-06  train=3.09e-06  ood=6.27e-03  → A*c0 + c1*sin(A*c2 + c3)
+  ★ [P1|[P1|[Degenerated] [LLM] B: Added product of A and cos(A) for concentration-dependent oscillatory modulation]]: test=3.72e-04  train=3.60e-04  ood=8.91e-01  → A*c0 + A*c1*cos(A*c2)
+  ★ [P1|[P1|[Degenerated] [Add] logarithmic term +c22*log(1+c23*A)]]: test=5.06e-08  train=5.41e-08  ood=1.19e-04  → A*c0 + c1*log(A*c2 + 1)
+  ★ [P1|[P1|[Degenerated] [Add] power-law coupling +c40*(t+c41)**c42*A]]: test=1.87e-03  train=1.91e-03  ood=5.87e+00  → A*c0*exp(c1*t) + A*c2/(c3 + t)**5
+  ★ [P1|[P1|[Degenerated] [Add] power-law coupling +c43*(A+c44)**c45*t]]: test=6.78e-02  train=5.66e-02  ood=2.70e+00  → A*c0*exp(c1*t) + c2*t*(A + c3)**3
+  ★ [P1|[P1|[Degenerated] [LLM] B: Added product of sin(t) and A for oscillatory time-modulated first-order kinetics]]: test=1.85e-01  train=2.01e-01  ood=3.87e+03  → A*c0*exp(c1*t) + A*c2
+  ★ [P1|[P1|[Degenerated] [LLM] A: Added composite log-exp term to capture saturation-like behavior in concentration]]: test=2.60e-04  train=2.53e-04  ood=8.04e-01  → A*c0 + c1*log(c2*exp(A*c3) + 1)
+  ★ [P1|[P1|[Degenerated] [LLM] A: Added log(1+A^2) composite to capture logarithmic saturation of quadratic kinetics]]: test=5.58e-06  train=5.72e-06  ood=1.90e-02  → A*c0 + c1*log(A**2*c2 + 1)
+  ★ [P1|[P1|[Degenerated] [Add] power term +c14*A**c15]]: test=3.39e-06  train=3.19e-06  ood=8.13e-03  → A*c0 + A**c1*c2
+  ★ [P1|[P1|[Degenerated] [Add] sinusoidal term +c6*sin(c7*t+c8)]]: test=2.81e-02  train=2.73e-02  ood=9.39e+02  → A*c0*exp(c1*t) + c2
+    ↳ degenerate simplified (c1=4.348e-04->small coeff,c1*t->0): A*c0*exp(c1*t) + c2 -> A*c0 + c1
+  ★ [P1|[P1|[Degenerated] [Add] rational fraction +(c28*A+c29)/(c30*A+c31)]]: test=5.98e-08  train=6.59e-08  ood=1.69e-04  → A**2*c0/(A*c1 + c2) + A*c3/(A*c1 + c2) + A*c4/(A*c1 + c2) + c5/(A*c1 + c2)
+  ★ [P1|[P1|[Degenerated] [LLM] A: Added exp(A^c) stretched exponential composite for nonlinear concentration dependence]]: test=2.32e-05  train=2.30e-05  ood=8.23e-02  → A*c0 + c1*exp(A**c2*c3)
+  ★ [P1|[P1|[Degenerated] [LLM] C: Added substrate inhibition term, referencing inhibition kinetics from domain knowledge above: dA_dt = c0 * A / (c1 + A**2)]]: test=8.92e-05  train=8.73e-05  ood=2.67e-01  → A**3*c0/(A**2 + c1) + A*c2/(A**2 + c1) + A*c3/(A**2 + c1)
+  ★ [P1|[P1|[Degenerated] [LLM] B: Added power-exponential product in A for strongly nonlinear rate expression]]: test=7.88e-08  train=8.26e-08  ood=1.61e-04  → A*c0 + A**c1*c2*exp(A*c3)
+  ★ [P3|[P3|[Degenerated] [Add] rational fraction +(c33*t+c34)/(c35*A+c36)]]: test=1.10e-11  train=1.27e-11  ood=4.32e-08  → A*A**c0*c1/(A*c2 + c3) + A*c4/(A*c2 + c3) + A**c0*c5/(A*c2 + c3) + c6/(A*c2 + c3
+    ↳ degenerate simplified (c0=2.0000->snapped to 2; c0=2.0000->snapped to 2): A*A**c0*c1/(A*c2 + c3) + A*c4/(A*c2 + c3) + A**c0*c5/(A*c2 + c3) + c6/(A*c2 + c3) + c7/(A*c2 + c3) -> A**3*c0/(A*c1 + c2) + A**2*c3/(A*c1 + c2) + A*c4/(A*c1 + c2) + c5/(A*c1 + c2) + c6/(A*c1 + c2)
+  ★ [P4|[P4|[Degenerated] [Add] rational fraction +(c33*t+c34)/(c35*A+c36)]]: test=1.10e-11  train=1.27e-11  ood=4.32e-08  → A**3*c0/(A*c1 + c2) + A**2*c3/(A*c1 + c2) + A**2*c4/(A*c1 + c2) + A*c5/(A*c1 + c
+  ★ [P4|[P4|[Degenerated] [LLM] B: Added exponential times power-law product in A for nonlinear rate enhancement]]: test=4.26e-11  train=4.81e-11  ood=1.33e-07  → A**2*c0 + A*c1 + A*c2*exp(A*c3) + c4
+  ★ [P4|[P4|[Degenerated] [LLM] C: Added Hill-type cooperative kinetics term, referencing cooperative kinetics from domain knowledge above: dA_dt = c0*A**c1/(c2 + A**c1)]]: test=1.10e-11  train=1.27e-11  ood=4.32e-08  → A**3*c0/(A*c1 + 1) + A**2*c2/(A*c1 + 1) + A**2*c3/(A*c1 + 1) + A*c4/(A*c1 + 1) +
+  ★ [P3|[P3|[Degenerated] [LLM] A: Added exp(A^c) composite for stretched exponential correction]]: test=6.06e-13  train=8.50e-13  ood=2.90e-08  → A**2*c0 + c1 + c2*exp(A**c3*c4)
+  ★ [P5|[P5|[Degenerated] [Add] rational fraction +(c32*t+c33)/(c34*A+c35)]]: test=1.10e-11  train=1.27e-11  ood=4.32e-08  → A**3*c0/(A*c1 + c2) + A**2*c3/(A*c1 + c2) + A**2*c4/(A*c1 + c2) + A*c5/(A*c1 + c
+  ★ [P1|[P1|[Degenerated] [LLM] C: Added Langmuir-Hinshelwood surface reaction term, referencing Langmuir-Hinshelwood from domain knowledge above: dA_dt = c0 * A / (c1 + A)**2]]: test=1.16e-07  train=1.46e-07  ood=7.32e-04  → A*c0 + A*c1/(A + c2)**2
+  ★ [P2|[P2|[Degenerated] [Add] sinusoidal term +c10*sin(c11*A+c12)]]: test=2.26e-13  train=2.76e-13  ood=2.87e-08  → A**2*c0/(A + c1) + A*c2/(A + c1) + A*c3/(A + c1) + A*c4*sin(A*c5 + c6)/(A + c1) 
+    ↳ degenerate simplified (c8=6.2766~2*pi->phase absorbed): A**2*c0/(A + c1) + A*c2/(A + c1) + A*c3/(A + c1) + A*c4*sin(A*c5 + c6)/(A + c1) + c7*sin(A*c5 + c8)/(A + c1) -> A**2*c0/(A + c1) + A*c2/(A + c1) + A*c3/(A + c1) + A*c4*sin(A*c5 + c6)/(A + c1) + c7*sin(A*c5 + c8)/(A + c1)
+  ★ [P2|[P2|[Degenerated] [Add] linear term +c3*t+c4]]: test=5.98e-08  train=6.59e-08  ood=1.69e-04  → A**2*c0/(A + c1) + A*c2/(A + c1) + A*c3/(A + c1) + A*c4/(A + c1) + c5/(A + c1)
+  ★ [P2|[P2|[Degenerated] [Add] rational fraction +(c33*t+c34)/(c35*A+c36)]]: test=1.51e-09  train=1.78e-09  ood=3.40e-06  → A*c0/(A + c1) + A*c2 + c3/(A*c4 + c5)
+  ★ [P2|[P2|[Degenerated] [LLM] A: Added sin(log(1+A)) composite to capture oscillatory corrections on logarithmic concentration scale]]: test=2.23e-13  train=2.69e-13  ood=2.87e-08  → A**2*c0/(A + c1) + A*c2/(A + c1) + A*c3/(A + c1) + A*c4*sin(c5 + c6*log(A*c7 + 1
+    ↳ degenerate simplified (c5=3.1650~1*pi->phase absorbed): A**2*c0/(A + c1) + A*c2/(A + c1) + A*c3/(A + c1) + A*c4*sin(c5 + c6*log(A*c7 + 1))/(A + c1) + c8*sin(c6*log(A*c7 + 1) + c9)/(A + c1) -> A**2*c0/(A + c1) + A*c2*sin(c3 + c4*log(A*c5 + 1))/(A + c1) + A*c6/(A + c1) + A*c7/(A + c1) + c8*sin(c4*log(A*c5 + 1) + c9)/(A + c1)
+    [P2|[P2|[Degenerated] [LLM] B: Added product of sin(t) and A for time-oscillatory modulation of first-order rate]]: test=6.40e-08  train=8.08e-08  ood=3.62e-04  → A**2*c0/(A + c1) + A**2*c2/(A + c1) + A*c3/(A + c1) + A*c4/(A + c1) + A*c5/(A + 
+  ★ [P3|[P3|[Degenerated] [LLM] C: Added Langmuir-Hinshelwood surface reaction term, referencing Langmuir-Hinshelwood from domain knowledge above: dA_dt = c0 * A / (c1 + A)**2]]: test=6.46e-11  train=7.17e-11  ood=2.22e-07  → A**2*c0 + A*c1/(A + c2)**2 + c3
+  ★ [P3|[P3|[Degenerated] [Add] power-law coupling +c44*(A+c45)**c46*t]]: test=1.38e-06  train=1.73e-06  ood=3.66e-02  → A**c0*c1 + c2 + c3*t*(A + c4)**2
+  ★ [P2|[P2|[Degenerated] [LLM] B: Added power-log product term for mixed-order correction with logarithmic modulation]]: test=2.32e-10  train=2.63e-10  ood=5.27e-07  → A**2*c0/(A + c1) + A*c2/(A + c1) + A*c3/(A + c1) + A*c4*log(A*c5 + 1)/(A + c1) +
+  ★ [P2|[P2|[Degenerated] [Add] power-law coupling +c41*(t+c42)**c43*A]]: test=4.06e-08  train=4.27e-08  ood=4.73e-04  → A*c0/(A + c1) + A*c2 + A*c3/(c4 + t)**5
+  ★ [P3|[P3|[Degenerated] [LLM] A: Added sin(log(1+A)) composite to capture oscillatory corrections on logarithmic scale]]: test=2.01e-13  train=2.61e-13  ood=2.90e-08  → A**2*c0 + c1 + c2*sin(c3*log(A*c4 + 1) + c5)
+  ★ [P3|[P3|[Degenerated] [LLM] B: Added exponential times power-law product for nonlinear rate enhancement]]: test=4.63e-12  train=5.75e-12  ood=3.15e-08  → A**2*c0 + A**c1*c2*exp(A*c3) + c4
+  ★ [P3|[P3|[Degenerated] [LLM] B: Added oscillatory time modulation multiplied by power of A]]: test=2.61e-05  train=3.23e-05  ood=3.52e+00  → A**c0*c1 + c2 + c3*sin(c4*t + c5)/A**5
+  ★ [P4|[P4|[Degenerated] [Add] power-law coupling +c41*(t+c42)**c43*A]]: test=8.07e-07  train=8.94e-07  ood=2.00e-02  → A**2*c0 + A*c1 + A*c2/(c3 + t)**5 + c4
+  ★ [P4|[P4|[Degenerated] [Add] power-law coupling +c44*(A+c45)**c46*t]]: test=4.91e-07  train=5.74e-07  ood=7.59e-03  → A**2*c0 + A*c1 + c2 + c3*t*(A + c4)**2
+  ★ [P5|[P5|[Degenerated] [Add] power-law coupling +c40*(t+c41)**c42*A]]: test=1.07e-04  train=1.14e-04  ood=1.11e+00  → A**2*c0 + A*c1 + A*c2/(c3 + t)**5
+  ★ [P5|[P5|[Degenerated] [Add] power-law coupling +c43*(A+c44)**c45*t]]: test=3.32e-05  train=4.28e-05  ood=1.08e+01  → A**2*c0 + A*c1 + A*c2*t + c3*t
+  [Degenerate simplification] Evaluating 4 simplified formulas
+
+  [Unified eval] 1 candidates, pool workers=16, timeout=120s
+    Parent tags: P2=A**c0*c1 + c2
+  ★ [P2|[P3|[Degenerated] [P3|[Degenerated] [Add] rational fraction +(c33*t+c34)/(c35*A+c36)]]]: test=1.10e-11  train=1.27e-11  ood=4.32e-08  → A**3*c0/(A*c1 + c2) + A**2*c3/(A*c1 + c2) + A*c4/(A*c1 + c2) + c5/(A*c1 + c2) + 
+
+  [Summary] Parents: 5, successfully evaluated: 220
+  [Step best] [LLM] A: Added sin(log(1+A)) composite to capture nonlinear oscillatory corrections in concentration dependence
+    formula: A**2*c0 + A*c1 + c2 + c3*sin(c4*log(A*c5 + 1) + c6)
+    params: c0=-1.1640e-01, c1=-7.2570e-02, c2=2.7787e-01, c3=5.9513e-01, c4=1.0391e+00, c5=1.3837e+00, c6=5.7502e+00
+    train=2.43e-13  test=1.92e-13  ood=2.88e-08
+
+  [Global best] A**2*c0 + A*c1 + c2 + c3*sin(c4*log(A*c5 + 1) + c6)
+    params: c0=-1.1640e-01, c1=-7.2570e-02, c2=2.7787e-01, c3=5.9513e-01, c4=1.0391e+00, c5=1.3837e+00, c6=5.7502e+00
+    train=2.43e-13  test=1.92e-13  ood=2.88e-08
+  [Mature] A**2*c0 + A*c1 + c2 + c3*sin(c4*log(A*c5 + 1) + c6)
+         train=2.43e-13  test=1.92e-13  ood=2.88e-08
+
+============================================================
+Step 2/30
+============================================================
+
+  [Selector] Selected 5 parents:
+
+  [1/5] Parent: A**2*c0 + c1 + c2*exp(A**c3*c4)
+    params: c0=-1.2597e-01, c1=7.5292e-01, c2=-7.9402e-01, c3=9.6840e-01, c4=-8.9920e-01
+    train=8.50e-13  test=6.06e-13  ood=2.90e-08
+    rationale: Excellent NMSE (8.5e-13) with only 5 params and 15 operators. Quadratic + exponential-of-power structure is compact and effective. 0 children means unexplored mutation space. Could yield even simpler variants.
+
+  [2/5] Parent: A*c0 + A**c1*c2 + c3
+    params: c0=1.0997e+00, c1=1.4747e+00, c2=-7.2567e-01, c3=-7.0132e-02
+    train=4.44e-10  test=3.48e-10  ood=1.83e-06
+    rationale: Very simple (4 params, depth 3, 10 operators) with good NMSE (4.44e-10). Linear + power law is a clean algebraic structure with significant room for improvement through adding small correction terms. 0 children.
+
+  [3/5] Parent: A*c0 + c1*log(A*c2 + 1)
+    params: c0=-2.7280e+00, c1=1.5554e+01, c2=2.1524e-01
+    train=5.41e-08  test=5.06e-08  ood=1.19e-04
+    rationale: Extremely simple (3 params, 12 operators) with decent NMSE (5.41e-8). Linear + logarithmic structure is algebraically distinct from polynomial/rational forms. Mutations could add quadratic or rational corrections to dramatically improve fit. 0 children.
+
+  [4/5] Parent: A**2*c0 + A*c1/(A + c2)**2 + c3
+    params: c0=-1.2316e-01, c1=1.1365e+01, c2=3.9584e+00, c3=-3.5247e-02
+    train=7.17e-11  test=6.46e-11  ood=2.22e-07
+    rationale: Only 4 params with excellent NMSE (7.17e-11). The rational term with squared denominator provides unique peaked behavior. Structurally distinct from Michaelis-Menten family. 0 children, unexplored direction.
+
+  [5/5] Parent: A**c0*c1 + A**c2*c3 + c4
+    params: c0=1.5217e+00, c1=-5.7475e-01, c2=9.4107e-01, c3=9.6089e-01, c4=-8.2280e-02
+    train=2.38e-10  test=2.05e-10  ood=4.48e-07
+    rationale: Two-power-law structure (depth 3, 12 operators) with very good NMSE (2.38e-10). Structurally diverse from quadratic/rational/log families. The flexible exponents capture nonlinearity differently. 0 children, fresh exploration direction.
+
+  [Mutation] Programmatic deletion: 6, Programmatic addition: 16
+
+  [Mutation] Programmatic deletion: 3, Programmatic addition: 16
+
+  [Mutation] Programmatic deletion: 5, Programmatic addition: 16
+
+  [Mutation] Programmatic deletion: 10, Programmatic addition: 16
+
+  [Mutation] Programmatic deletion: 6, Programmatic addition: 16
+  [Mutation] LLM suggestions: 20
+  [Mutation] After dedup: 33 unique candidates (raw 42)
+  [Mutation] LLM suggestions: 20
+  [Mutation] After dedup: 40 unique candidates (raw 46)
+  [Mutation] LLM suggestions: 20
+  [Mutation] After dedup: 37 unique candidates (raw 42)
+  [Mutation] LLM suggestions: 20
+  [Mutation] After dedup: 35 unique candidates (raw 41)
+  [Mutation] LLM suggestions: 20
+  [Mutation] After dedup: 37 unique candidates (raw 39)
+
+  [Unified eval] 181 candidates, pool workers=16, timeout=120s
+    Parent tags: P1=A*c0 + c1*log(A*c2 + 1)  P2=A**2*c0 + A*c1/(A + c2)**2 + c3  P3=A**2*c0 + c1 + c2*exp(A**c3*c4)  P4=A*c0 + A**c1*c2 + c3  P5=A**c0*c1 + A**c2*c3 + c4
+    ✗ [P1|[Deletion] Remove multiplicative factor A]: overfitting (c2=1.000e-06->small coeff,A*c2->0; no feature variables after simplification->overfitting)  -> c0 + c1*log(A*c2 + 1)
+  ★ [P1|[Add] power term +c13*t**c14]: test=4.92e-08  train=5.03e-08  ood=6.74e-04  → A*c0 + c1*log(A*c2 + 1) + c3*t**c4
+    ↳ degenerate simplified (c3=-5.213e-06->small coeff,c3*t**c4->0): A*c0 + c1*log(A*c2 + 1) + c3*t**c4 -> A*c0 + c1*log(A*c2 + 1)
+  ★ [P1|[Add] linear term +c3*t+c4]: test=4.56e-08  train=5.00e-08  ood=1.08e-03  → A*c0 + c1*log(A*c2 + 1) + c3*t + c4
+    ↳ degenerate simplified (c3=-3.273e-07->small coeff,c3*t->0): A*c0 + c1*log(A*c2 + 1) + c3*t + c4 -> A*c0 + c1*log(A*c2 + 1) + c3
+  ★ [P1|[Add] sinusoidal term +c10*sin(c11*A+c12)]: test=3.22e-13  train=4.55e-13  ood=2.94e-08  → A*c0 + c1*log(A*c2 + 1) + c3*sin(A*c4 + c5)
+    ↳ degenerate simplified (c5=3.1254~1*pi->phase absorbed): A*c0 + c1*log(A*c2 + 1) + c3*sin(A*c4 + c5) -> A*c0 + c1*log(A*c2 + 1) + c3*sin(A*c4 + c5)
+  ★ [P1|[Add] sinusoidal term +c7*sin(c8*t+c9)]: test=4.10e-08  train=4.44e-08  ood=3.24e-03  → A*c0 + c1*log(A*c2 + 1) + c3*sin(c4*t + c5)
+    [P1|[Deletion] Remove multiplicative factor c0]: test=1.07e+00  train=1.06e+00  ood=8.38e+03  → A + c0*log(A*c1 + 1)
+    ↳ degenerate simplified (c1=1.000e-06->small coeff,A*c1->0): A + c0*log(A*c1 + 1) -> A
+  ★ [P1|[Add] linear term +c5*A+c6]: test=4.86e-08  train=5.38e-08  ood=1.41e-04  → A*c0 + A*c1 + c2*log(A*c3 + 1) + c4
+  ★ [P1|[Add] rational fraction +(c37*A+c38)/(c39*t+c40)]: test=2.29e-08  train=2.66e-08  ood=9.42e-04  → A*c0 + A*c1/(c2*t + c3) + c4*log(A*c5 + 1) + c6/(c2*t + c3)
+  ★ [P1|[Add] rational fraction +(c33*t+c34)/(c35*A+c36)]: test=1.09e-09  train=1.22e-09  ood=2.27e-05  → A*c0 + c1*log(A*c2 + 1) + c3*t/(A*c4 + c5) + c6/(A*c4 + c5)
+    ↳ degenerate simplified (c3=-4.298e-08->small coeff,c3*t/(A*c4 + c5)->0): A*c0 + c1*log(A*c2 + 1) + c3*t/(A*c4 + c5) + c6/(A*c4 + c5) -> A**2*c0/(A*c1 + c2) + A*c3/(A*c1 + c2) + A*c4*log(A*c5 + 1)/(A*c1 + c2) + c6*log(A*c5 + 1)/(A*c1 + c2) + c7/(A*c1 + c2)
+  ★ [P1|[Add] rational fraction +(c29*A+c30)/(c31*A+c32)]: test=2.40e-13  train=3.23e-13  ood=2.92e-08  → A*c0 + A*c1/(A*c2 + c3) + c4*log(A*c5 + 1) + c6/(A*c2 + c3)
+  ★ [P1|[Add] logarithmic term +c21*log(1+c22*t)]: test=4.88e-08  train=4.94e-08  ood=6.74e-04  → A*c0 + c1*log(A*c2 + 1) + c3*log(c4*t + 1)
+    ↳ degenerate simplified (c3=-1.012e-05->small coeff,c3*log(c4*t + 1)->0): A*c0 + c1*log(A*c2 + 1) + c3*log(c4*t + 1) -> A*c0 + c1*log(A*c2 + 1)
+  ★ [P1|[Add] exponential term +c17*exp(c18*t)]: test=4.82e-08  train=4.52e-08  ood=7.68e-05  → A*c0 + c1*log(A*c2 + 1) + c3*exp(c4*t)
+    ↳ degenerate simplified (c3=1.234e-04->small coeff,c3*exp(c4*t)->0): A*c0 + c1*log(A*c2 + 1) + c3*exp(c4*t) -> A*c0 + c1*log(A*c2 + 1)
+  ★ [P1|[Add] rational fraction +(c25*t+c26)/(c27*t+c28)]: test=2.64e-08  train=3.05e-08  ood=4.76e-04  → A*c0 + c1*log(A*c2 + 1) + c3*t/(c4*t + c5) + c6/(c4*t + c5)
+  ★ [P1|[Add] exponential term +c19*exp(c20*A)]: test=1.65e-10  train=1.87e-10  ood=4.08e-07  → A*c0 + c1*log(A*c2 + 1) + c3*exp(A*c4)
+  ★ [P1|[Add] power term +c15*A**c16]: test=2.38e-08  train=2.52e-08  ood=5.04e-05  → A*c0 + A**c1*c2 + c3*log(A*c4 + 1)
+    [P1|[Add] logarithmic term +c23*log(1+c24*A)]: test=5.24e-08  train=5.34e-08  ood=8.74e-05  → A*c0 + c1*log(A*c2 + 1) + c3*log(A*c4 + 1)
+    ↳ degenerate simplified (c2=2.100e-05->small coeff,A*c2->0): A*c0 + c1*log(A*c2 + 1) + c3*log(A*c4 + 1) -> A*c0 + c1*log(A*c2 + 1)
+  ★ [P1|[LLM] B: Added power-law times logarithm product for nonlinear log-correction]: test=8.26e-11  train=9.23e-11  ood=1.83e-07  → A*c0 + A**c1*c2*log(A*c3 + 1) + c4*log(A*c5 + 1)
+  ★ [P1|[LLM] A: Added sin(log(A*c+1)) composite nested term capturing oscillatory behavior in log-concentration space]: test=1.96e-13  train=2.46e-13  ood=2.88e-08  → A*c0 + c1*log(A*c2 + 1) + c3*sin(c4*log(A*c5 + 1) + c6)
+  ★ [P1|[LLM] A: Added exp(sin(c*A)) composite term for modulated exponential behavior]: test=8.48e-13  train=1.07e-12  ood=2.89e-08  → A*c0 + c1*log(A*c2 + 1) + c3*exp(c4*sin(A*c5 + c6))
+  ★ [P1|[LLM] A: Added softplus log(1+exp(c*A)) composite term for smooth threshold behavior]: test=2.63e-13  train=3.15e-13  ood=2.86e-08  → A*c0 + c1*log(A*c2 + 1) + c3*log(c4*exp(A*c5) + 1)
+  ★ [P1|[LLM] A: Added cos(c*log(A*c+1)) composite providing phase-shifted oscillatory correction]: test=5.90e-12  train=8.73e-12  ood=3.89e-08  → A*c0 + c1*log(A*c2 + 1) + c3*cos(c4*log(A*c5 + 1))
+  ★ [P1|[LLM] B: Added power-exponential product term for stretched exponential behavior]: test=1.52e-11  train=1.72e-11  ood=5.54e-08  → A*c0 + A**c1*c2*exp(A*c3) + c4*log(A*c5 + 1)
+  ★ [P1|[LLM] B: Added exponential times sinusoidal product for damped oscillatory kinetics]: test=2.03e-13  train=2.51e-13  ood=2.87e-08  → A*c0 + c1*log(A*c2 + 1) + c3*exp(A*c4)*sin(A*c5 + c6)
+  ★ [P1|[LLM] C: Added quadratic kinetics plus oscillatory log-correction, referencing second-order kinetics dA_dt = c0*A**2 combined with periodic modulation matching historical best]: test=1.92e-13  train=2.43e-13  ood=2.88e-08  → A**2*c0 + A*c1 + c2*log(A*c3 + 1) + c4*sin(c5*log(A*c6 + 1) + c7)
+    ↳ degenerate simplified (c7=6.2666~2*pi->phase absorbed): A**2*c0 + A*c1 + c2*log(A*c3 + 1) + c4*sin(c5*log(A*c6 + 1) + c7) -> A**2*c0 + A*c1 + c2*log(A*c3 + 1) + c4*sin(c5*log(A*c6 + 1) + c7)
+  ★ [P1|[LLM] C: Added Hill-type cooperative kinetics term, referencing cooperative kinetics from domain knowledge above: dA_dt = c0*A**c1/(c2 + A**c1)]: test=5.53e-13  train=7.64e-13  ood=2.86e-08  → A*c0 + A**c1*c2/(A**c1 + c3) + c4*log(A*c5 + 1)
+    ↳ degenerate simplified (c1=0.9928->snapped to 1; c1=0.9928->snapped to 1): A*c0 + A**c1*c2/(A**c1 + c3) + c4*log(A*c5 + 1) -> A**2*c0/(A + c1) + A*c2/(A + c1) + A*c3/(A + c1) + A*c4*log(A*c5 + 1)/(A + c1) + c6*log(A*c5 + 1)/(A + c1)
+  ★ [P1|[LLM] C: Added polynomial rate correction with cubic and quadratic terms, referencing polynomial rate from domain knowledge above: dA_dt = c0 + c1*A + c2*A**2 + c3*A**3]: test=4.54e-13  train=6.62e-13  ood=3.00e-08  → A**3*c0 + A**2*c1 + A*c2 + c3*log(A*c4 + 1) + c5
+  ★ [P1|[LLM] B: Added product of A and sin(c*A) for amplitude-modulated oscillation]: test=3.46e-09  train=3.64e-09  ood=3.99e-06  → A*c0 + A*c1*sin(A*c2 + c3) + c4*log(A*c5 + 1)
+  ★ [P1|[Add] power-law coupling +c44*(A+c45)**c46*t]: test=3.74e-08  train=3.40e-08  ood=1.85e-03  → A*c0 + c1*log(A*c2 + 1) + c3*t*(A + c4)**c5
+    ↳ degenerate simplified (c5=1.0000->snapped to 1; c3=-2.172e-04->small coeff,c3*t*(A + c4)->0): A*c0 + c1*log(A*c2 + 1) + c3*t*(A + c4)**c5 -> A*c0 + c1*log(A*c2 + 1)
+  ★ [P1|[Add] power-law coupling +c41*(t+c42)**c43*A]: test=2.99e-08  train=3.82e-08  ood=1.82e-04  → A*c0 + A*c1*(c2 + t)**c3 + c4*log(A*c5 + 1)
+    ↳ degenerate simplified (c3=-5.0000->snapped to -5; c1=-2.679e-05->small coeff,A*c1/(c2 + t)**5->0): A*c0 + A*c1*(c2 + t)**c3 + c4*log(A*c5 + 1) -> A*c0 + c1*log(A*c2 + 1)
+    [P1|[LLM] C: Added autocatalytic logistic term, referencing autocatalytic kinetics from domain knowledge above: dA_dt = c0*A*(c1 - A)]: test=5.24e-08  train=5.34e-08  ood=8.72e-05  → A**2*c0 + A*c1 + A*c2 + c3*log(A*c4 + 1)
+  ★ [P1|[LLM] C: Added substrate inhibition term, referencing inhibition kinetics from domain knowledge above: dA_dt = c0*A/(c1 + A**2)]: test=7.73e-11  train=8.02e-11  ood=4.11e-08  → A*c0 + A*c1/(A**2 + c2) + c3*log(A*c4 + 1)
+  ★ [P1|[LLM] B: Added sin times log product coupling oscillatory and logarithmic behaviors]: test=3.56e-13  train=4.74e-13  ood=2.85e-08  → A*c0 + c1*log(A*c2 + 1) + c3*log(A*c4 + 1)*sin(A*c5 + c6)
+  ★ [P2|[Add] exponential term +c20*exp(c21*A)]: test=1.43e-12  train=1.77e-12  ood=2.87e-08  → A**2*c0 + A*c1/(A + c2)**2 + c3*exp(A*c4) + c5
+  ★ [P2|[Add] power term +c16*A**c17]: test=2.52e-13  train=3.44e-13  ood=2.94e-08  → A**2*c0 + A*c1/(A + c2)**2 + A**c3*c4 + c5
+    ↳ degenerate simplified (c3=0.3333->snapped to 1/3): A**2*c0 + A*c1/(A + c2)**2 + A**c3*c4 + c5 -> A**(1/3)*c0 + A**2*c1 + A*c2/(A + c3)**2 + c4
+  ★ [P2|[Add] power term +c14*t**c15]: test=5.96e-11  train=6.53e-11  ood=1.19e-06  → A**2*c0 + A*c1/(A + c2)**2 + c3*t**c4 + c5
+    ↳ degenerate simplified (c4=0.3333->snapped to 1/3; c3=3.717e-07->small coeff,c3*t**(1/3)->0): A**2*c0 + A*c1/(A + c2)**2 + c3*t**c4 + c5 -> A**2*c0 + A*c1/(A + c2)**2 + c3
+  ★ [P1|[LLM] C: Added time-modulated rate term, referencing time-modulated rate from domain knowledge above: dA_dt = c0*A*exp(c1*t)]: test=4.67e-08  train=4.37e-08  ood=1.10e-04  → A*c0 + A*c1*exp(c2*t) + c3*log(A*c4 + 1)
+    ↳ degenerate simplified (c1=6.380e-05->small coeff,A*c1*exp(c2*t)->0): A*c0 + A*c1*exp(c2*t) + c3*log(A*c4 + 1) -> A*c0 + c1*log(A*c2 + 1)
+  ★ [P2|[Add] rational fraction +(c26*t+c27)/(c28*t+c29)]: test=3.17e-11  train=3.55e-11  ood=6.94e-07  → A**2*c0 + A*c1/(A + c2)**2 + c3*t/(c4*t + c5) + c6/(c4*t + c5) + c7
+    ↳ degenerate simplified (c6=-3.398e-04->small coeff,c6/(c4*t + c5)->0): A**2*c0 + A*c1/(A + c2)**2 + c3*t/(c4*t + c5) + c6/(c4*t + c5) + c7 -> A**2*c0 + A*c1/(A + c2)**2 + c3*t/(c4*t + c5) + c6
+    [P2|[Deletion] Remove additive term c3]: test=1.17e-06  train=1.10e-06  ood=2.74e-03  → A**2*c0 + A*c1/(A + c2)**2
+    [P2|[Deletion] Remove multiplicative factor c0]: test=8.11e-03  train=7.94e-03  ood=2.20e+01  → A**2 + A*c0/(A + c1)**2 + c2
+    [P2|[Deletion] Remove additive term A**2*c0]: test=1.17e-03  train=1.10e-03  ood=2.04e+00  → A*c0/(A + c1)**2 + c2
+    [P2|[Deletion] Remove exponent A**2 -> A]: test=1.11e-07  train=1.44e-07  ood=8.78e-04  → A*c0 + A*c1/(A + c2)**2 + c3
+    [P2|[Deletion] Remove multiplicative factor c1]: test=7.53e-03  train=7.05e-03  ood=2.93e+01  → A**2*c0 + A/(A + c1)**2 + c2
+    [P2|[Deletion] Remove exponent (A + c2)**(-2) -> A + c2]: test=3.47e-05  train=3.41e-05  ood=1.13e-01  → A**2*c0 + A**2*c1 + A*c2 + c3
+  ★ [P2|[Add] power-law coupling +c42*(t+c43)**c44*A]: test=7.48e-13  train=9.35e-13  ood=3.30e-08  → A**2*c0 + A*c1/(A + c2)**2 + A*c3*(c4 + t)**c5 + c6
+    ↳ degenerate simplified (c5=1.0000->snapped to 1; c3=-2.230e-10->small coeff,A*c3*(c4 + t)->0): A**2*c0 + A*c1/(A + c2)**2 + A*c3*(c4 + t)**c5 + c6 -> A**2*c0 + A*c1/(A + c2)**2 + c3
+  ★ [P2|[Add] power-law coupling +c45*(A+c46)**c47*t]: test=3.00e-11  train=3.32e-11  ood=3.97e-06  → A**2*c0 + A*c1/(A + c2)**2 + c3 + c4*t*(A + c5)**c6
+    ↳ degenerate simplified (c6=1.0000->snapped to 1; c4=1.030e-05->small coeff,c4*t*(A + c5)->0): A**2*c0 + A*c1/(A + c2)**2 + c3 + c4*t*(A + c5)**c6 -> A**2*c0 + A*c1/(A + c2)**2 + c3
+    [P2|[Deletion] Remove multiplicative factor A]: test=1.30e-08  train=1.45e-08  ood=4.08e-05  → A**2*c0 + c1/(A + c2)**2 + c3
+  ★ [P2|[Add] exponential term +c18*exp(c19*t)]: test=4.61e-11  train=4.93e-11  ood=3.86e-07  → A**2*c0 + A*c1/(A + c2)**2 + c3*exp(c4*t) + c5
+    ↳ degenerate simplified (c3=-7.998e-06->small coeff,c3*exp(c4*t)->0): A**2*c0 + A*c1/(A + c2)**2 + c3*exp(c4*t) + c5 -> A**2*c0 + A*c1/(A + c2)**2 + c3
+  ★ [P2|[Add] logarithmic term +c22*log(1+c23*t)]: test=5.83e-11  train=6.35e-11  ood=1.28e-06  → A**2*c0 + A*c1/(A + c2)**2 + c3*log(c4*t + 1) + c5
+    ↳ degenerate simplified (c3=4.311e-07->small coeff,c3*log(c4*t + 1)->0): A**2*c0 + A*c1/(A + c2)**2 + c3*log(c4*t + 1) + c5 -> A**2*c0 + A*c1/(A + c2)**2 + c3
+  ★ [P2|[Add] linear term +c4*t+c5]: test=6.10e-11  train=6.70e-11  ood=1.33e-06  → A**2*c0 + A*c1/(A + c2)**2 + c3 + c4*t
+    ↳ degenerate simplified (c4=1.156e-08->small coeff,c4*t->0): A**2*c0 + A*c1/(A + c2)**2 + c3 + c4*t -> A**2*c0 + A*c1/(A + c2)**2 + c3
+    [P2|[Deletion] Remove additive term c2]: test=6.73e-05  train=6.54e-05  ood=2.03e-01  → A**2*c0 + c1 + c2/A
+  ★ [P2|[Add] logarithmic term +c24*log(1+c25*A)]: test=2.57e-13  train=3.51e-13  ood=2.95e-08  → A**2*c0 + A*c1/(A + c2)**2 + c3*log(A*c4 + 1) + c5
+  ★ [P2|[LLM] A: Added softplus-type log(1+exp(A)) composite for smooth threshold behavior]: test=1.43e-12  train=1.77e-12  ood=2.87e-08  → A**2*c0 + A*c1/(A + c2)**2 + c3 + c4*log(c5*exp(A*c6) + 1)
+    ↳ degenerate simplified (c5=5.172e-05->small coeff,c5*exp(A*c6)->0): A**2*c0 + A*c1/(A + c2)**2 + c3 + c4*log(c5*exp(A*c6) + 1) -> A**2*c0 + A*c1/(A + c2)**2 + c3
+  ★ [P2|[LLM] A: Added nested sin(log(1+A)) composite term, inspired by historical best formula structure]: test=1.92e-13  train=2.43e-13  ood=2.88e-08  → A**2*c0 + A*c1/(A + c2)**2 + c3 + c4*sin(c5*log(A*c6 + 1) + c7)
+  ★ [P2|[Add] rational fraction +(c38*A+c39)/(c40*t+c41)]: test=5.09e-13  train=6.89e-13  ood=8.40e-08  → A**2*c0 + A*c1/(A + c2)**2 + A*c3/(c4*t + c5) + c6 + c7/(c4*t + c5)
+  ★ [P2|[LLM] B: Added time-exponential times concentration power product for time-modulated kinetics]: test=4.52e-13  train=5.62e-13  ood=3.70e-08  → A**2*c0 + A*c1/(A + c2)**2 + A**c3*c4*exp(c5*t) + c6
+    ↳ degenerate simplified (c3=-0.3333->snapped to -1/3; c5=1.182e-07->small coeff,c5*t->0): A**2*c0 + A*c1/(A + c2)**2 + A**c3*c4*exp(c5*t) + c6 -> A**2*c0 + A*c1/(A + c2)**2 + c3 + c4/A**(1/3)
+  ★ [P2|[LLM] B: Added log(1+A)*A**c product for logarithmic-power coupling]: test=2.55e-13  train=3.48e-13  ood=2.95e-08  → A**2*c0 + A*c1/(A + c2)**2 + A**c3*c4*log(A*c5 + 1) + c6
+    ↳ degenerate simplified (c3=-0.5000->snapped to -1/2): A**2*c0 + A*c1/(A + c2)**2 + A**c3*c4*log(A*c5 + 1) + c6 -> A**2*c0 + A*c1/(A + c2)**2 + c3 + c4*log(A*c5 + 1)/sqrt(A)
+  ★ [P2|[LLM] B: Added power-exponential product term for stretched exponential behavior]: test=1.98e-13  train=2.55e-13  ood=2.90e-08  → A**2*c0 + A*c1/(A + c2)**2 + A**c3*c4*exp(A*c5) + c6
+    ↳ degenerate simplified (c3=-3.0000->snapped to -3; c4=6.684e-05->small coeff,c4*exp(A*c5)/A**3->0): A**2*c0 + A*c1/(A + c2)**2 + A**c3*c4*exp(A*c5) + c6 -> A**2*c0 + A*c1/(A + c2)**2 + c3
+  ★ [P2|[LLM] C: Added Michaelis-Menten saturation term, referencing Michaelis-Menten type from domain knowledge above: dA_dt = c0 * A / (c1 + A)]: test=2.69e-13  train=3.70e-13  ood=2.93e-08  → A**2*c0 + A*c1/(A + c2)**2 + A*c3/(A + c4) + c5
+  ★ [P2|[LLM] C: Added sin(log(1+A)) plus first-order term combining historical best with first-order kinetics, referencing first-order kinetics from domain knowledge above: dA_dt = c0 * A]: test=1.92e-13  train=2.43e-13  ood=2.88e-08  → A**2*c0 + A*c1/(A + c2)**2 + A*c3 + c4 + c5*sin(c6*log(A*c7 + 1) + c8)
+  ★ [P2|[LLM] C: Added substrate inhibition term, referencing inhibition kinetics from domain knowledge above: dA_dt = c0 * A / (c1 + A**2)]: test=3.19e-13  train=4.45e-13  ood=2.98e-08  → A**2*c0 + A*c1/(A + c2)**2 + A*c3/(A**2 + c4) + c5
+  ★ [P2|[LLM] C: Added Hill-type cooperative kinetics term, referencing cooperative kinetics from domain knowledge above: dA_dt = c0 * A**c1 / (c2 + A**c1)]: test=2.53e-13  train=3.45e-13  ood=2.95e-08  → A**2*c0 + A*c1/(A + c2)**2 + A**c3*c4/(A**c3 + c5) + c6
+    ↳ degenerate simplified (c3=-0.3333->snapped to -1/3; c3=-0.3333->snapped to -1/3): A**2*c0 + A*c1/(A + c2)**2 + A**c3*c4/(A**c3 + c5) + c6 -> A**2*c0 + A*c1/(A + c2)**2 + c3/(A**(1/3)*c4 + 1) + c5
+  ★ [P2|[Add] rational fraction +(c30*A+c31)/(c32*A+c33)]: test=2.65e-13  train=3.63e-13  ood=2.95e-08  → A**2*c0 + A*c1/(A + c2)**2 + A*c3/(A*c4 + c5) + c6 + c7/(A*c4 + c5)
+  ★ [P2|[LLM] B: Added product of sin(A) and A**c for amplitude-modulated oscillation]: test=1.92e-13  train=2.44e-13  ood=2.89e-08  → A**2*c0 + A*c1/(A + c2)**2 + A**c3*c4*sin(A*c5 + c6) + c7
+    ↳ degenerate simplified (c3=-2.0000->snapped to -2): A**2*c0 + A*c1/(A + c2)**2 + A**c3*c4*sin(A*c5 + c6) + c7 -> A**2*c0 + A*c1/(A + c2)**2 + c3 + c4*sin(A*c5 + c6)/A**2
+    [P3|[Add] linear term +c7*A+c8]: test=3.58e-12  train=4.65e-12  ood=3.37e-08  → A**2*c0 + A*c1 + c2 + c3*exp(A**c4*c5)
+    ↳ degenerate simplified (c4=-0.3333->snapped to -1/3): A**2*c0 + A*c1 + c2 + c3*exp(A**c4*c5) -> A**2*c0 + A*c1 + c2 + c3*exp(c4/A**(1/3))
+  ★ [P2|[Add] sinusoidal term +c11*sin(c12*A+c13)]: test=3.26e-13  train=4.61e-13  ood=2.95e-08  → A**2*c0 + A*c1/(A + c2)**2 + c3*sin(A*c4 + c5) + c6
+  ★ [P2|[LLM] B: Added product of sin(A) and log(1+A) for oscillatory-logarithmic coupling]: test=2.79e-12  train=3.23e-12  ood=3.26e-08  → A**2*c0 + A*c1/(A + c2)**2 + c3 + c4*log(A*c5 + 1)*sin(A*c6 + c7)
+    ↳ degenerate simplified (c6=1.552e-04->small coeff,A*c6->0): A**2*c0 + A*c1/(A + c2)**2 + c3 + c4*log(A*c5 + 1)*sin(A*c6 + c7) -> A**2*c0 + A*c1/(A + c2)**2 + c3*log(A*c4 + 1) + c5
+  ★ [P2|[Add] rational fraction +(c34*t+c35)/(c36*A+c37)]: test=2.66e-13  train=3.57e-13  ood=2.95e-08  → A**2*c0 + A*c1/(A + c2)**2 + c3 + c4*t/(A*c5 + c6) + c7/(A*c5 + c6)
+    ↳ degenerate simplified (c4=2.183e-09->small coeff,c4*t/(A*c5 + c6)->0): A**2*c0 + A*c1/(A + c2)**2 + c3 + c4*t/(A*c5 + c6) + c7/(A*c5 + c6) -> A**2*c0 + A*c1/(A + c2)**2 + c3 + c4/(A*c5 + c6)
+  ★ [P2|[Add] sinusoidal term +c8*sin(c9*t+c10)]: test=5.55e-11  train=5.99e-11  ood=4.11e-06  → A**2*c0 + A*c1/(A + c2)**2 + c3 + c4*sin(c5 + c6*t)
+    ↳ degenerate simplified (c6=5.963e-05->small coeff,c6*t->0): A**2*c0 + A*c1/(A + c2)**2 + c3 + c4*sin(c5 + c6*t) -> A**2*c0 + A*c1/(A + c2)**2 + c3
+  ★ [P2|[LLM] C: Added autocatalytic logistic term, referencing autocatalytic kinetics from domain knowledge above: dA_dt = c0 * A * (c1 - A)]: test=7.62e-13  train=9.44e-13  ood=2.85e-08  → A**2*c0 + A**2*c1 + A*c2/(A + c3)**2 + A*c4 + c5
+  ★ [P2|[LLM] C: Added cubic polynomial term, referencing polynomial rate from domain knowledge above: dA_dt = c0 + c1*A + c2*A**2 + c3*A**3]: test=1.23e-12  train=1.47e-12  ood=2.87e-08  → A**3*c0 + A**2*c1 + A*c2/(A + c3)**2 + c4
+    ↳ degenerate simplified (c0=1.984e-04->small coeff,A**3*c0->0): A**3*c0 + A**2*c1 + A*c2/(A + c3)**2 + c4 -> A**2*c0 + A*c1/(A + c2)**2 + c3
+    [P3|[Add] power term +c15*t**c16]: test=6.08e-13  train=8.48e-13  ood=2.86e-08  → A**2*c0 + c1 + c2*t**c3 + c4*exp(A**c5*c6)
+    ↳ degenerate simplified (c3=1.0000->snapped to 1; c2=2.088e-10->small coeff,c2*t->0): A**2*c0 + c1 + c2*t**c3 + c4*exp(A**c5*c6) -> A**2*c0 + c1 + c2*exp(A**c3*c4)
+  ★ [P3|[Add] exponential term +c21*exp(c22*A)]: test=2.01e-13  train=2.58e-13  ood=2.89e-08  → A**2*c0 + c1 + c2*exp(A**c3*c4) + c5*exp(A*c6)
+    ↳ degenerate simplified (c3=2.0000->snapped to 2): A**2*c0 + c1 + c2*exp(A**c3*c4) + c5*exp(A*c6) -> A**2*c0 + c1 + c2*exp(A**2*c3) + c4*exp(A*c5)
+  ★ [P2|[LLM] C: Added time-modulated first-order term, referencing time-modulated rate from domain knowledge above: dA_dt = c0 * A * exp(c1 * t)]: test=7.48e-13  train=9.35e-13  ood=3.30e-08  → A**2*c0 + A*c1/(A + c2)**2 + A*c3*exp(c4*t) + c5
+    ↳ degenerate simplified (c4=1.889e-08->small coeff,c4*t->0): A**2*c0 + A*c1/(A + c2)**2 + A*c3*exp(c4*t) + c5 -> A**2*c0 + A*c1/(A + c2)**2 + A*c3 + c4
+  ★ [P2|[LLM] C: Added combined first and third order terms for parallel reaction pathways, referencing polynomial rate from domain knowledge above: dA_dt = c0 + c1*A + c2*A**2 + c3*A**3]: test=3.14e-13  train=4.43e-13  ood=2.95e-08  → A**3*c0 + A**2*c1 + A*c2/(A + c3)**2 + A*c4 + c5
+    ↳ degenerate simplified (c0=-4.725e-04->small coeff,A**3*c0->0): A**3*c0 + A**2*c1 + A*c2/(A + c3)**2 + A*c4 + c5 -> A**2*c0 + A*c1/(A + c2)**2 + A*c3 + c4
+  ★ [P2|[LLM] A: Added cos(log(1+A+t)) multivariate composite nesting]: test=4.12e-11  train=4.67e-11  ood=5.86e-06  → A**2*c0 + A*c1/(A + c2)**2 + c3 + c4*cos(c5*log(A*c6 + c7*t + 1))
+    ↳ degenerate simplified (c6=1.000e-06->small coeff,A*c6->0; c4=5.819e-07->small coeff,c4*cos(c5*log(c7*t + 1))->0): A**2*c0 + A*c1/(A + c2)**2 + c3 + c4*cos(c5*log(A*c6 + c7*t + 1)) -> A**2*c0 + A*c1/(A + c2)**2 + c3
+  ★ [P3|[Add] logarithmic term +c25*log(1+c26*A)]: test=4.98e-13  train=7.30e-13  ood=3.01e-08  → A**2*c0 + c1 + c2*exp(A**c3*c4) + c5*log(A*c6 + 1)
+    ↳ degenerate simplified (c3=1.0000->snapped to 1): A**2*c0 + c1 + c2*exp(A**c3*c4) + c5*log(A*c6 + 1) -> A**2*c0 + c1 + c2*exp(A*c3) + c4*log(A*c5 + 1)
+    [P3|[Add] power-law coupling +c43*(t+c44)**c45*A]: test=3.53e-12  train=4.56e-12  ood=4.92e-08  → A**2*c0 + A*c1*(c2 + t)**c3 + c4 + c5*exp(A**c6*c7)
+    ↳ degenerate simplified (c6=-0.3333->snapped to -1/3; c3=1.0000->snapped to 1; c1=7.088e-10->small coeff,A*c1*(c2 + t)->0): A**2*c0 + A*c1*(c2 + t)**c3 + c4 + c5*exp(A**c6*c7) -> A**2*c0 + c1 + c2*exp(c3/A**(1/3))
+    [P3|[Add] linear term +c5*t+c6]: test=6.08e-13  train=8.48e-13  ood=2.86e-08  → A**2*c0 + c1 + c2*exp(A**c3*c4) + c5*t
+    ↳ degenerate simplified (c5=2.088e-10->small coeff,c5*t->0): A**2*c0 + c1 + c2*exp(A**c3*c4) + c5*t -> A**2*c0 + c1 + c2*exp(A**c3*c4)
+  ★ [P3|[Add] power term +c17*A**c18]: test=3.81e-13  train=5.45e-13  ood=3.04e-08  → A**2*c0 + A**c1*c2 + c3 + c4*exp(A**c5*c6)
+    ↳ degenerate simplified (c1=-3.0000->snapped to -3; c2=8.950e-05->small coeff,c2/A**3->0): A**2*c0 + A**c1*c2 + c3 + c4*exp(A**c5*c6) -> A**2*c0 + c1 + c2*exp(A**c3*c4)
+    [P3|[Add] rational fraction +(c39*A+c40)/(c41*t+c42)]: test=2.88e-12  train=3.88e-12  ood=2.59e-07  → A**2*c0 + A*c1/(c2*t + c3) + c4 + c5*exp(A**c6*c7) + c8/(c2*t + c3)
+    ↳ degenerate simplified (c6=-0.3333->snapped to -1/3; c2=3.744e-04->small coeff,c2*t->0; c2=3.744e-04->small coeff,c2*t->0): A**2*c0 + A*c1/(c2*t + c3) + c4 + c5*exp(A**c6*c7) + c8/(c2*t + c3) -> A**2*c0 + A*c1 + c2 + c3*exp(c4/A**(1/3))
+    [P3|[Add] power-law coupling +c46*(A+c47)**c48*t]: test=6.07e-13  train=8.48e-13  ood=2.91e-08  → A**2*c0 + c1 + c2*exp(A**c3*c4) + c5*t*(A + c6)**c7
+    ↳ degenerate simplified (c7=1.0000->snapped to 1; c5=-7.086e-08->small coeff,c5*t*(A + c6)->0): A**2*c0 + c1 + c2*exp(A**c3*c4) + c5*t*(A + c6)**c7 -> A**2*c0 + c1 + c2*exp(A**c3*c4)
+  ★ [P3|[Add] rational fraction +(c31*A+c32)/(c33*A+c34)]: test=4.26e-13  train=5.96e-13  ood=3.01e-08  → A**2*c0 + A*c1/(A*c2 + c3) + c4 + c5*exp(A**c6*c7) + c8/(A*c2 + c3)
+    ↳ degenerate simplified (c6=-0.3333->snapped to -1/3): A**2*c0 + A*c1/(A*c2 + c3) + c4 + c5*exp(A**c6*c7) + c8/(A*c2 + c3) -> A**3*c0/(A*c1 + c2) + A**2*c3/(A*c1 + c2) + A*c4/(A*c1 + c2) + A*c5/(A*c1 + c2) + A*c6*exp(c7/A**(1/3))/(A*c1 + c2) + c10*exp(c7/A**(1/3))/(A*c1 + c2) + c8/(A*c1 + c2) + c9/(A*c1 + c2)
+  ★ [P2|[LLM] A: Added exp(sin(A)) nested composite term for oscillatory modulation]: test=2.05e-13  train=2.54e-13  ood=2.87e-08  → A**2*c0 + A*c1/(A + c2)**2 + c3 + c4*exp(c5*sin(A*c6 + c7))
+    ↳ degenerate simplified (c4=1.423e-04->small coeff,c4*exp(c5*sin(A*c6 + c7))->0): A**2*c0 + A*c1/(A + c2)**2 + c3 + c4*exp(c5*sin(A*c6 + c7)) -> A**2*c0 + A*c1/(A + c2)**2 + c3
+  ★ [P3|[Add] rational fraction +(c35*t+c36)/(c37*A+c38)]: test=4.24e-13  train=5.79e-13  ood=3.19e-08  → A**2*c0 + c1 + c2*exp(A**c3*c4) + c5*t/(A*c6 + c7) + c8/(A*c6 + c7)
+    ↳ degenerate simplified (c3=-0.3333->snapped to -1/3; c5=4.168e-09->small coeff,c5*t/(A*c6 + c7)->0): A**2*c0 + c1 + c2*exp(A**c3*c4) + c5*t/(A*c6 + c7) + c8/(A*c6 + c7) -> A**3*c0/(A*c1 + c2) + A**2*c3/(A*c1 + c2) + A*c4/(A*c1 + c2) + A*c5*exp(c6/A**(1/3))/(A*c1 + c2) + c7/(A*c1 + c2) + c8*exp(c6/A**(1/3))/(A*c1 + c2) + c9/(A*c1 + c2)
+    [P3|[Add] exponential term +c19*exp(c20*t)]: test=6.09e-13  train=8.48e-13  ood=2.86e-08  → A**2*c0 + c1 + c2*exp(c3*t) + c4*exp(A**c5*c6)
+    ↳ degenerate simplified (c2=-2.979e-08->small coeff,c2*exp(c3*t)->0): A**2*c0 + c1 + c2*exp(c3*t) + c4*exp(A**c5*c6) -> A**2*c0 + c1 + c2*exp(A**c3*c4)
+  ★ [P3|[LLM] A: Added softplus-like composite log(1+exp(c*A)) for smooth threshold behavior]: test=1.93e-13  train=2.43e-13  ood=2.88e-08  → A**2*c0 + c1 + c2*exp(A**c3*c4) + c5*log(c6*exp(A*c7) + 1)
+    [P3|[Add] logarithmic term +c23*log(1+c24*t)]: test=6.08e-13  train=8.48e-13  ood=2.85e-08  → A**2*c0 + c1 + c2*exp(A**c3*c4) + c5*log(c6*t + 1)
+    ↳ degenerate simplified (c5=7.074e-09->small coeff,c5*log(c6*t + 1)->0): A**2*c0 + c1 + c2*exp(A**c3*c4) + c5*log(c6*t + 1) -> A**2*c0 + c1 + c2*exp(A**c3*c4)
+    [P3|[LLM] C: Added autocatalytic logistic term A*(c-A), referencing autocatalytic kinetics from domain knowledge above: dA_dt = c0 * A * (c1 - A)]: test=3.58e-12  train=4.65e-12  ood=3.37e-08  → A**2*c0 + A**2*c1 + A*c2 + c3 + c4*exp(A**c5*c6)
+    ↳ degenerate simplified (c5=-0.3333->snapped to -1/3): A**2*c0 + A**2*c1 + A*c2 + c3 + c4*exp(A**c5*c6) -> A**2*c0 + A**2*c1 + A*c2 + c3 + c4*exp(c5/A**(1/3))
+  ★ [P3|[LLM] A: Added composite sin(log(1+c*A)) term, inspired by historical best formula's dominant oscillatory-logarithmic structure]: test=1.92e-13  train=2.43e-13  ood=2.88e-08  → A**2*c0 + c1 + c2*exp(A**c3*c4) + c5*sin(c6*log(A*c7 + 1) + c8)
+    ↳ degenerate simplified (c3=-2.0000->snapped to -2): A**2*c0 + c1 + c2*exp(A**c3*c4) + c5*sin(c6*log(A*c7 + 1) + c8) -> A**2*c0 + c1 + c2*exp(c3/A**2) + c4*sin(c5*log(A*c6 + 1) + c7)
+  ★ [P3|[Add] sinusoidal term +c9*sin(c10*t+c11)]: test=6.01e-13  train=8.36e-13  ood=3.09e-08  → A**2*c0 + c1 + c2*exp(A**c3*c4) + c5*sin(c6*t + c7)
+    ↳ degenerate simplified (c5=-1.090e-08->small coeff,c5*sin(c6*t + c7)->0): A**2*c0 + c1 + c2*exp(A**c3*c4) + c5*sin(c6*t + c7) -> A**2*c0 + c1 + c2*exp(A**c3*c4)
+  ★ [P3|[Add] rational fraction +(c27*t+c28)/(c29*t+c30)]: test=3.81e-13  train=4.88e-13  ood=3.36e-08  → A**2*c0 + c1 + c2*exp(A**c3*c4) + c5*t/(c6*t + c7) + c8/(c6*t + c7)
+  ★ [P3|[LLM] C: Added Michaelis-Menten saturation term, referencing Michaelis-Menten type from domain knowledge above: dA_dt = c0 * A / (c1 + A)]: test=3.32e-13  train=4.71e-13  ood=2.96e-08  → A**2*c0 + A*c1/(A + c2) + c3 + c4*exp(A**c5*c6)
+    ↳ degenerate simplified (c5=1.0000->snapped to 1): A**2*c0 + A*c1/(A + c2) + c3 + c4*exp(A**c5*c6) -> A**3*c0/(A + c1) + A**2*c2/(A + c1) + A*c3/(A + c1) + A*c4/(A + c1) + A*c5*exp(A*c6)/(A + c1) + c7/(A + c1) + c8*exp(A*c6)/(A + c1)
+    [P3|[LLM] C: Added cubic concentration term for third-order kinetics, referencing polynomial rate from domain knowledge above: dA_dt = c0 + c1*A + c2*A**2 + c3*A**3]: test=1.97e-11  train=2.22e-11  ood=7.83e-08  → A**3*c0 + A**2*c1 + c2 + c3*exp(A**c4*c5)
+    ↳ degenerate simplified (c0=-7.934e-04->small coeff,A**3*c0->0; c4=1.0000->snapped to 1): A**3*c0 + A**2*c1 + c2 + c3*exp(A**c4*c5) -> A**2*c0 + c1 + c2*exp(A*c3)
+  ★ [P3|[LLM] C: Added combined first and third-order terms for polynomial rate expansion, referencing polynomial rate from domain knowledge above: dA_dt = c0 + c1*A + c2*A**2 + c3*A**3]: test=2.13e-13  train=2.78e-13  ood=2.90e-08  → A**3*c0 + A**2*c1 + A*c2 + c3 + c4*exp(A**c5*c6)
+    ↳ degenerate simplified (c5=1.0000->snapped to 1): A**3*c0 + A**2*c1 + A*c2 + c3 + c4*exp(A**c5*c6) -> A**3*c0 + A**2*c1 + A*c2 + c3 + c4*exp(A*c5)
+  ★ [P3|[LLM] C: Added substrate inhibition term, referencing inhibition kinetics from domain knowledge above: dA_dt = c0 * A / (c1 + A**2)]: test=2.07e-13  train=2.75e-13  ood=2.92e-08  → A**2*c0 + A*c1/(A**2 + c2) + c3 + c4*exp(A**c5*c6)
+    ↳ degenerate simplified (c5=1.0000->snapped to 1): A**2*c0 + A*c1/(A**2 + c2) + c3 + c4*exp(A**c5*c6) -> A**4*c0/(A**2 + c1) + A**2*c2/(A**2 + c1) + A**2*c3/(A**2 + c1) + A**2*c4*exp(A*c5)/(A**2 + c1) + A*c6/(A**2 + c1) + c7/(A**2 + c1) + c8*exp(A*c5)/(A**2 + c1)
+  ★ [P3|[LLM] C: Added Langmuir-Hinshelwood surface kinetics term, referencing Langmuir-Hinshelwood from domain knowledge above: dA_dt = c0 * A / (c1 + A)**2]: test=2.52e-13  train=3.44e-13  ood=2.94e-08  → A**2*c0 + A*c1/(A + c2)**2 + c3 + c4*exp(A**c5*c6)
+    ↳ degenerate simplified (c5=0.3333->snapped to 1/3): A**2*c0 + A*c1/(A + c2)**2 + c3 + c4*exp(A**c5*c6) -> A**2*c0 + A*c1/(A + c2)**2 + c3 + c4*exp(A**(1/3)*c5)
+  ★ [P3|[Add] sinusoidal term +c12*sin(c13*A+c14)]: test=2.06e-13  train=2.54e-13  ood=2.87e-08  → A**2*c0 + c1 + c2*sin(A*c3 + c4) + c5*exp(A**c6*c7)
+    ↳ degenerate simplified (c6=1.0000->snapped to 1): A**2*c0 + c1 + c2*sin(A*c3 + c4) + c5*exp(A**c6*c7) -> A**2*c0 + c1 + c2*sin(A*c3 + c4) + c5*exp(A*c6)
+  ★ [P3|[LLM] B: Added product of power-law and exponential for flexible nonlinear rate correction]: test=1.92e-13  train=2.43e-13  ood=2.89e-08  → A**2*c0 + A**c1*c2*exp(A*c3) + c4 + c5*exp(A**c6*c7)
+    ↳ degenerate simplified (c6=1.0003->snapped to 1; c1=4.0000->snapped to 4): A**2*c0 + A**c1*c2*exp(A*c3) + c4 + c5*exp(A**c6*c7) -> A**4*c0*exp(A*c1) + A**2*c2 + c3 + c4*exp(A*c5)
+  ★ [P3|[LLM] B: Added product of exponential and sinusoidal in A for damped/growing oscillatory correction]: test=1.93e-13  train=2.43e-13  ood=2.88e-08  → A**2*c0 + c1 + c2*exp(A**c3*c4) + c5*exp(A*c6)*sin(A*c7 + c8)
+  ★ [P3|[LLM] C: Added time-modulated first-order term, referencing time-modulated rate from domain knowledge above: dA_dt = c0 * A * exp(c1 * t)]: test=4.68e-13  train=6.67e-13  ood=3.29e-08  → A**2*c0 + A*c1*exp(c2*t) + c3 + c4*exp(A**c5*c6)
+    ↳ degenerate simplified (c2=7.163e-08->small coeff,c2*t->0): A**2*c0 + A*c1*exp(c2*t) + c3 + c4*exp(A**c5*c6) -> A**2*c0 + A*c1 + c2 + c3*exp(A**c4*c5)
+  ★ [P4|[Add] sinusoidal term +c11*sin(c12*A+c13)]: test=3.55e-12  train=5.43e-12  ood=3.54e-08  → A*c0 + A**c1*c2 + c3*sin(A*c4 + c5) + c6
+    ↳ degenerate simplified (c3=-5.286e-04->small coeff,c3*sin(A*c4 + c5)->0): A*c0 + A**c1*c2 + c3*sin(A*c4 + c5) + c6 -> A*c0 + A**c1*c2 + c3
+  ★ [P3|[LLM] C: Added Hill-type cooperative kinetics term, referencing cooperative kinetics from domain knowledge above: dA_dt = c0 * A**c1 / (c2 + A**c1)]: test=1.92e-13  train=2.43e-13  ood=2.88e-08  → A**2*c0 + A**c1*c2/(A**c1 + c3) + c4 + c5*exp(A**c6*c7)
+    ↳ degenerate simplified (c1=-1.0000->snapped to -1; c1=-1.0000->snapped to -1): A**2*c0 + A**c1*c2/(A**c1 + c3) + c4 + c5*exp(A**c6*c7) -> A**3*c0/(A*c1 + 1) + A**2*c2/(A*c1 + 1) + A*c3/(A*c1 + 1) + A*c4*exp(A**c5*c6)/(A*c1 + 1) + c7/(A*c1 + 1) + c8/(A*c1 + 1) + c9*exp(A**c5*c6)/(A*c1 + 1)
+  ★ [P3|[LLM] B: Added product of sin(c*A) and log(1+c*A) for oscillatory term with logarithmic envelope]: test=1.92e-13  train=2.44e-13  ood=2.89e-08  → A**2*c0 + c1 + c2*exp(A**c3*c4) + c5*log(A*c6 + 1)*sin(A*c7 + c8)
+    ↳ degenerate simplified (c3=0.5000->snapped to 1/2): A**2*c0 + c1 + c2*exp(A**c3*c4) + c5*log(A*c6 + 1)*sin(A*c7 + c8) -> A**2*c0 + c1 + c2*exp(sqrt(A)*c3) + c4*log(A*c5 + 1)*sin(A*c6 + c7)
+  ★ [P3|[LLM] B: Added product of power-law A**c and sin(c*A) for amplitude-modulated oscillation]: test=1.92e-13  train=2.43e-13  ood=2.88e-08  → A**2*c0 + A**c1*c2*sin(A*c3 + c4) + c5 + c6*exp(A**c7*c8)
+    ↳ degenerate simplified (c1=-0.5000->snapped to -1/2): A**2*c0 + A**c1*c2*sin(A*c3 + c4) + c5 + c6*exp(A**c7*c8) -> A**2*c0 + c1 + c2*exp(A**c3*c4) + c5*sin(A*c6 + c7)/sqrt(A)
+  ★ [P4|[Add] exponential term +c20*exp(c21*A)]: test=1.19e-11  train=1.36e-11  ood=6.26e-08  → A*c0 + A**c1*c2 + c3*exp(A*c4) + c5
+    ↳ degenerate simplified (c1=2.0000->snapped to 2): A*c0 + A**c1*c2 + c3*exp(A*c4) + c5 -> A**2*c0 + A*c1 + c2*exp(A*c3) + c4
+    [P3|[Deletion] Remove additive term c1]: test=5.47e-08  train=6.06e-08  ood=1.59e-04  → A**2*c0 + c1*exp(A**c2*c3)
+    [P3|[Deletion] Remove multiplicative factor c0]: test=5.31e-06  train=5.49e-06  ood=9.78e-03  → A**2 + c0 + c1*exp(A**c2*c3)
+    [P3|[Deletion] Remove additive term A**2*c0]: test=8.25e-05  train=7.53e-05  ood=6.67e-02  → c0 + c1*exp(A**c2*c3)
+  ★ [P4|[Add] logarithmic term +c24*log(1+c25*A)]: test=7.64e-12  train=8.84e-12  ood=5.43e-08  → A*c0 + A**c1*c2 + c3*log(A*c4 + 1) + c5
+    ↳ degenerate simplified (c1=3.0000->snapped to 3): A*c0 + A**c1*c2 + c3*log(A*c4 + 1) + c5 -> A**3*c0 + A*c1 + c2*log(A*c3 + 1) + c4
+    [P3|[Deletion] Remove exponent A**2 -> A]: test=1.79e-10  train=2.04e-10  ood=3.23e-07  → A*c0 + c1 + c2*exp(A**c3*c4)
+  ★ [P4|[Add] rational fraction +(c30*A+c31)/(c32*A+c33)]: test=1.10e-11  train=1.27e-11  ood=4.32e-08  → A*c0 + A*c1/(A*c2 + c3) + A**c4*c5 + c6 + c7/(A*c2 + c3)
+    ↳ degenerate simplified (c4=2.0000->snapped to 2): A*c0 + A*c1/(A*c2 + c3) + A**c4*c5 + c6 + c7/(A*c2 + c3) -> A**3*c0/(A*c1 + c2) + A**2*c3/(A*c1 + c2) + A**2*c4/(A*c1 + c2) + A*c5/(A*c1 + c2) + A*c6/(A*c1 + c2) + A*c7/(A*c1 + c2) + c8/(A*c1 + c2) + c9/(A*c1 + c2)
+  ★ [P4|[Add] rational fraction +(c34*t+c35)/(c36*A+c37)]: test=1.05e-11  train=1.21e-11  ood=2.19e-07  → A*c0 + A**c1*c2 + c3 + c4*t/(A*c5 + c6) + c7/(A*c5 + c6)
+    ↳ degenerate simplified (c1=2.0000->snapped to 2; c4=-8.267e-09->small coeff,c4*t/(A*c5 + c6)->0): A*c0 + A**c1*c2 + c3 + c4*t/(A*c5 + c6) + c7/(A*c5 + c6) -> A**3*c0/(A*c1 + c2) + A**2*c3/(A*c1 + c2) + A**2*c4/(A*c1 + c2) + A*c5/(A*c1 + c2) + A*c6/(A*c1 + c2) + c7/(A*c1 + c2) + c8/(A*c1 + c2)
+  ★ [P4|[Add] power-law coupling +c45*(A+c46)**c47*t]: test=9.01e-11  train=9.70e-11  ood=9.65e-08  → A*c0 + A**c1*c2 + c3 + c4*t*(A + c5)**c6
+    ↳ degenerate simplified (c6=2.0000->snapped to 2; c4=-1.346e-04->small coeff,c4*t*(A + c5)**2->0): A*c0 + A**c1*c2 + c3 + c4*t*(A + c5)**c6 -> A*c0 + A**c1*c2 + c3
+    [P3|[LLM] A: Added composite exp(sin(c*A)) term for bounded oscillatory modulation of rate]: test=6.06e-13  train=8.50e-13  ood=2.90e-08  → A**2*c0 + c1 + c2*exp(A**c3*c4) + c5*exp(c6*sin(A*c7 + c8))
+    ↳ degenerate simplified (c7=1.000e-06->small coeff,A*c7->0; c8=0.000e+00->small-angle approx,sin->c8; c6=0.000e+00->small coeff,c6*c8->0): A**2*c0 + c1 + c2*exp(A**c3*c4) + c5*exp(c6*sin(A*c7 + c8)) -> A**2*c0 + c1 + c2*exp(A**c3*c4)
+  ★ [P4|[Add] rational fraction +(c38*A+c39)/(c40*t+c41)]: test=8.86e-11  train=9.97e-11  ood=2.99e-06  → A*c0 + A*c1/(c2*t + c3) + A**c4*c5 + c6 + c7/(c2*t + c3)
+  ★ [P4|[LLM] A: Added nested sin(log(1+A)) composite term, inspired by historical best formula structure]: test=1.96e-13  train=2.47e-13  ood=2.88e-08  → A*c0 + A**c1*c2 + c3 + c4*sin(c5*log(A*c6 + 1) + c7)
+    ↳ degenerate simplified (c1=2.0000->snapped to 2): A*c0 + A**c1*c2 + c3 + c4*sin(c5*log(A*c6 + 1) + c7) -> A**2*c0 + A*c1 + c2 + c3*sin(c4*log(A*c5 + 1) + c6)
+    [P3|[LLM] A: Added cos(log(1+c*A**c)) composite with power-law inside logarithm for flexible oscillation]: test=6.06e-13  train=8.50e-13  ood=2.90e-08  → A**2*c0 + c1 + c2*exp(A**c3*c4) + c5*cos(c6*log(A**c7*c8 + 1))
+    ↳ degenerate simplified (c7=0.0000->snapped to 0; c6=1.000e-06->small coeff,c6*log(c8 + 1)->0): A**2*c0 + c1 + c2*exp(A**c3*c4) + c5*cos(c6*log(A**c7*c8 + 1)) -> A**2*c0 + c1 + c2*exp(A**c3*c4)
+  ★ [P4|[LLM] A: Added softplus log(1+exp()) composite for smooth threshold behavior]: test=5.38e-12  train=8.22e-12  ood=3.56e-08  → A*c0 + A**c1*c2 + c3 + c4*log(c5*exp(A*c6) + 1)
+  ★ [P4|[LLM] A: Added cos(log(1+A+A^2)) composite with quadratic argument for richer oscillatory correction]: test=2.89e-13  train=4.02e-13  ood=2.95e-08  → A*c0 + A**c1*c2 + c3 + c4*cos(c5*log(A**2*c6 + A*c7 + 1))
+    ↳ degenerate simplified (c1=2.0000->snapped to 2): A*c0 + A**c1*c2 + c3 + c4*cos(c5*log(A**2*c6 + A*c7 + 1)) -> A**2*c0 + A*c1 + c2 + c3*cos(c4*log(A**2*c5 + A*c6 + 1))
+    [P3|[LLM] B: Added product of sin(c*t) and A**c for time-periodic modulation of concentration-dependent rate]: test=3.68e-10  train=5.10e-10  ood=2.47e-05  → A**2*c0 + A**c1*c2*sin(c3*t + c4) + c5 + c6*exp(A**c7*c8)
+    ↳ degenerate simplified (c1=-5.0000->snapped to -5; c2=7.920e-05->small coeff,c2*sin(c3*t + c4)/A**5->0): A**2*c0 + A**c1*c2*sin(c3*t + c4) + c5 + c6*exp(A**c7*c8) -> A**2*c0 + c1 + c2*exp(A**c3*c4)
+  ★ [P4|[LLM] B: Added product of log(1+A) and A**c for logarithmic-power coupling]: test=2.02e-13  train=2.64e-13  ood=2.91e-08  → A*c0 + A**c1*c2 + A**c3*c4*log(A*c5 + 1) + c6
+  ★ [P4|[LLM] A: Added exp(sin(A)) composite capturing oscillatory modulation with bounded exponent]: test=2.33e-13  train=2.86e-13  ood=2.87e-08  → A*c0 + A**c1*c2 + c3 + c4*exp(c5*sin(A*c6 + c7))
+    ↳ degenerate simplified (c1=5.0000->snapped to 5): A*c0 + A**c1*c2 + c3 + c4*exp(c5*sin(A*c6 + c7)) -> A**5*c0 + A*c1 + c2 + c3*exp(c4*sin(A*c5 + c6))
+    [P4|[Deletion] Remove multiplicative factor c0]: test=1.85e-07  train=1.78e-07  ood=5.04e-04  → A + A**c0*c1 + c2
+  ★ [P4|[LLM] B: Added product of exp(A) and sin(A) for damped/growing oscillatory correction]: test=4.09e-13  train=4.62e-13  ood=2.86e-08  → A*c0 + A**c1*c2 + c3 + c4*exp(A*c5)*sin(A*c6 + c7)
+  ★ [P4|[LLM] A: Added sin(A**c) composite combining power-law scaling with oscillation]: test=1.97e-13  train=2.50e-13  ood=2.89e-08  → A*c0 + A**c1*c2 + c3 + c4*sin(A**c5*c6 + c7)
+    ↳ degenerate simplified (c1=2.0000->snapped to 2; c5=0.5018->snapped to 1/2): A*c0 + A**c1*c2 + c3 + c4*sin(A**c5*c6 + c7) -> A**2*c0 + A*c1 + c2 + c3*sin(sqrt(A)*c4 + c5)
+  ★ [P4|[LLM] C: Added Michaelis-Menten saturation term, referencing Michaelis-Menten type from domain knowledge above: dA_dt = c0 * A / (c1 + A)]: test=1.10e-11  train=1.27e-11  ood=4.32e-08  → A*c0 + A*c1/(A + c2) + A**c3*c4 + c5
+    ↳ degenerate simplified (c3=2.0000->snapped to 2): A*c0 + A*c1/(A + c2) + A**c3*c4 + c5 -> A**3*c0/(A + c1) + A**2*c2/(A + c1) + A**2*c3/(A + c1) + A*c4/(A + c1) + A*c5/(A + c1) + A*c6/(A + c1) + c7/(A + c1)
+    [P4|[Deletion] Remove multiplicative factor c2]: test=1.55e-02  train=1.52e-02  ood=8.76e+01  → A*c0 + A**c1 + c2
+  ★ [P4|[Add] linear term +c4*t+c5]: test=3.13e-10  train=3.94e-10  ood=1.46e-05  → A*c0 + A**c1*c2 + c3 + c4*t
+    ↳ degenerate simplified (c4=-3.772e-08->small coeff,c4*t->0): A*c0 + A**c1*c2 + c3 + c4*t -> A*c0 + A**c1*c2 + c3
+    [P4|[Add] linear term +c6*A+c7]: test=3.48e-10  train=4.44e-10  ood=1.83e-06  → A*c0 + A*c1 + A**c2*c3 + c4
+  ★ [P4|[LLM] C: Added Langmuir-Hinshelwood surface reaction term, referencing Langmuir-Hinshelwood from domain knowledge above: dA_dt = c0 * A / (c1 + A)**2]: test=7.62e-13  train=9.44e-13  ood=2.85e-08  → A*c0 + A*c1/(A + c2)**2 + A**c3*c4 + c5
+    ↳ degenerate simplified (c3=2.0000->snapped to 2): A*c0 + A*c1/(A + c2)**2 + A**c3*c4 + c5 -> A**2*c0 + A*c1 + A*c2/(A + c3)**2 + c4
+  ★ [P4|[LLM] C: Added Hill-type cooperative kinetics, referencing cooperative kinetics from domain knowledge above: dA_dt = c0 * A**c1 / (c2 + A**c1)]: test=1.92e-13  train=2.44e-13  ood=2.89e-08  → A*c0 + A**c1*c2 + A**c3*c4/(A**c3 + c5) + c6
+    ↳ degenerate simplified (c1=2.0000->snapped to 2): A*c0 + A**c1*c2 + A**c3*c4/(A**c3 + c5) + c6 -> A**2*A**c0*c1/(A**c0 + c2) + A**2*c3/(A**c0 + c2) + A*A**c0*c4/(A**c0 + c2) + A*c5/(A**c0 + c2) + A**c0*c6/(A**c0 + c2) + A**c0*c7/(A**c0 + c2) + c8/(A**c0 + c2)
+  ★ [P4|[LLM] B: Added product of sin(A) and A**c for oscillatory power-law modulation]: test=1.94e-13  train=2.44e-13  ood=2.88e-08  → A*c0 + A**c1*c2 + A**c3*c4*sin(A*c5 + c6) + c7
+    ↳ degenerate simplified (c1=-0.5000->snapped to -1/2): A*c0 + A**c1*c2 + A**c3*c4*sin(A*c5 + c6) + c7 -> A*c0 + A**c1*c2*sin(A*c3 + c4) + c5 + c6/sqrt(A)
+  ★ [P4|[LLM] B: Added sin*cos product equivalent to sin(2x)/2 for harmonic correction]: test=2.81e-12  train=4.30e-12  ood=3.42e-08  → A*c0 + A**c1*c2 + c3 + c4*sin(A*c5 + c6)*cos(A*c7)
+    ↳ degenerate simplified (c4=-7.313e-04->small coeff,c4*sin(A*c5 + c6)*cos(A*c7)->0): A*c0 + A**c1*c2 + c3 + c4*sin(A*c5 + c6)*cos(A*c7) -> A*c0 + A**c1*c2 + c3
+  ★ [P4|[Add] sinusoidal term +c8*sin(c9*t+c10)]: test=2.64e-10  train=3.24e-10  ood=3.84e-05  → A*c0 + A**c1*c2 + c3 + c4*sin(c5 + c6*t)
+    ↳ degenerate simplified (c6=3.407e-06->small coeff,c6*t->0): A*c0 + A**c1*c2 + c3 + c4*sin(c5 + c6*t) -> A*c0 + A**c1*c2 + c3
+  ★ [P4|[LLM] C: Added substrate inhibition term, referencing inhibition kinetics from domain knowledge above: dA_dt = c0 * A / (c1 + A**2)]: test=4.89e-13  train=6.58e-13  ood=2.87e-08  → A*c0 + A*c1/(A**2 + c2) + A**c3*c4 + c5
+  ★ [P4|[Add] power term +c16*A**c17]: test=1.52e-10  train=1.70e-10  ood=2.16e-07  → A*c0 + A**c1*c2 + A**c3*c4 + c5
+    ↳ degenerate simplified (c1=5.0000->snapped to 5; c2=-1.004e-05->small coeff,A**5*c2->0): A*c0 + A**c1*c2 + A**c3*c4 + c5 -> A*c0 + A**c1*c2 + c3
+  ★ [P4|[Add] exponential term +c18*exp(c19*t)]: test=1.94e-10  train=2.32e-10  ood=3.53e-06  → A*c0 + A**c1*c2 + c3*exp(c4*t) + c5
+    ↳ degenerate simplified (c3=2.492e-05->small coeff,c3*exp(c4*t)->0): A*c0 + A**c1*c2 + c3*exp(c4*t) + c5 -> A*c0 + A**c1*c2 + c3
+  ★ [P4|[Add] power term +c14*t**c15]: test=2.91e-10  train=3.65e-10  ood=1.32e-05  → A*c0 + A**c1*c2 + c3*t**c4 + c5
+    ↳ degenerate simplified (c3=-7.332e-06->small coeff,c3*t**c4->0): A*c0 + A**c1*c2 + c3*t**c4 + c5 -> A*c0 + A**c1*c2 + c3
+  ★ [P5|[Add] power term +c17*A**c18]: test=2.09e-12  train=2.91e-12  ood=3.05e-08  → A**c0*c1 + A**c2*c3 + A**c4*c5 + c6
+    ↳ degenerate simplified (c0=-0.3333->snapped to -1/3): A**c0*c1 + A**c2*c3 + A**c4*c5 + c6 -> A**c0*c1 + A**c2*c3 + c4 + c5/A**(1/3)
+  ★ [P4|[Add] logarithmic term +c22*log(1+c23*t)]: test=2.89e-10  train=3.59e-10  ood=1.36e-05  → A*c0 + A**c1*c2 + c3*log(c4*t + 1) + c5
+    ↳ degenerate simplified (c3=-1.371e-06->small coeff,c3*log(c4*t + 1)->0): A*c0 + A**c1*c2 + c3*log(c4*t + 1) + c5 -> A*c0 + A**c1*c2 + c3
+  ★ [P5|[Add] exponential term +c21*exp(c22*A)]: test=1.95e-13  train=2.45e-13  ood=2.88e-08  → A**c0*c1 + A**c2*c3 + c4*exp(A*c5) + c6
+  ★ [P5|[Add] sinusoidal term +c12*sin(c13*A+c14)]: test=1.97e-13  train=2.51e-13  ood=2.89e-08  → A**c0*c1 + A**c2*c3 + c4*sin(A*c5 + c6) + c7
+    ↳ degenerate simplified (c0=-0.3333->snapped to -1/3): A**c0*c1 + A**c2*c3 + c4*sin(A*c5 + c6) + c7 -> A**c0*c1 + c2*sin(A*c3 + c4) + c5 + c6/A**(1/3)
+  ★ [P5|[Add] logarithmic term +c25*log(1+c26*A)]: test=2.10e-13  train=2.78e-13  ood=2.91e-08  → A**c0*c1 + A**c2*c3 + c4*log(A*c5 + 1) + c6
+  ★ [P5|[Add] rational fraction +(c31*A+c32)/(c33*A+c34)]: test=1.93e-13  train=2.43e-13  ood=2.88e-08  → A*c0/(A*c1 + c2) + A**c3*c4 + A**c5*c6 + c7/(A*c1 + c2) + c8
+    ↳ degenerate simplified (c3=2.0000->snapped to 2): A*c0/(A*c1 + c2) + A**c3*c4 + A**c5*c6 + c7/(A*c1 + c2) + c8 -> A**3*c0/(A*c1 + c2) + A**2*c3/(A*c1 + c2) + A*A**c4*c5/(A*c1 + c2) + A*c6/(A*c1 + c2) + A*c7/(A*c1 + c2) + A**c4*c8/(A*c1 + c2) + c10/(A*c1 + c2) + c9/(A*c1 + c2)
+  ★ [P5|[Add] rational fraction +(c39*A+c40)/(c41*t+c42)]: test=8.86e-11  train=9.97e-11  ood=2.99e-06  → A*c0/(c1*t + c2) + A**c3*c4 + A**c5*c6 + c7 + c8/(c1*t + c2)
+    ↳ degenerate simplified (c3=1.0000->snapped to 1): A*c0/(c1*t + c2) + A**c3*c4 + A**c5*c6 + c7 + c8/(c1*t + c2) -> A*c0/(c1*t + c2) + A*c3/(c1*t + c2) + A*c4*t/(c1*t + c2) + A**c5*c6/(c1*t + c2) + A**c5*c7*t/(c1*t + c2) + c10*t/(c1*t + c2) + c8/(c1*t + c2) + c9/(c1*t + c2)
+  ★ [P5|[Add] rational fraction +(c27*t+c28)/(c29*t+c30)]: test=8.16e-11  train=7.51e-11  ood=3.51e-06  → A**c0*c1 + A**c2*c3 + c4*t/(c5*t + c6) + c7/(c5*t + c6) + c8
+    ↳ degenerate simplified (c7=-2.910e-04->small coeff,c7/(c5*t + c6)->0): A**c0*c1 + A**c2*c3 + c4*t/(c5*t + c6) + c7/(c5*t + c6) + c8 -> A**c0*c1/(c2*t + c3) + A**c0*c4*t/(c2*t + c3) + A**c5*c6/(c2*t + c3) + A**c5*c7*t/(c2*t + c3) + c10*t/(c2*t + c3) + c8*t/(c2*t + c3) + c9/(c2*t + c3)
+  ★ [P5|[Add] rational fraction +(c35*t+c36)/(c37*A+c38)]: test=1.93e-13  train=2.43e-13  ood=2.88e-08  → A**c0*c1 + A**c2*c3 + c4*t/(A*c5 + c6) + c7/(A*c5 + c6) + c8
+    ↳ degenerate simplified (c0=2.0000->snapped to 2; c4=-1.612e-11->small coeff,c4*t/(A*c5 + c6)->0): A**c0*c1 + A**c2*c3 + c4*t/(A*c5 + c6) + c7/(A*c5 + c6) + c8 -> A**3*c0/(A*c1 + c2) + A**2*c3/(A*c1 + c2) + A*A**c4*c5/(A*c1 + c2) + A*c6/(A*c1 + c2) + A**c4*c7/(A*c1 + c2) + c8/(A*c1 + c2) + c9/(A*c1 + c2)
+  ★ [P4|[Add] rational fraction +(c26*t+c27)/(c28*t+c29)]: test=2.61e-10  train=3.20e-10  ood=1.08e-05  → A*c0 + A**c1*c2 + c3*t/(c4*t + c5) + c6/(c4*t + c5) + c7
+  ★ [P4|[Add] power-law coupling +c42*(t+c43)**c44*A]: test=1.83e-10  train=2.18e-10  ood=4.80e-06  → A*c0 + A*c1*(c2 + t)**c3 + A**c4*c5 + c6
+    ↳ degenerate simplified (c3=-5.0000->snapped to -5): A*c0 + A*c1*(c2 + t)**c3 + A**c4*c5 + c6 -> A*c0 + A*c1/(c2 + t)**5 + A**c3*c4 + c5
+  ★ [P5|[LLM] A: Added softplus-like log(1+exp(c*A)) composite for smooth saturation behavior]: test=2.06e-13  train=2.54e-13  ood=2.87e-08  → A**c0*c1 + A**c2*c3 + c4 + c5*log(c6*exp(A*c7) + 1)
+    ↳ degenerate simplified (c0=3.0000->snapped to 3): A**c0*c1 + A**c2*c3 + c4 + c5*log(c6*exp(A*c7) + 1) -> A**3*c0 + A**c1*c2 + c3 + c4*log(c5*exp(A*c6) + 1)
+  ★ [P5|[LLM] A: Added sin(log(1+c*A)) composite, inspired by historical best formula's dominant correction term]: test=1.92e-13  train=2.43e-13  ood=2.88e-08  → A**c0*c1 + A**c2*c3 + c4 + c5*sin(c6*log(A*c7 + 1) + c8)
+    ↳ degenerate simplified (c0=-0.5000->snapped to -1/2): A**c0*c1 + A**c2*c3 + c4 + c5*sin(c6*log(A*c7 + 1) + c8) -> A**c0*c1 + c2 + c3*sin(c4*log(A*c5 + 1) + c6) + c7/sqrt(A)
+  ★ [P4|[LLM] B: Added power-exponential product coupling concentration with time]: test=1.47e-10  train=1.64e-10  ood=2.07e-06  → A*c0 + A**c1*c2 + A**c3*c4*exp(c5*t) + c6
+    ↳ degenerate simplified (c3=5.0000->snapped to 5; c5=2.463e-05->small coeff,c5*t->0; c4=-9.579e-06->small coeff,A**5*c4->0): A*c0 + A**c1*c2 + A**c3*c4*exp(c5*t) + c6 -> A*c0 + A**c1*c2 + c3
+  ★ [P4|[LLM] C: Added autocatalytic logistic term, referencing autocatalytic kinetics from domain knowledge above: dA_dt = c0 * A * (c1 - A)]: test=1.92e-10  train=2.21e-10  ood=3.83e-07  → A**2*c0 + A*c1 + A*c2 + A**c3*c4 + c5
+  ★ [P4|[LLM] C: Added cubic polynomial term, referencing polynomial rate from domain knowledge above: dA_dt = c0 + c1*A + c2*A**2 + c3*A**3]: test=1.78e-10  train=2.03e-10  ood=3.18e-07  → A**3*c0 + A*c1 + A**c2*c3 + c4
+    ↳ degenerate simplified (c0=-4.671e-04->small coeff,A**3*c0->0): A**3*c0 + A*c1 + A**c2*c3 + c4 -> A*c0 + A**c1*c2 + c3
+  ★ [P4|[LLM] C: Added time-modulated first-order term, referencing time-modulated rate from domain knowledge above: dA_dt = c0 * A * exp(c1 * t)]: test=1.91e-10  train=2.28e-10  ood=3.52e-06  → A*c0 + A*c1*exp(c2*t) + A**c3*c4 + c5
+    ↳ degenerate simplified (c1=1.095e-05->small coeff,A*c1*exp(c2*t)->0): A*c0 + A*c1*exp(c2*t) + A**c3*c4 + c5 -> A*c0 + A**c1*c2 + c3
+  ★ [P5|[LLM] A: Added cos(c*A**c) composite combining power-law scaling with trigonometric oscillation]: test=1.94e-13  train=2.47e-13  ood=2.89e-08  → A**c0*c1 + A**c2*c3 + c4 + c5*cos(A**c6*c7)
+    ↳ degenerate simplified (c0=0.5000->snapped to 1/2): A**c0*c1 + A**c2*c3 + c4 + c5*cos(A**c6*c7) -> sqrt(A)*c0 + A**c1*c2 + c3 + c4*cos(A**c5*c6)
+    [P5|[Deletion] Remove additive term c4]: test=4.47e-06  train=1.11e-06  ood=5.73e-01  → A**c0*c1 + A**c2*c3
+    ↳ degenerate simplified (Like-term merge: A**c0*c1 + A**c2*c3 -> A**c0*(c1 + c3)): A**c0*c1 + A**c2*c3 -> A**c0*c1 + A**c0*c2
+  ★ [P5|[LLM] C: Added autocatalytic logistic term, referencing Autocatalytic from domain knowledge above: dA_dt = c0 * A * (c1 - A)]: test=1.00e-12  train=1.39e-12  ood=2.89e-08  → A**2*c0 + A*c1 + A**c2*c3 + A**c4*c5 + c6
+    ↳ degenerate simplified (c2=0.3333->snapped to 1/3; c4=0.3266->snapped to 1/3): A**2*c0 + A*c1 + A**c2*c3 + A**c4*c5 + c6 -> A**(1/3)*c0 + A**(1/3)*c1 + A**2*c2 + A*c3 + c4
+    [P5|[Deletion] Remove multiplicative factor c1]: test=2.12e-10  train=2.64e-10  ood=8.39e-07  → A**c0 + A**c1*c2 + c3
+  ★ [P5|[LLM] C: Added substrate inhibition term, referencing Inhibition kinetics from domain knowledge above: dA_dt = c0 * A / (c1 + A**2)]: test=2.88e-13  train=3.56e-13  ood=2.85e-08  → A*c0/(A**2 + c1) + A**c2*c3 + A**c4*c5 + c6
+    ↳ degenerate simplified (c2=0.5000->snapped to 1/2): A*c0/(A**2 + c1) + A**c2*c3 + A**c4*c5 + c6 -> A**(5/2)*c0/(A**2 + c1) + sqrt(A)*c2/(A**2 + c1) + A**2*A**c3*c4/(A**2 + c1) + A**2*c5/(A**2 + c1) + A*c6/(A**2 + c1) + A**c3*c7/(A**2 + c1) + c8/(A**2 + c1)
+  ★ [P5|[Add] linear term +c5*t+c6]: test=1.94e-10  train=2.25e-10  ood=4.14e-06  → A**c0*c1 + A**c2*c3 + c4 + c5*t
+    ↳ degenerate simplified (c5=-1.989e-08->small coeff,c5*t->0): A**c0*c1 + A**c2*c3 + c4 + c5*t -> A**c0*c1 + A**c2*c3 + c4
+  ★ [P5|[LLM] C: Added Langmuir-Hinshelwood surface kinetics term, referencing Langmuir-Hinshelwood from domain knowledge above: dA_dt = c0 * A / (c1 + A)**2]: test=2.17e-13  train=2.89e-13  ood=2.92e-08  → A*c0/(A + c1)**2 + A**c2*c3 + A**c4*c5 + c6
+    ↳ degenerate simplified (c2=-3.0000->snapped to -3; c3=9.711e-05->small coeff,c3/A**3->0; c4=1.9940->snapped to 2): A*c0/(A + c1)**2 + A**c2*c3 + A**c4*c5 + c6 -> A**2*c0 + A*c1/(A + c2)**2 + c3
+  ★ [P5|[Add] sinusoidal term +c9*sin(c10*t+c11)]: test=1.79e-10  train=2.05e-10  ood=1.17e-05  → A**c0*c1 + A**c2*c3 + c4 + c5*sin(c6*t + c7)
+    ↳ degenerate simplified (c6=9.400e-06->small coeff,c6*t->0): A**c0*c1 + A**c2*c3 + c4 + c5*sin(c6*t + c7) -> A**c0*c1 + A**c2*c3 + c4
+  ★ [P5|[LLM] C: Added Michaelis-Menten saturation term, referencing Michaelis-Menten type from domain knowledge above: dA_dt = c0 * A / (c1 + A)]: test=1.93e-13  train=2.43e-13  ood=2.88e-08  → A*c0/(A + c1) + A**c2*c3 + A**c4*c5 + c6
+    ↳ degenerate simplified (c2=2.0000->snapped to 2): A*c0/(A + c1) + A**c2*c3 + A**c4*c5 + c6 -> A**3*c0/(A + c1) + A**2*c2/(A + c1) + A*A**c3*c4/(A + c1) + A*c5/(A + c1) + A*c6/(A + c1) + A**c3*c7/(A + c1) + c8/(A + c1)
+  ★ [P5|[Add] power term +c15*t**c16]: test=1.85e-10  train=1.99e-10  ood=5.06e-06  → A**c0*c1 + A**c2*c3 + c4*t**c5 + c6
+    ↳ degenerate simplified (c4=-1.594e-05->small coeff,c4*t**c5->0): A**c0*c1 + A**c2*c3 + c4*t**c5 + c6 -> A**c0*c1 + A**c2*c3 + c4
+  ★ [P5|[LLM] C: Added third power-law plus cubic term for parallel reaction pathways, referencing Polynomial rate and nth-order kinetics from domain knowledge above]: test=1.96e-13  train=2.49e-13  ood=2.89e-08  → A**3*c0 + A**c1*c2 + A**c3*c4 + A**c5*c6 + c7
+    ↳ degenerate simplified (c1=1.0000->snapped to 1): A**3*c0 + A**c1*c2 + A**c3*c4 + A**c5*c6 + c7 -> A**3*c0 + A*c1 + A**c2*c3 + A**c4*c5 + c6
+  ★ [P5|[LLM] B: Added product of exp(c*A) and A**c for exponentially enhanced power-law term]: test=1.94e-13  train=2.44e-13  ood=2.88e-08  → A**c0*c1 + A**c2*c3 + A**c4*c5*exp(A*c6) + c7
+    ↳ degenerate simplified (c0=1.0000->snapped to 1): A**c0*c1 + A**c2*c3 + A**c4*c5*exp(A*c6) + c7 -> A*c0 + A**c1*c2 + A**c3*c4*exp(A*c5) + c6
+  ★ [P5|[Add] exponential term +c19*exp(c20*t)]: test=1.53e-10  train=1.74e-10  ood=1.51e-06  → A**c0*c1 + A**c2*c3 + c4*exp(c5*t) + c6
+    ↳ degenerate simplified (c4=1.636e-05->small coeff,c4*exp(c5*t)->0): A**c0*c1 + A**c2*c3 + c4*exp(c5*t) + c6 -> A**c0*c1 + A**c2*c3 + c4
+  ★ [P5|[Add] logarithmic term +c23*log(1+c24*t)]: test=1.85e-10  train=2.13e-10  ood=4.61e-06  → A**c0*c1 + A**c2*c3 + c4*log(c5*t + 1) + c6
+    ↳ degenerate simplified (c4=-7.693e-07->small coeff,c4*log(c5*t + 1)->0): A**c0*c1 + A**c2*c3 + c4*log(c5*t + 1) + c6 -> A**c0*c1 + A**c2*c3 + c4
+  ★ [P5|[LLM] C: Added sin(log(1+A)) correction plus linear first-order term, referencing historical best formula structure and First-order kinetics from domain knowledge above: dA_dt = c0 * A]: test=1.92e-13  train=2.43e-13  ood=2.88e-08  → A*c0 + A**c1*c2 + A**c3*c4 + c5 + c6*sin(c7*log(A*c8 + 1) + c9)
+    ↳ degenerate simplified (c1=0.5000->snapped to 1/2): A*c0 + A**c1*c2 + A**c3*c4 + c5 + c6*sin(c7*log(A*c8 + 1) + c9) -> sqrt(A)*c0 + A*c1 + A**c2*c3 + c4 + c5*sin(c6*log(A*c7 + 1) + c8)
+  ★ [P5|[LLM] C: Added Hill-type cooperative binding term, referencing Cooperative kinetics from domain knowledge above: dA_dt = c0 * A**c1 / (c2 + A**c1)]: test=1.92e-13  train=2.43e-13  ood=2.88e-08  → A**c0*c1 + A**c2*c3 + A**c4*c5/(A**c4 + c6) + c7
+    ↳ degenerate simplified (c0=4.0000->snapped to 4; c1=-4.690e-05->small coeff,A**4*c1->0): A**c0*c1 + A**c2*c3 + A**c4*c5/(A**c4 + c6) + c7 -> A**c0*A**c1*c2/(A**c1 + c3) + A**c0*c4/(A**c1 + c3) + A**c1*c5/(A**c1 + c3) + A**c1*c6/(A**c1 + c3) + c7/(A**c1 + c3)
+  ★ [P5|[LLM] B: Added product of sin(c*A) and log(1+c*A) for oscillatory-logarithmic coupling]: test=1.52e-12  train=2.30e-12  ood=3.17e-08  → A**c0*c1 + A**c2*c3 + c4 + c5*log(A*c6 + 1)*sin(A*c7 + c8)
+    ↳ degenerate simplified (c5=7.492e-04->small coeff,c5*log(A*c6 + 1)*sin(A*c7 + c8)->0): A**c0*c1 + A**c2*c3 + c4 + c5*log(A*c6 + 1)*sin(A*c7 + c8) -> A**c0*c1 + A**c2*c3 + c4
+  ★ [P5|[Add] power-law coupling +c43*(t+c44)**c45*A]: test=1.47e-10  train=1.64e-10  ood=2.03e-06  → A*c0*(c1 + t)**c2 + A**c3*c4 + A**c5*c6 + c7
+    ↳ degenerate simplified (c3=5.0000->snapped to 5; c4=-9.592e-06->small coeff,A**5*c4->0; c2=1.0000->snapped to 1; c0=-6.108e-09->small coeff,A*c0*(c1 + t)->0): A*c0*(c1 + t)**c2 + A**c3*c4 + A**c5*c6 + c7 -> A**c0*c1 + c2
+  ★ [P5|[Add] power-law coupling +c46*(A+c47)**c48*t]: test=1.26e-10  train=1.46e-10  ood=1.33e-05  → A**c0*c1 + A**c2*c3 + c4 + c5*t*(A + c6)**c7
+    ↳ degenerate simplified (c7=1.0000->snapped to 1; c5=-2.259e-05->small coeff,c5*t*(A + c6)->0): A**c0*c1 + A**c2*c3 + c4 + c5*t*(A + c6)**c7 -> A**c0*c1 + A**c2*c3 + c4
+    [P5|[LLM] A: Added exp(sin(c*A)) composite for modulated exponential correction]: test=2.05e-10  train=2.38e-10  ood=4.48e-07  → A**c0*c1 + A**c2*c3 + c4 + c5*exp(c6*sin(A*c7 + c8))
+    ↳ degenerate simplified (c7=1.000e-06->small coeff,A*c7->0; c8=0.000e+00->small-angle approx,sin->c8; c6=0.000e+00->small coeff,c6*c8->0): A**c0*c1 + A**c2*c3 + c4 + c5*exp(c6*sin(A*c7 + c8)) -> A**c0*c1 + A**c2*c3 + c4
+    [P5|[LLM] B: Added product of power-law A**c and sin(c*A) for amplitude-modulated oscillation]: test=1.89e-09  train=2.27e-09  ood=9.08e-06  → A**c0*c1 + A**c2*c3 + A**c4*c5*sin(A*c6 + c7) + c8
+  ★ [P5|[LLM] B: Added product of A**c and cos(c*t) for time-modulated concentration dependence]: test=1.21e-10  train=1.41e-10  ood=2.87e-07  → A**c0*c1 + A**c2*c3 + A**c4*c5*cos(c6*t) + c7
+    ↳ degenerate simplified (c6=1.002e-06->small coeff,c6*t->0): A**c0*c1 + A**c2*c3 + A**c4*c5*cos(c6*t) + c7 -> A**c0*c1 + A**c2*c3 + A**c4*c5 + c6
+    [P5|[LLM] B: Added product of sin(c*A) and exp(c*t) coupling oscillatory concentration with time decay]: test=2.05e-10  train=2.38e-10  ood=4.48e-07  → A**c0*c1 + A**c2*c3 + c4 + c5*exp(c6*t)*sin(A*c7 + c8)
+    ↳ degenerate simplified (c6=0.000e+00->small coeff,c6*t->0; c7=1.000e-06->small coeff,A*c7->0; c8=0.000e+00->small-angle approx,sin->c8; c5=0.000e+00->small coeff,c5*c8->0): A**c0*c1 + A**c2*c3 + c4 + c5*exp(c6*t)*sin(A*c7 + c8) -> A**c0*c1 + A**c2*c3 + c4
+  ★ [P5|[LLM] C: Added time-modulated first-order term, referencing Time-modulated rate from domain knowledge above: dA_dt = c0 * A * exp(c1 * t)]: test=1.52e-10  train=1.73e-10  ood=1.51e-06  → A*c0*exp(c1*t) + A**c2*c3 + A**c4*c5 + c6
+    ↳ degenerate simplified (c0=7.235e-06->small coeff,A*c0*exp(c1*t)->0): A*c0*exp(c1*t) + A**c2*c3 + A**c4*c5 + c6 -> A**c0*c1 + A**c2*c3 + c4
+  ★ [P5|[LLM] C: Added cubic concentration term for third-order pathway, referencing Polynomial rate from domain knowledge above: dA_dt = c0 + c1*A + c2*A**2 + c3*A**3]: test=1.56e-10  train=1.53e-10  ood=2.30e-06  → A**3*c0 + A**c1*c2 + A**c3*c4 + c5
+    ↳ degenerate simplified (Like-term merge: A**c1*c2 + A**c3*c4 -> A**c1*(c2 + c4)): A**3*c0 + A**c1*c2 + A**c3*c4 + c5 -> A**3*c0 + A**c1*c2 + A**c1*c3 + c4
+  ★ [P5|[LLM] C: Added first-order rate modulated by oscillatory log-concentration term, referencing nth-order kinetics dA_dt=c0*A**c1 combined with historical best sin(log(1+A)) structure]: test=2.03e-10  train=2.35e-10  ood=4.59e-07  → A*c0*sin(c1*log(A*c2 + 1) + c3) + A**c4*c5 + A**c6*c7 + c8
+    ↳ degenerate simplified (c6=1.0018->snapped to 1): A*c0*sin(c1*log(A*c2 + 1) + c3) + A**c4*c5 + A**c6*c7 + c8 -> A*c0*sin(c1*log(A*c2 + 1) + c3) + A*c4 + A**c5*c6 + c7
+  [Degenerate simplification] Evaluating 122 simplified formulas
+
+  [Unified eval] 50 candidates, skipped 4 (params>10), pool workers=16, timeout=120s
+    Parent tags: P1=A*c0 + c1*log(A*c2 + 1)  P2=A**2*c0 + A*c1/(A + c2)**2 + c3  P3=A**2*c0 + c1 + c2*exp(A**c3*c4)  P4=A*c0 + A**c1*c2 + c3  P5=A**c0*c1 + A**c2*c3 + c4
+  ★ [P2|[P2|[Degenerated] [Add] rational fraction +(c26*t+c27)/(c28*t+c29)]]: test=3.17e-11  train=3.55e-11  ood=6.94e-07  → A**2*c0 + A*c1/(A + c2)**2 + c3*t/(c4*t + c5) + c6
+    ↳ degenerate simplified (c3=-3.810e-04->small coeff,c3*t/(c4*t + c5)->0): A**2*c0 + A*c1/(A + c2)**2 + c3*t/(c4*t + c5) + c6 -> A**2*c0 + A*c1/(A + c2)**2 + c3
+  ★ [P3|[P3|[Degenerated] [Add] logarithmic term +c25*log(1+c26*A)]]: test=3.78e-13  train=5.44e-13  ood=2.98e-08  → A**2*c0 + c1 + c2*exp(A*c3) + c4*log(A*c5 + 1)
+  ★ [P2|[P2|[Degenerated] [Add] rational fraction +(c34*t+c35)/(c36*A+c37)]]: test=2.65e-13  train=3.63e-13  ood=2.95e-08  → A**2*c0 + A*c1/(A + c2)**2 + c3 + c4/(A*c5 + c6)
+  ★ [P2|[P2|[Degenerated] [LLM] B: Added time-exponential times concentration power product for time-modulated kinetics]]: test=4.68e-13  train=6.00e-13  ood=3.13e-08  → A**2*c0 + A*c1/(A + c2)**2 + c3 + c4/A**(1/3)
+  ★ [P2|[P2|[Degenerated] [LLM] B: Added product of sin(A) and A**c for amplitude-modulated oscillation]]: test=1.91e-13  train=2.43e-13  ood=2.89e-08  → A**2*c0 + A*c1/(A + c2)**2 + c3 + c4*sin(A*c5 + c6)/A**2
+    ↳ degenerate simplified (c4=-4.759e-04->small coeff,c4*sin(A*c5 + c6)/A**2->0): A**2*c0 + A*c1/(A + c2)**2 + c3 + c4*sin(A*c5 + c6)/A**2 -> A**2*c0 + A*c1/(A + c2)**2 + c3
+    [P3|[P3|[Degenerated] [Add] linear term +c7*A+c8]]: test=3.58e-12  train=4.65e-12  ood=3.37e-08  → A**2*c0 + A*c1 + c2 + c3*exp(c4/A**(1/3))
+  ★ [P1|[P1|[Degenerated] [Add] rational fraction +(c33*t+c34)/(c35*A+c36)]]: test=2.43e-13  train=3.28e-13  ood=2.91e-08  → A**2*c0/(A*c1 + c2) + A*c3/(A*c1 + c2) + A*c4*log(A*c5 + 1)/(A*c1 + c2) + c6*log
+  ★ [P3|[P3|[Degenerated] [Add] exponential term +c21*exp(c22*A)]]: test=2.01e-13  train=2.58e-13  ood=2.89e-08  → A**2*c0 + c1 + c2*exp(A**2*c3) + c4*exp(A*c5)
+    ✗ [P2|[P2|[Degenerated] [Add] power term +c16*A**c17]]: eval failed/timeout -> A**(1/3)*c0 + A**2*c1 + A*c2/(A + c3)**2 + c4
+  ★ [P1|[P1|[Degenerated] [Add] linear term +c3*t+c4]]: test=4.86e-08  train=5.38e-08  ood=1.41e-04  → A*c0 + c1*log(A*c2 + 1) + c3
+  ★ [P2|[P2|[Degenerated] [LLM] C: Added Hill-type cooperative kinetics term, referencing cooperative kinetics from domain knowledge above: dA_dt = c0 * A**c1 / (c2 + A**c1)]]: test=2.52e-13  train=3.43e-13  ood=2.94e-08  → A**2*c0 + A*c1/(A + c2)**2 + c3/(A**(1/3)*c4 + 1) + c5
+    [P1|[P1|[Degenerated] [Deletion] Remove multiplicative factor c0]]: test=9.31e+02  train=1.16e+03  ood=1.44e+08  → A
+  ★ [P2|[P2|[Degenerated] [LLM] B: Added log(1+A)*A**c product for logarithmic-power coupling]]: test=2.54e-13  train=3.47e-13  ood=2.94e-08  → A**2*c0 + A*c1/(A + c2)**2 + c3 + c4*log(A*c5 + 1)/sqrt(A)
+    [P3|[P3|[Degenerated] [LLM] C: Added autocatalytic logistic term A*(c-A), referencing autocatalytic kinetics from domain knowledge above: dA_dt = c0 * A * (c1 - A)]]: test=3.58e-12  train=4.65e-12  ood=3.37e-08  → A**2*c0 + A**2*c1 + A*c2 + c3 + c4*exp(c5/A**(1/3))
+    [P3|[P3|[Degenerated] [Add] power-law coupling +c43*(t+c44)**c45*A]]: test=9.67e-08  train=1.08e-07  ood=2.99e-04  → A**2*c0 + c1 + c2*exp(c3/A**(1/3))
+  ★ [P3|[P3|[Degenerated] [Add] rational fraction +(c35*t+c36)/(c37*A+c38)]]: test=1.92e-13  train=2.43e-13  ood=2.88e-08  → A**3*c0/(A*c1 + c2) + A**2*c3/(A*c1 + c2) + A*c4/(A*c1 + c2) + A*c5*exp(c6/A**(1
+  ★ [P3|[P3|[Degenerated] [LLM] C: Added combined first and third-order terms for polynomial rate expansion, referencing polynomial rate from domain knowledge above: dA_dt = c0 + c1*A + c2*A**2 + c3*A**3]]: test=2.13e-13  train=2.78e-13  ood=2.90e-08  → A**3*c0 + A**2*c1 + A*c2 + c3 + c4*exp(A*c5)
+  ★ [P3|[P3|[Degenerated] [LLM] B: Added product of sin(c*A) and log(1+c*A) for oscillatory term with logarithmic envelope]]: test=1.92e-13  train=2.44e-13  ood=2.89e-08  → A**2*c0 + c1 + c2*exp(sqrt(A)*c3) + c4*log(A*c5 + 1)*sin(A*c6 + c7)
+  ★ [P3|[P3|[Degenerated] [LLM] C: Added substrate inhibition term, referencing inhibition kinetics from domain knowledge above: dA_dt = c0 * A / (c1 + A**2)]]: test=1.94e-13  train=2.45e-13  ood=2.88e-08  → A**4*c0/(A**2 + c1) + A**2*c2/(A**2 + c1) + A**2*c3/(A**2 + c1) + A**2*c4*exp(A*
+  ★ [P3|[P3|[Degenerated] [LLM] C: Added Hill-type cooperative kinetics term, referencing cooperative kinetics from domain knowledge above: dA_dt = c0 * A**c1 / (c2 + A**c1)]]: test=1.91e-13  train=2.43e-13  ood=2.89e-08  → A**3*c0/(A*c1 + 1) + A**2*c2/(A*c1 + 1) + A*c3/(A*c1 + 1) + A*c4*exp(A**c5*c6)/(
+    ↳ degenerate simplified (c5=0.5000->snapped to 1/2; c5=0.5000->snapped to 1/2; c4=6.914e-04->small coeff,A*c4*exp(sqrt(A)*c6)/(A*c1 + 1)->0): A**3*c0/(A*c1 + 1) + A**2*c2/(A*c1 + 1) + A*c3/(A*c1 + 1) + A*c4*exp(A**c5*c6)/(A*c1 + 1) + c7/(A*c1 + 1) + c8/(A*c1 + 1) + c9*exp(A**c5*c6)/(A*c1 + 1) -> A**3*c0/(A*c1 + 1) + A**2*c2/(A*c1 + 1) + A*c3/(A*c1 + 1) + c4/(A*c1 + 1) + c5/(A*c1 + 1) + c6*exp(sqrt(A)*c7)/(A*c1 + 1)
+  ★ [P3|[P3|[Degenerated] [LLM] A: Added composite sin(log(1+c*A)) term, inspired by historical best formula's dominant oscillatory-logarithmic structure]]: test=1.92e-13  train=2.43e-13  ood=2.88e-08  → A**2*c0 + c1 + c2*exp(c3/A**2) + c4*sin(c5*log(A*c6 + 1) + c7)
+  ★ [P5|[P5|[Degenerated] [Add] power term +c17*A**c18]]: test=1.30e-11  train=1.49e-11  ood=6.41e-08  → A**c0*c1 + A**c2*c3 + c4 + c5/A**(1/3)
+    ↳ degenerate simplified (c0=0.3333->snapped to 1/3): A**c0*c1 + A**c2*c3 + c4 + c5/A**(1/3) -> A**(1/3)*c0 + A**c1*c2 + c3 + c4/A**(1/3)
+  ★ [P4|[P4|[Degenerated] [LLM] A: Added cos(log(1+A+A^2)) composite with quadratic argument for richer oscillatory correction]]: test=2.84e-13  train=3.94e-13  ood=2.95e-08  → A**2*c0 + A*c1 + c2 + c3*cos(c4*log(A**2*c5 + A*c6 + 1))
+  ★ [P4|[P4|[Degenerated] [LLM] A: Added sin(A**c) composite combining power-law scaling with oscillation]]: test=1.62e-12  train=2.46e-12  ood=3.34e-08  → A**2*c0 + A*c1 + c2 + c3*sin(sqrt(A)*c4 + c5)
+  ★ [P4|[P4|[Degenerated] [LLM] C: Added Hill-type cooperative kinetics, referencing cooperative kinetics from domain knowledge above: dA_dt = c0 * A**c1 / (c2 + A**c1)]]: test=2.12e-13  train=2.61e-13  ood=2.87e-08  → A**2*A**c0*c1/(A**c0 + c2) + A**2*c3/(A**c0 + c2) + A*A**c0*c4/(A**c0 + c2) + A*
+    ↳ degenerate simplified (c0=-3.0000->snapped to -3; c0=-3.0000->snapped to -3; c0=-3.0000->snapped to -3; c0=-3.0000->snapped to -3; c0=-3.0000->snapped to -3; c0=-3.0000->snapped to -3; c0=-3.0000->snapped to -3; c0=-3.0000->snapped to -3; c0=-3.0000->snapped to -3; c0=-3.0000->snapped to -3; c0=-3.0000->snapped to -3): A**2*A**c0*c1/(A**c0 + c2) + A**2*c3/(A**c0 + c2) + A*A**c0*c4/(A**c0 + c2) + A*c5/(A**c0 + c2) + A**c0*c6/(A**c0 + c2) + A**c0*c7/(A**c0 + c2) + c8/(A**c0 + c2) -> A**5*c0/(A**3*c1 + 1) + A**4*c2/(A**3*c1 + 1) + A**3*c3/(A**3*c1 + 1) + A**2*c4/(A**3*c1 + 1) + A*c5/(A**3*c1 + 1) + c6/(A**3*c1 + 1) + c7/(A**3*c1 + 1)
+  ★ [P5|[P5|[Degenerated] [Add] rational fraction +(c35*t+c36)/(c37*A+c38)]]: test=1.92e-13  train=2.43e-13  ood=2.88e-08  → A**3*c0/(A*c1 + c2) + A**2*c3/(A*c1 + c2) + A*A**c4*c5/(A*c1 + c2) + A*c6/(A*c1 
+  ★ [P5|[P5|[Degenerated] [LLM] A: Added softplus-like log(1+exp(c*A)) composite for smooth saturation behavior]]: test=6.78e-12  train=9.56e-12  ood=3.63e-08  → A**3*c0 + A**c1*c2 + c3 + c4*log(c5*exp(A*c6) + 1)
+    ↳ degenerate simplified (c1=2.0000->snapped to 2): A**3*c0 + A**c1*c2 + c3 + c4*log(c5*exp(A*c6) + 1) -> A**3*c0 + A**2*c1 + c2 + c3*log(c4*exp(A*c5) + 1)
+  ★ [P5|[P5|[Degenerated] [Add] sinusoidal term +c12*sin(c13*A+c14)]]: test=2.16e-13  train=2.87e-13  ood=2.92e-08  → A**c0*c1 + c2*sin(A*c3 + c4) + c5 + c6/A**(1/3)
+  ★ [P4|[P4|[Degenerated] [LLM] A: Added exp(sin(A)) composite capturing oscillatory modulation with bounded exponent]]: test=2.33e-13  train=2.86e-13  ood=2.87e-08  → A**5*c0 + A*c1 + c2 + c3*exp(c4*sin(A*c5 + c6))
+  ★ [P4|[P4|[Degenerated] [LLM] B: Added product of sin(A) and A**c for oscillatory power-law modulation]]: test=1.98e-13  train=2.53e-13  ood=2.90e-08  → A*c0 + A**c1*c2*sin(A*c3 + c4) + c5 + c6/sqrt(A)
+    ↳ degenerate simplified (c1=-0.3333->snapped to -1/3): A*c0 + A**c1*c2*sin(A*c3 + c4) + c5 + c6/sqrt(A) -> A*c0 + c1 + c2/sqrt(A) + c3*sin(A*c4 + c5)/A**(1/3)
+  ★ [P5|[P5|[Degenerated] [LLM] C: Added third power-law plus cubic term for parallel reaction pathways, referencing Polynomial rate and nth-order kinetics from domain knowledge above]]: test=2.00e-13  train=2.53e-13  ood=2.88e-08  → A**3*c0 + A*c1 + A**c2*c3 + A**c4*c5 + c6
+    ↳ degenerate simplified (c2=0.5000->snapped to 1/2): A**3*c0 + A*c1 + A**c2*c3 + A**c4*c5 + c6 -> sqrt(A)*c0 + A**3*c1 + A*c2 + A**c3*c4 + c5
+  ★ [P5|[P5|[Degenerated] [LLM] C: Added Michaelis-Menten saturation term, referencing Michaelis-Menten type from domain knowledge above: dA_dt = c0 * A / (c1 + A)]]: test=1.92e-13  train=2.43e-13  ood=2.88e-08  → A**3*c0/(A + c1) + A**2*c2/(A + c1) + A*A**c3*c4/(A + c1) + A*c5/(A + c1) + A*c6
+  ★ [P5|[P5|[Degenerated] [LLM] A: Added sin(log(1+c*A)) composite, inspired by historical best formula's dominant correction term]]: test=1.98e-13  train=2.49e-13  ood=2.88e-08  → A**c0*c1 + c2 + c3*sin(c4*log(A*c5 + 1) + c6) + c7/sqrt(A)
+    ↳ degenerate simplified (c0=2.0000->snapped to 2): A**c0*c1 + c2 + c3*sin(c4*log(A*c5 + 1) + c6) + c7/sqrt(A) -> A**2*c0 + c1 + c2*sin(c3*log(A*c4 + 1) + c5) + c6/sqrt(A)
+  ★ [P5|[P5|[Degenerated] [LLM] A: Added cos(c*A**c) composite combining power-law scaling with trigonometric oscillation]]: test=8.64e-12  train=9.96e-12  ood=5.38e-08  → sqrt(A)*c0 + A**c1*c2 + c3 + c4*cos(A**c5*c6)
+    ↳ degenerate simplified (c1=-1.0000->snapped to -1): sqrt(A)*c0 + A**c1*c2 + c3 + c4*cos(A**c5*c6) -> sqrt(A)*c0 + c1 + c2*cos(A**c3*c4) + c5/A
+  ★ [P5|[P5|[Degenerated] [LLM] C: Added sin(log(1+A)) correction plus linear first-order term, referencing historical best formula structure and First-order kinetics from domain knowledge above: dA_dt = c0 * A]]: test=1.92e-13  train=2.45e-13  ood=2.89e-08  → sqrt(A)*c0 + A*c1 + A**c2*c3 + c4 + c5*sin(c6*log(A*c7 + 1) + c8)
+    ↳ degenerate simplified (c2=2.0000->snapped to 2): sqrt(A)*c0 + A*c1 + A**c2*c3 + c4 + c5*sin(c6*log(A*c7 + 1) + c8) -> sqrt(A)*c0 + A**2*c1 + A*c2 + c3 + c4*sin(c5*log(A*c6 + 1) + c7)
+  ★ [P5|[P5|[Degenerated] [LLM] C: Added substrate inhibition term, referencing Inhibition kinetics from domain knowledge above: dA_dt = c0 * A / (c1 + A**2)]]: test=2.39e-13  train=2.98e-13  ood=2.91e-08  → A**(5/2)*c0/(A**2 + c1) + sqrt(A)*c2/(A**2 + c1) + A**2*A**c3*c4/(A**2 + c1) + A
+    ↳ degenerate simplified (c3=3.0000->snapped to 3; c3=3.0000->snapped to 3): A**(5/2)*c0/(A**2 + c1) + sqrt(A)*c2/(A**2 + c1) + A**2*A**c3*c4/(A**2 + c1) + A**2*c5/(A**2 + c1) + A*c6/(A**2 + c1) + A**c3*c7/(A**2 + c1) + c8/(A**2 + c1) -> A**(5/2)*c0/(A**2 + c1) + sqrt(A)*c2/(A**2 + c1) + A**5*c3/(A**2 + c1) + A**3*c4/(A**2 + c1) + A**2*c5/(A**2 + c1) + A*c6/(A**2 + c1) + c7/(A**2 + c1)
+  ★ [P4|[P4|[Degenerated] [LLM] C: Added Michaelis-Menten saturation term, referencing Michaelis-Menten type from domain knowledge above: dA_dt = c0 * A / (c1 + A)]]: test=1.10e-11  train=1.27e-11  ood=4.32e-08  → A**3*c0/(A + c1) + A**2*c2/(A + c1) + A**2*c3/(A + c1) + A*c4/(A + c1) + A*c5/(A
+  ★ [P5|[P5|[Degenerated] [LLM] B: Added product of exp(c*A) and A**c for exponentially enhanced power-law term]]: test=3.87e-13  train=5.08e-13  ood=2.85e-08  → A*c0 + A**c1*c2 + A**c3*c4*exp(A*c5) + c6
+    ↳ degenerate simplified (c1=0.5000->snapped to 1/2): A*c0 + A**c1*c2 + A**c3*c4*exp(A*c5) + c6 -> sqrt(A)*c0 + A*c1 + A**c2*c3*exp(A*c4) + c5
+  ★ [P5|[P5|[Degenerated] [LLM] C: Added first-order rate modulated by oscillatory log-concentration term, referencing nth-order kinetics dA_dt=c0*A**c1 combined with historical best sin(log(1+A)) structure]]: test=1.97e-13  train=2.54e-13  ood=2.90e-08  → A*c0*sin(c1*log(A*c2 + 1) + c3) + A*c4 + A**c5*c6 + c7
+    ↳ degenerate simplified (c5=2.0000->snapped to 2): A*c0*sin(c1*log(A*c2 + 1) + c3) + A*c4 + A**c5*c6 + c7 -> A**2*c0 + A*c1*sin(c2*log(A*c3 + 1) + c4) + A*c5 + c6
+  ★ [P5|[P5|[Degenerated] [LLM] C: Added Hill-type cooperative binding term, referencing Cooperative kinetics from domain knowledge above: dA_dt = c0 * A**c1 / (c2 + A**c1)]]: test=1.93e-13  train=2.47e-13  ood=2.89e-08  → A**c0*A**c1*c2/(A**c1 + c3) + A**c0*c4/(A**c1 + c3) + A**c1*c5/(A**c1 + c3) + A*
+    ↳ degenerate simplified (c0=2.0000->snapped to 2; c0=2.0000->snapped to 2; Like-term merge: A**c1*c5 + A**c1*c6 -> A**c1*(c5 + c6)): A**c0*A**c1*c2/(A**c1 + c3) + A**c0*c4/(A**c1 + c3) + A**c1*c5/(A**c1 + c3) + A**c1*c6/(A**c1 + c3) + c7/(A**c1 + c3) -> A**2*c0/(A**c1 + c2) + A**c1*c3/(A**c1 + c2) + A**c1*c4/(A**c1 + c2) + A**c5*c6/(A**c1 + c2) + c7/(A**c1 + c2)
+  ★ [P3|[P3|[Degenerated] [LLM] B: Added product of power-law A**c and sin(c*A) for amplitude-modulated oscillation]]: test=1.95e-13  train=2.45e-13  ood=2.88e-08  → A**2*c0 + c1 + c2*exp(A**c3*c4) + c5*sin(A*c6 + c7)/sqrt(A)
+    ↳ degenerate simplified (c3=1.0000->snapped to 1): A**2*c0 + c1 + c2*exp(A**c3*c4) + c5*sin(A*c6 + c7)/sqrt(A) -> A**2*c0 + c1 + c2*exp(A*c3) + c4*sin(A*c5 + c6)/sqrt(A)
+  ★ [P4|[P4|[Degenerated] [Add] logarithmic term +c24*log(1+c25*A)]]: test=7.64e-12  train=8.84e-12  ood=5.43e-08  → A**3*c0 + A*c1 + c2*log(A*c3 + 1) + c4
+  ★ [P3|[P3|[Degenerated] [LLM] B: Added product of power-law and exponential for flexible nonlinear rate correction]]: test=1.92e-13  train=2.43e-13  ood=2.89e-08  → A**4*c0*exp(A*c1) + A**2*c2 + c3 + c4*exp(A*c5)
+  ★ [P3|[P3|[Degenerated] [Add] sinusoidal term +c12*sin(c13*A+c14)]]: test=2.00e-13  train=2.50e-13  ood=2.88e-08  → A**2*c0 + c1 + c2*sin(A*c3 + c4) + c5*exp(A*c6)
+  ★ [P3|[P3|[Degenerated] [LLM] C: Added Langmuir-Hinshelwood surface kinetics term, referencing Langmuir-Hinshelwood from domain knowledge above: dA_dt = c0 * A / (c1 + A)**2]]: test=2.52e-13  train=3.43e-13  ood=2.94e-08  → A**2*c0 + A*c1/(A + c2)**2 + c3 + c4*exp(A**(1/3)*c5)
+  ★ [P3|[P3|[Degenerated] [LLM] C: Added Michaelis-Menten saturation term, referencing Michaelis-Menten type from domain knowledge above: dA_dt = c0 * A / (c1 + A)]]: test=1.93e-13  train=2.44e-13  ood=2.89e-08  → A**3*c0/(A + c1) + A**2*c2/(A + c1) + A*c3/(A + c1) + A*c4/(A + c1) + A*c5*exp(A
+  ★ [P4|[P4|[Degenerated] [Add] rational fraction +(c30*A+c31)/(c32*A+c33)]]: test=1.10e-11  train=1.27e-11  ood=4.32e-08  → A**3*c0/(A*c1 + c2) + A**2*c3/(A*c1 + c2) + A**2*c4/(A*c1 + c2) + A*c5/(A*c1 + c
+    ✗ [P3|[P3|[Degenerated] [LLM] C: Added cubic concentration term for third-order kinetics, referencing polynomial rate from domain knowledge above: dA_dt = c0 + c1*A + c2*A**2 + c3*A**3]]: eval failed/timeout -> A**2*c0 + c1 + c2*exp(A*c3)
+  ★ [P4|[P4|[Degenerated] [Add] power-law coupling +c42*(t+c43)**c44*A]]: test=1.83e-10  train=2.18e-10  ood=4.80e-06  → A*c0 + A*c1/(c2 + t)**5 + A**c3*c4 + c5
+    [P5|[P5|[Degenerated] [LLM] C: Added autocatalytic logistic term, referencing Autocatalytic from domain knowledge above: dA_dt = c0 * A * (c1 - A)]]: test=9.95e-08  train=1.09e-07  ood=2.50e-04  → A**(1/3)*c0 + A**(1/3)*c1 + A**2*c2 + A*c3 + c4
+  [Degenerate simplification] Evaluating 16 simplified formulas
+
+  [Unified eval] 14 candidates, pool workers=16, timeout=120s
+    Parent tags: P2=A**2*c0 + c1 + c2*exp(A**c3*c4)  P3=A**c0*c1 + A**c2*c3 + c4  P4=A*c0 + A**c1*c2 + c3
+  ★ [P3|[P5|[Degenerated] [P5|[Degenerated] [LLM] C: Added substrate inhibition term, referencing Inhibition kinetics from domain knowledge above: dA_dt = c0 * A / (c1 + A**2)]]]: test=2.39e-13  train=2.98e-13  ood=2.91e-08  → A**(5/2)*c0/(A**2 + c1) + sqrt(A)*c2/(A**2 + c1) + A**5*c3/(A**2 + c1) + A**3*c4
+  ★ [P3|[P5|[Degenerated] [P5|[Degenerated] [LLM] B: Added product of exp(c*A) and A**c for exponentially enhanced power-law term]]]: test=7.59e-12  train=9.37e-12  ood=4.48e-08  → sqrt(A)*c0 + A*c1 + A**c2*c3*exp(A*c4) + c5
+    ↳ degenerate simplified (c2=0.3333->snapped to 1/3): sqrt(A)*c0 + A*c1 + A**c2*c3*exp(A*c4) + c5 -> A**(1/3)*c0*exp(A*c1) + sqrt(A)*c2 + A*c3 + c4
+  ★ [P2|[P3|[Degenerated] [P3|[Degenerated] [LLM] C: Added Hill-type cooperative kinetics term, referencing cooperative kinetics from domain knowledge above: dA_dt = c0 * A**c1 / (c2 + A**c1)]]]: test=1.92e-13  train=2.43e-13  ood=2.88e-08  → A**3*c0/(A*c1 + 1) + A**2*c2/(A*c1 + 1) + A*c3/(A*c1 + 1) + c4/(A*c1 + 1) + c5/(
+  ★ [P2|[P3|[Degenerated] [P3|[Degenerated] [LLM] B: Added product of power-law A**c and sin(c*A) for amplitude-modulated oscillation]]]: test=1.95e-13  train=2.45e-13  ood=2.88e-08  → A**2*c0 + c1 + c2*exp(A*c3) + c4*sin(A*c5 + c6)/sqrt(A)
+  ★ [P3|[P5|[Degenerated] [P5|[Degenerated] [LLM] C: Added third power-law plus cubic term for parallel reaction pathways, referencing Polynomial rate and nth-order kinetics from domain knowledge above]]]: test=2.00e-13  train=2.53e-13  ood=2.88e-08  → sqrt(A)*c0 + A**3*c1 + A*c2 + A**c3*c4 + c5
+  ★ [P3|[P5|[Degenerated] [P5|[Degenerated] [LLM] A: Added sin(log(1+c*A)) composite, inspired by historical best formula's dominant correction term]]]: test=1.92e-13  train=2.43e-13  ood=2.88e-08  → A**2*c0 + c1 + c2*sin(c3*log(A*c4 + 1) + c5) + c6/sqrt(A)
+  ★ [P3|[P5|[Degenerated] [P5|[Degenerated] [LLM] A: Added softplus-like log(1+exp(c*A)) composite for smooth saturation behavior]]]: test=6.78e-12  train=9.56e-12  ood=3.63e-08  → A**3*c0 + A**2*c1 + c2 + c3*log(c4*exp(A*c5) + 1)
+  ★ [P3|[P5|[Degenerated] [P5|[Degenerated] [LLM] C: Added Hill-type cooperative binding term, referencing Cooperative kinetics from domain knowledge above: dA_dt = c0 * A**c1 / (c2 + A**c1)]]]: test=3.63e-13  train=5.20e-13  ood=2.97e-08  → A**2*c0/(A**c1 + c2) + A**c1*c3/(A**c1 + c2) + A**c1*c4/(A**c1 + c2) + A**c5*c6/
+    ↳ degenerate simplified (c1=1.0000->snapped to 1; c1=1.0000->snapped to 1; c1=1.0000->snapped to 1; c1=1.0000->snapped to 1; c1=1.0000->snapped to 1; c1=1.0000->snapped to 1; c1=1.0000->snapped to 1): A**2*c0/(A**c1 + c2) + A**c1*c3/(A**c1 + c2) + A**c1*c4/(A**c1 + c2) + A**c5*c6/(A**c1 + c2) + c7/(A**c1 + c2) -> A**2*c0/(A + c1) + A*c2/(A + c1) + A*c3/(A + c1) + A**c4*c5/(A + c1) + c6/(A + c1)
+  ★ [P3|[P5|[Degenerated] [P5|[Degenerated] [LLM] C: Added first-order rate modulated by oscillatory log-concentration term, referencing nth-order kinetics dA_dt=c0*A**c1 combined with historical best sin(log(1+A)) structure]]]: test=1.92e-13  train=2.43e-13  ood=2.88e-08  → A**2*c0 + A*c1*sin(c2*log(A*c3 + 1) + c4) + A*c5 + c6
+  ★ [P4|[P4|[Degenerated] [P4|[Degenerated] [LLM] B: Added product of sin(A) and A**c for oscillatory power-law modulation]]]: test=1.98e-13  train=2.53e-13  ood=2.90e-08  → A*c0 + c1 + c2/sqrt(A) + c3*sin(A*c4 + c5)/A**(1/3)
+  ★ [P4|[P4|[Degenerated] [P4|[Degenerated] [LLM] C: Added Hill-type cooperative kinetics, referencing cooperative kinetics from domain knowledge above: dA_dt = c0 * A**c1 / (c2 + A**c1)]]]: test=2.12e-13  train=2.60e-13  ood=2.87e-08  → A**5*c0/(A**3*c1 + 1) + A**4*c2/(A**3*c1 + 1) + A**3*c3/(A**3*c1 + 1) + A**2*c4/
+  ★ [P3|[P5|[Degenerated] [P5|[Degenerated] [LLM] C: Added sin(log(1+A)) correction plus linear first-order term, referencing historical best formula structure and First-order kinetics from domain knowledge above: dA_dt = c0 * A]]]: test=1.92e-13  train=2.43e-13  ood=2.88e-08  → sqrt(A)*c0 + A**2*c1 + A*c2 + c3 + c4*sin(c5*log(A*c6 + 1) + c7)
+  ★ [P3|[P5|[Degenerated] [P5|[Degenerated] [Add] power term +c17*A**c18]]]: test=1.30e-11  train=1.49e-11  ood=6.41e-08  → A**(1/3)*c0 + A**c1*c2 + c3 + c4/A**(1/3)
+  ★ [P3|[P5|[Degenerated] [P5|[Degenerated] [LLM] A: Added cos(c*A**c) composite combining power-law scaling with trigonometric oscillation]]]: test=8.44e-12  train=9.74e-12  ood=5.33e-08  → sqrt(A)*c0 + c1 + c2*cos(A**c3*c4) + c5/A
+  [Degenerate simplification] Evaluating 2 simplified formulas
+
+  [Unified eval] 2 candidates, pool workers=16, timeout=120s
+    Parent tags: P1=A**c0*c1 + A**c2*c3 + c4
+  ★ [P1|[P3|[Degenerated] [P5|[Degenerated] [P5|[Degenerated] [LLM] B: Added product of exp(c*A) and A**c for exponentially enhanced power-law term]]]]: test=7.59e-12  train=9.37e-12  ood=4.48e-08  → A**(1/3)*c0*exp(A*c1) + sqrt(A)*c2 + A*c3 + c4
+  ★ [P1|[P3|[Degenerated] [P5|[Degenerated] [P5|[Degenerated] [LLM] C: Added Hill-type cooperative binding term, referencing Cooperative kinetics from domain knowledge above: dA_dt = c0 * A**c1 / (c2 + A**c1)]]]]: test=1.10e-11  train=1.27e-11  ood=4.32e-08  → A**2*c0/(A + c1) + A*c2/(A + c1) + A*c3/(A + c1) + A**c4*c5/(A + c1) + c6/(A + c
+    ↳ degenerate simplified (c4=3.0000->snapped to 3): A**2*c0/(A + c1) + A*c2/(A + c1) + A*c3/(A + c1) + A**c4*c5/(A + c1) + c6/(A + c1) -> A**3*c0/(A + c1) + A**2*c2/(A + c1) + A*c3/(A + c1) + A*c4/(A + c1) + c5/(A + c1)
+  [Degenerate simplification] Evaluating 1 simplified formulas
+
+  [Unified eval] 1 candidates, pool workers=16, timeout=120s
+    Parent tags: P1=A**c0*c1 + A**c2*c3 + c4
+  ★ [P1|[P1|[Degenerated] [P3|[Degenerated] [P5|[Degenerated] [P5|[Degenerated] [LLM] C: Added Hill-type cooperative binding term, referencing Cooperative kinetics from domain knowledge above: dA_dt = c0 * A**c1 / (c2 + A**c1)]]]]]: test=1.10e-11  train=1.27e-11  ood=4.32e-08  → A**3*c0/(A + c1) + A**2*c2/(A + c1) + A*c3/(A + c1) + A*c4/(A + c1) + c5/(A + c1
+
+  [Summary] Parents: 5, successfully evaluated: 245
+  [Step best] [P3|[Degenerated] [LLM] C: Added Hill-type cooperative kinetics term, referencing cooperative kinetics from domain knowledge above: dA_dt = c0 * A**c1 / (c2 + A**c1)]
+    formula: A**3*c0/(A*c1 + 1) + A**2*c2/(A*c1 + 1) + A*c3/(A*c1 + 1) + A*c4*exp(A**c5*c6)/(A*c1 + 1) + c7/(A*c1 + 1) + c8/(A*c1 + 1) + c9*exp(A**c5*c6)/(A*c1 + 1)
+    params: c0=-4.6853e-02, c1=4.5393e-01, c2=-1.7509e-01, c3=9.8910e-01, c4=6.9139e-04, c5=5.0000e-01, c6=1.5075e+00, c7=5.0172e-02, c8=5.0172e-02, c9=-9.4973e-02
+    train=2.43e-13  test=1.91e-13  ood=2.89e-08
+
+  [Global best] A**3*c0/(A*c1 + 1) + A**2*c2/(A*c1 + 1) + A*c3/(A*c1 + 1) + A*c4*exp(A**c5*c6)/(A*c1 + 1) + c7/(A*c1 + 1) + c8/(A*c1 + 1) + c9*exp(A**c5*c6)/(A*c1 + 1)
+    params: c0=-4.6853e-02, c1=4.5393e-01, c2=-1.7509e-01, c3=9.8910e-01, c4=6.9139e-04, c5=5.0000e-01, c6=1.5075e+00, c7=5.0172e-02, c8=5.0172e-02, c9=-9.4973e-02
+    train=2.43e-13  test=1.91e-13  ood=2.89e-08
+  [Mature nodes] 1/50
+  [Mature] A*c0 + c1*log(A*c2 + 1) + c3*sin(c4*log(A*c5 + 1) + c6)
+         train=2.46e-13  test=1.96e-13  ood=2.88e-08
+  [Mature] A**2*c0 + A*c1 + c2*log(A*c3 + 1) + c4*sin(c5*log(A*c6 + 1) + c7)
+         train=2.43e-13  test=1.92e-13  ood=2.88e-08
+  [Mature] A**2*c0 + A*c1/(A + c2)**2 + c3 + c4*sin(c5*log(A*c6 + 1) + c7)
+         train=2.43e-13  test=1.92e-13  ood=2.88e-08
+  [Mature] A**2*c0 + A*c1/(A + c2)**2 + A**c3*c4*sin(A*c5 + c6) + c7
+         train=2.44e-13  test=1.92e-13  ood=2.89e-08
+  [Mature] A**2*c0 + A*c1/(A + c2)**2 + A*c3 + c4 + c5*sin(c6*log(A*c7 + 1) + c8)
+         train=2.43e-13  test=1.92e-13  ood=2.88e-08
+  [Mature] A**2*c0 + c1 + c2*exp(A**c3*c4) + c5*sin(c6*log(A*c7 + 1) + c8)
+         train=2.43e-13  test=1.92e-13  ood=2.88e-08
+  [Mature] A**2*c0 + c1 + c2*exp(A**c3*c4) + c5*log(c6*exp(A*c7) + 1)
+         train=2.43e-13  test=1.93e-13  ood=2.88e-08
+  [Mature] A**2*c0 + c1 + c2*exp(A**c3*c4) + c5*log(A*c6 + 1)*sin(A*c7 + c8)
+         train=2.44e-13  test=1.92e-13  ood=2.89e-08
+  [Mature] A**2*c0 + A**c1*c2*sin(A*c3 + c4) + c5 + c6*exp(A**c7*c8)
+         train=2.43e-13  test=1.92e-13  ood=2.88e-08
+  [Mature] A**2*c0 + c1 + c2*exp(A**c3*c4) + c5*exp(A*c6)*sin(A*c7 + c8)
+         train=2.43e-13  test=1.93e-13  ood=2.88e-08
+  [Mature] A**2*c0 + A**c1*c2*exp(A*c3) + c4 + c5*exp(A**c6*c7)
+         train=2.43e-13  test=1.92e-13  ood=2.89e-08
+  [Mature] A**2*c0 + A**c1*c2/(A**c1 + c3) + c4 + c5*exp(A**c6*c7)
+         train=2.43e-13  test=1.92e-13  ood=2.88e-08
+  [Mature] A*c0 + A**c1*c2 + c3 + c4*sin(c5*log(A*c6 + 1) + c7)
+         train=2.47e-13  test=1.96e-13  ood=2.88e-08
+  [Mature] A*c0 + A**c1*c2 + c3 + c4*sin(A**c5*c6 + c7)
+         train=2.50e-13  test=1.97e-13  ood=2.89e-08
+  [Mature] A*c0 + A**c1*c2 + A**c3*c4*sin(A*c5 + c6) + c7
+         train=2.44e-13  test=1.94e-13  ood=2.88e-08
+  [Mature] A*c0 + A**c1*c2 + A**c3*c4/(A**c3 + c5) + c6
+         train=2.44e-13  test=1.92e-13  ood=2.89e-08
+  [Mature] A**c0*c1 + A**c2*c3 + c4*sin(A*c5 + c6) + c7
+         train=2.51e-13  test=1.97e-13  ood=2.89e-08
+  [Mature] A**c0*c1 + A**c2*c3 + c4*exp(A*c5) + c6
+         train=2.45e-13  test=1.95e-13  ood=2.88e-08
+  [Mature] A*c0/(A*c1 + c2) + A**c3*c4 + A**c5*c6 + c7/(A*c1 + c2) + c8
+         train=2.43e-13  test=1.93e-13  ood=2.88e-08
+  [Mature] A**c0*c1 + A**c2*c3 + c4*t/(A*c5 + c6) + c7/(A*c5 + c6) + c8
+         train=2.43e-13  test=1.93e-13  ood=2.88e-08
+  [Mature] A**c0*c1 + A**c2*c3 + c4 + c5*sin(c6*log(A*c7 + 1) + c8)
+         train=2.43e-13  test=1.92e-13  ood=2.88e-08
+  [Mature] A**c0*c1 + A**c2*c3 + c4 + c5*cos(A**c6*c7)
+         train=2.47e-13  test=1.94e-13  ood=2.89e-08
+  [Mature] A**c0*c1 + A**c2*c3 + A**c4*c5*exp(A*c6) + c7
+         train=2.44e-13  test=1.94e-13  ood=2.88e-08
+  [Mature] A*c0/(A + c1) + A**c2*c3 + A**c4*c5 + c6
+         train=2.43e-13  test=1.93e-13  ood=2.88e-08
+  [Mature] A**c0*c1 + A**c2*c3 + A**c4*c5/(A**c4 + c6) + c7
+         train=2.43e-13  test=1.92e-13  ood=2.88e-08
+  [Mature] A**3*c0 + A**c1*c2 + A**c3*c4 + A**c5*c6 + c7
+         train=2.49e-13  test=1.96e-13  ood=2.89e-08
+  [Mature] A*c0 + A**c1*c2 + A**c3*c4 + c5 + c6*sin(c7*log(A*c8 + 1) + c9)
+         train=2.43e-13  test=1.92e-13  ood=2.88e-08
+  [Mature] A**2*c0 + A*c1/(A + c2)**2 + c3 + c4*sin(A*c5 + c6)/A**2
+         train=2.43e-13  test=1.91e-13  ood=2.89e-08
+  [Mature] A**3*c0/(A*c1 + c2) + A**2*c3/(A*c1 + c2) + A*c4/(A*c1 + c2) + A*c5*exp(c6/A**(1/3))/(A*c1 + c2) + c7/(A*c1 + c2) + c8*exp(c6/A**(1/3))/(A*c1 + c2) + c9/(A*c1 + c2)
+         train=2.43e-13  test=1.92e-13  ood=2.88e-08
+  [Mature] A**2*c0 + c1 + c2*exp(c3/A**2) + c4*sin(c5*log(A*c6 + 1) + c7)
+         train=2.43e-13  test=1.92e-13  ood=2.88e-08
+  [Mature] A**3*c0/(A + c1) + A**2*c2/(A + c1) + A*c3/(A + c1) + A*c4/(A + c1) + A*c5*exp(A*c6)/(A + c1) + c7/(A + c1) + c8*exp(A*c6)/(A + c1)
+         train=2.44e-13  test=1.93e-13  ood=2.89e-08
+  [Mature] A**4*c0/(A**2 + c1) + A**2*c2/(A**2 + c1) + A**2*c3/(A**2 + c1) + A**2*c4*exp(A*c5)/(A**2 + c1) + A*c6/(A**2 + c1) + c7/(A**2 + c1) + c8*exp(A*c5)/(A**2 + c1)
+         train=2.45e-13  test=1.94e-13  ood=2.88e-08
+  [Mature] A**2*c0 + c1 + c2*sin(A*c3 + c4) + c5*exp(A*c6)
+         train=2.50e-13  test=2.00e-13  ood=2.88e-08
+  [Mature] A**4*c0*exp(A*c1) + A**2*c2 + c3 + c4*exp(A*c5)
+         train=2.43e-13  test=1.92e-13  ood=2.89e-08
+  [Mature] A**3*c0/(A*c1 + 1) + A**2*c2/(A*c1 + 1) + A*c3/(A*c1 + 1) + A*c4*exp(A**c5*c6)/(A*c1 + 1) + c7/(A*c1 + 1) + c8/(A*c1 + 1) + c9*exp(A**c5*c6)/(A*c1 + 1)
+         train=2.43e-13  test=1.91e-13  ood=2.89e-08
+  [Mature] A**2*c0 + c1 + c2*exp(sqrt(A)*c3) + c4*log(A*c5 + 1)*sin(A*c6 + c7)
+         train=2.44e-13  test=1.92e-13  ood=2.89e-08
+  [Mature] A**2*c0 + c1 + c2*exp(A**c3*c4) + c5*sin(A*c6 + c7)/sqrt(A)
+         train=2.45e-13  test=1.95e-13  ood=2.88e-08
+  [Mature] A*c0 + A**c1*c2*sin(A*c3 + c4) + c5 + c6/sqrt(A)
+         train=2.53e-13  test=1.98e-13  ood=2.90e-08
+  [Mature] A**3*c0/(A*c1 + c2) + A**2*c3/(A*c1 + c2) + A*A**c4*c5/(A*c1 + c2) + A*c6/(A*c1 + c2) + A**c4*c7/(A*c1 + c2) + c8/(A*c1 + c2) + c9/(A*c1 + c2)
+         train=2.43e-13  test=1.92e-13  ood=2.88e-08
+  [Mature] A**c0*c1 + c2 + c3*sin(c4*log(A*c5 + 1) + c6) + c7/sqrt(A)
+         train=2.49e-13  test=1.98e-13  ood=2.88e-08
+  [Mature] A**3*c0/(A + c1) + A**2*c2/(A + c1) + A*A**c3*c4/(A + c1) + A*c5/(A + c1) + A*c6/(A + c1) + A**c3*c7/(A + c1) + c8/(A + c1)
+         train=2.43e-13  test=1.92e-13  ood=2.88e-08
+  [Mature] A**3*c0 + A*c1 + A**c2*c3 + A**c4*c5 + c6
+         train=2.53e-13  test=2.00e-13  ood=2.88e-08
+  [Mature] sqrt(A)*c0 + A*c1 + A**c2*c3 + c4 + c5*sin(c6*log(A*c7 + 1) + c8)
+         train=2.45e-13  test=1.92e-13  ood=2.89e-08
+  [Mature] A**c0*A**c1*c2/(A**c1 + c3) + A**c0*c4/(A**c1 + c3) + A**c1*c5/(A**c1 + c3) + A**c1*c6/(A**c1 + c3) + c7/(A**c1 + c3)
+         train=2.47e-13  test=1.93e-13  ood=2.89e-08
+  [Mature] A*c0*sin(c1*log(A*c2 + 1) + c3) + A*c4 + A**c5*c6 + c7
+         train=2.54e-13  test=1.97e-13  ood=2.90e-08
+  [Mature] A**3*c0/(A*c1 + 1) + A**2*c2/(A*c1 + 1) + A*c3/(A*c1 + 1) + c4/(A*c1 + 1) + c5/(A*c1 + 1) + c6*exp(sqrt(A)*c7)/(A*c1 + 1)
+         train=2.43e-13  test=1.92e-13  ood=2.88e-08
+  [Mature] A**2*c0 + c1 + c2*exp(A*c3) + c4*sin(A*c5 + c6)/sqrt(A)
+         train=2.45e-13  test=1.95e-13  ood=2.88e-08
+  [Mature] sqrt(A)*c0 + A**3*c1 + A*c2 + A**c3*c4 + c5
+         train=2.53e-13  test=2.00e-13  ood=2.88e-08
+  [Mature] A**2*c0 + c1 + c2*sin(c3*log(A*c4 + 1) + c5) + c6/sqrt(A)
+         train=2.43e-13  test=1.92e-13  ood=2.88e-08
+  [Mature] sqrt(A)*c0 + A**2*c1 + A*c2 + c3 + c4*sin(c5*log(A*c6 + 1) + c7)
+         train=2.43e-13  test=1.92e-13  ood=2.88e-08
+  [Mature] A**2*c0 + A*c1*sin(c2*log(A*c3 + 1) + c4) + A*c5 + c6
+         train=2.43e-13  test=1.92e-13  ood=2.88e-08
+  [Mature] A*c0 + c1 + c2/sqrt(A) + c3*sin(A*c4 + c5)/A**(1/3)
+         train=2.53e-13  test=1.98e-13  ood=2.90e-08
+
+  [Early stop] Collected 53 mature nodes (>= 50), ending search early.
+    1. A**3*c0/(A*c1 + 1) + A**2*c2/(A*c1 + 1) + A*c3/(A*c1 + 1) + A*c4*exp(A**c5*c6)/(A*c1 + 1) + c7/(A*c1 + 1) + c8/(A*c1 + 1) + c9*exp(A**c5*c6)/(A*c1 + 1)
+       train=2.43e-13  test=1.91e-13  ood=2.89e-08
+    2. A**2*c0 + A*c1/(A + c2)**2 + c3 + c4*sin(A*c5 + c6)/A**2
+       train=2.43e-13  test=1.91e-13  ood=2.89e-08
+    3. A**3*c0/(A*c1 + 1) + A**2*c2/(A*c1 + 1) + A*c3/(A*c1 + 1) + c4/(A*c1 + 1) + c5/(A*c1 + 1) + c6*exp(sqrt(A)*c7)/(A*c1 + 1)
+       train=2.43e-13  test=1.92e-13  ood=2.88e-08
+    4. A**2*c0 + A**c1*c2*sin(A*c3 + c4) + c5 + c6*exp(A**c7*c8)
+       train=2.43e-13  test=1.92e-13  ood=2.88e-08
+    5. sqrt(A)*c0 + A**2*c1 + A*c2 + c3 + c4*sin(c5*log(A*c6 + 1) + c7)
+       train=2.43e-13  test=1.92e-13  ood=2.88e-08
+    6. A**2*c0 + A*c1/(A + c2)**2 + A**c3*c4*sin(A*c5 + c6) + c7
+       train=2.44e-13  test=1.92e-13  ood=2.89e-08
+    7. A*c0 + A**c1*c2 + A**c3*c4 + c5 + c6*sin(c7*log(A*c8 + 1) + c9)
+       train=2.43e-13  test=1.92e-13  ood=2.88e-08
+    8. A**c0*c1 + A**c2*c3 + c4 + c5*sin(c6*log(A*c7 + 1) + c8)
+       train=2.43e-13  test=1.92e-13  ood=2.88e-08
+    9. A**2*c0 + c1 + c2*sin(c3*log(A*c4 + 1) + c5) + c6/sqrt(A)
+       train=2.43e-13  test=1.92e-13  ood=2.88e-08
+    10. A**2*c0 + c1 + c2*exp(c3/A**2) + c4*sin(c5*log(A*c6 + 1) + c7)
+       train=2.43e-13  test=1.92e-13  ood=2.88e-08
+    11. A**2*c0 + c1 + c2*exp(sqrt(A)*c3) + c4*log(A*c5 + 1)*sin(A*c6 + c7)
+       train=2.44e-13  test=1.92e-13  ood=2.89e-08
+    12. A**3*c0/(A*c1 + c2) + A**2*c3/(A*c1 + c2) + A*A**c4*c5/(A*c1 + c2) + A*c6/(A*c1 + c2) + A**c4*c7/(A*c1 + c2) + c8/(A*c1 + c2) + c9/(A*c1 + c2)
+       train=2.43e-13  test=1.92e-13  ood=2.88e-08
+    13. A**2*c0 + c1 + c2*exp(A**c3*c4) + c5*sin(c6*log(A*c7 + 1) + c8)
+       train=2.43e-13  test=1.92e-13  ood=2.88e-08
+    14. A**4*c0*exp(A*c1) + A**2*c2 + c3 + c4*exp(A*c5)
+       train=2.43e-13  test=1.92e-13  ood=2.89e-08
+    15. A**3*c0/(A*c1 + c2) + A**2*c3/(A*c1 + c2) + A*c4/(A*c1 + c2) + A*c5*exp(c6/A**(1/3))/(A*c1 + c2) + c7/(A*c1 + c2) + c8*exp(c6/A**(1/3))/(A*c1 + c2) + c9/(A*c1 + c2)
+       train=2.43e-13  test=1.92e-13  ood=2.88e-08
+    16. A**2*c0 + A**c1*c2/(A**c1 + c3) + c4 + c5*exp(A**c6*c7)
+       train=2.43e-13  test=1.92e-13  ood=2.88e-08
+    17. A**2*c0 + c1 + c2*exp(A**c3*c4) + c5*log(A*c6 + 1)*sin(A*c7 + c8)
+       train=2.44e-13  test=1.92e-13  ood=2.89e-08
+    18. A**2*c0 + A*c1/(A + c2)**2 + c3 + c4*sin(c5*log(A*c6 + 1) + c7)
+       train=2.43e-13  test=1.92e-13  ood=2.88e-08
+    19. A**c0*c1 + A**c2*c3 + A**c4*c5/(A**c4 + c6) + c7
+       train=2.43e-13  test=1.92e-13  ood=2.88e-08
+    20. sqrt(A)*c0 + A*c1 + A**c2*c3 + c4 + c5*sin(c6*log(A*c7 + 1) + c8)
+       train=2.45e-13  test=1.92e-13  ood=2.89e-08
+    21. A**3*c0/(A + c1) + A**2*c2/(A + c1) + A*A**c3*c4/(A + c1) + A*c5/(A + c1) + A*c6/(A + c1) + A**c3*c7/(A + c1) + c8/(A + c1)
+       train=2.43e-13  test=1.92e-13  ood=2.88e-08
+    22. A**2*c0 + A**c1*c2*exp(A*c3) + c4 + c5*exp(A**c6*c7)
+       train=2.43e-13  test=1.92e-13  ood=2.89e-08
+    23. A**2*c0 + A*c1 + c2*log(A*c3 + 1) + c4*sin(c5*log(A*c6 + 1) + c7)
+       train=2.43e-13  test=1.92e-13  ood=2.88e-08
+    24. A**2*c0 + A*c1*sin(c2*log(A*c3 + 1) + c4) + A*c5 + c6
+       train=2.43e-13  test=1.92e-13  ood=2.88e-08
+    25. A**2*c0 + A*c1 + c2 + c3*sin(c4*log(A*c5 + 1) + c6)
+       train=2.43e-13  test=1.92e-13  ood=2.88e-08
+    26. A*c0 + A**c1*c2 + A**c3*c4/(A**c3 + c5) + c6
+       train=2.44e-13  test=1.92e-13  ood=2.89e-08
+    27. A**2*c0 + A*c1/(A + c2)**2 + A*c3 + c4 + c5*sin(c6*log(A*c7 + 1) + c8)
+       train=2.43e-13  test=1.92e-13  ood=2.88e-08
+    28. A**c0*c1 + A**c2*c3 + c4*t/(A*c5 + c6) + c7/(A*c5 + c6) + c8
+       train=2.43e-13  test=1.93e-13  ood=2.88e-08
+    29. A*c0/(A*c1 + c2) + A**c3*c4 + A**c5*c6 + c7/(A*c1 + c2) + c8
+       train=2.43e-13  test=1.93e-13  ood=2.88e-08
+    30. A*c0/(A + c1) + A**c2*c3 + A**c4*c5 + c6
+       train=2.43e-13  test=1.93e-13  ood=2.88e-08
+    31. A**2*c0 + c1 + c2*exp(A**c3*c4) + c5*log(c6*exp(A*c7) + 1)
+       train=2.43e-13  test=1.93e-13  ood=2.88e-08
+    32. A**3*c0/(A + c1) + A**2*c2/(A + c1) + A*c3/(A + c1) + A*c4/(A + c1) + A*c5*exp(A*c6)/(A + c1) + c7/(A + c1) + c8*exp(A*c6)/(A + c1)
+       train=2.44e-13  test=1.93e-13  ood=2.89e-08
+    33. A**2*c0 + c1 + c2*exp(A**c3*c4) + c5*exp(A*c6)*sin(A*c7 + c8)
+       train=2.43e-13  test=1.93e-13  ood=2.88e-08
+    34. A**c0*A**c1*c2/(A**c1 + c3) + A**c0*c4/(A**c1 + c3) + A**c1*c5/(A**c1 + c3) + A**c1*c6/(A**c1 + c3) + c7/(A**c1 + c3)
+       train=2.47e-13  test=1.93e-13  ood=2.89e-08
+    35. A*c0 + A**c1*c2 + A**c3*c4*sin(A*c5 + c6) + c7
+       train=2.44e-13  test=1.94e-13  ood=2.88e-08
+    36. A**c0*c1 + A**c2*c3 + A**c4*c5*exp(A*c6) + c7
+       train=2.44e-13  test=1.94e-13  ood=2.88e-08
+    37. A**c0*c1 + A**c2*c3 + c4 + c5*cos(A**c6*c7)
+       train=2.47e-13  test=1.94e-13  ood=2.89e-08
+    38. A**4*c0/(A**2 + c1) + A**2*c2/(A**2 + c1) + A**2*c3/(A**2 + c1) + A**2*c4*exp(A*c5)/(A**2 + c1) + A*c6/(A**2 + c1) + c7/(A**2 + c1) + c8*exp(A*c5)/(A**2 + c1)
+       train=2.45e-13  test=1.94e-13  ood=2.88e-08
+    39. A**2*c0 + c1 + c2*exp(A*c3) + c4*sin(A*c5 + c6)/sqrt(A)
+       train=2.45e-13  test=1.95e-13  ood=2.88e-08
+    40. A**2*c0 + c1 + c2*exp(A**c3*c4) + c5*sin(A*c6 + c7)/sqrt(A)
+       train=2.45e-13  test=1.95e-13  ood=2.88e-08
+    41. A**c0*c1 + A**c2*c3 + c4*exp(A*c5) + c6
+       train=2.45e-13  test=1.95e-13  ood=2.88e-08
+    42. A**3*c0 + A**c1*c2 + A**c3*c4 + A**c5*c6 + c7
+       train=2.49e-13  test=1.96e-13  ood=2.89e-08
+    43. A*c0 + A**c1*c2 + c3 + c4*sin(c5*log(A*c6 + 1) + c7)
+       train=2.47e-13  test=1.96e-13  ood=2.88e-08
+    44. A*c0 + c1*log(A*c2 + 1) + c3*sin(c4*log(A*c5 + 1) + c6)
+       train=2.46e-13  test=1.96e-13  ood=2.88e-08
+    45. A**c0*c1 + A**c2*c3 + c4*sin(A*c5 + c6) + c7
+       train=2.51e-13  test=1.97e-13  ood=2.89e-08
+    46. A*c0*sin(c1*log(A*c2 + 1) + c3) + A*c4 + A**c5*c6 + c7
+       train=2.54e-13  test=1.97e-13  ood=2.90e-08
+    47. A*c0 + A**c1*c2 + c3 + c4*sin(A**c5*c6 + c7)
+       train=2.50e-13  test=1.97e-13  ood=2.89e-08
+    48. A**c0*c1 + c2 + c3*sin(c4*log(A*c5 + 1) + c6) + c7/sqrt(A)
+       train=2.49e-13  test=1.98e-13  ood=2.88e-08
+    49. A*c0 + A**c1*c2*sin(A*c3 + c4) + c5 + c6/sqrt(A)
+       train=2.53e-13  test=1.98e-13  ood=2.90e-08
+    50. A*c0 + c1 + c2/sqrt(A) + c3*sin(A*c4 + c5)/A**(1/3)
+       train=2.53e-13  test=1.98e-13  ood=2.90e-08
+    51. sqrt(A)*c0 + A**3*c1 + A*c2 + A**c3*c4 + c5
+       train=2.53e-13  test=2.00e-13  ood=2.88e-08
+    52. A**2*c0 + c1 + c2*sin(A*c3 + c4) + c5*exp(A*c6)
+       train=2.50e-13  test=2.00e-13  ood=2.88e-08
+    53. A**3*c0 + A*c1 + A**c2*c3 + A**c4*c5 + c6
+       train=2.53e-13  test=2.00e-13  ood=2.88e-08
+
+============================================================
+Search completed, elapsed 1750.8s
+Explored 489 nodes total, global best (test): train=2.43e-13  test=1.91e-13  ood=2.89e-08
+Best formula: A**3*c0/(A*c1 + 1) + A**2*c2/(A*c1 + 1) + A*c3/(A*c1 + 1) + A*c4*exp(A**c5*c6)/(A*c1 + 1) + c7/(A*c1 + 1) + c8/(A*c1 + 1) + c9*exp(A**c5*c6)/(A*c1 + 1)
+Best expression params: c0=-4.6853e-02, c1=4.5393e-01, c2=-1.7509e-01, c3=9.8910e-01, c4=6.9139e-04, c5=5.0000e-01, c6=1.5075e+00, c7=5.0172e-02, c8=5.0172e-02, c9=-9.4973e-02
+
+Final output 53 formulas (mature 53, supplement 0):
+  1. [Mature] <<<FORMULA>>>A**3*c0/(A*c1 + 1) + A**2*c2/(A*c1 + 1) + A*c3/(A*c1 + 1) + A*c4*exp(A**c5*c6)/(A*c1 + 1) + c7/(A*c1 + 1) + c8/(A*c1 + 1) + c9*exp(A**c5*c6)/(A*c1 + 1)<<<END_FORMULA>>>
+     params: c0=-4.6853e-02, c1=4.5393e-01, c2=-1.7509e-01, c3=9.8910e-01, c4=6.9139e-04, c5=5.0000e-01, c6=1.5075e+00, c7=5.0172e-02, c8=5.0172e-02, c9=-9.4973e-02
+     train=2.43e-13  test=1.91e-13  ood=2.89e-08
+  2. [Mature] <<<FORMULA>>>A**2*c0 + A*c1/(A + c2)**2 + c3 + c4*sin(A*c5 + c6)/A**2<<<END_FORMULA>>>
+     params: c0=-1.2281e-01, c1=1.1186e+01, c2=3.9026e+00, c3=-3.8492e-02, c4=-4.7595e-04, c5=2.3538e+00, c6=4.4070e+00
+     train=2.43e-13  test=1.91e-13  ood=2.89e-08
+  3. [Mature] <<<FORMULA>>>A**3*c0/(A*c1 + 1) + A**2*c2/(A*c1 + 1) + A*c3/(A*c1 + 1) + c4/(A*c1 + 1) + c5/(A*c1 + 1) + c6*exp(sqrt(A)*c7)/(A*c1 + 1)<<<END_FORMULA>>>
+     params: c0=-4.7811e-02, c1=4.5757e-01, c2=-1.7842e-01, c3=9.8650e-01, c4=5.3724e-02, c5=5.3724e-02, c6=-1.0135e-01, c7=1.4331e+00
+     train=2.43e-13  test=1.92e-13  ood=2.88e-08
+  4. [Mature] <<<FORMULA>>>A**2*c0 + A**c1*c2*sin(A*c3 + c4) + c5 + c6*exp(A**c7*c8)<<<END_FORMULA>>>
+     params: c0=-1.2122e-01, c1=-5.0000e-01, c2=1.5019e-01, c3=5.1308e-01, c4=2.0394e-01, c5=6.1649e-01, c6=-7.5670e-01, c7=9.4582e-01, c8=-9.5873e-01
+     train=2.43e-13  test=1.92e-13  ood=2.88e-08
+  5. [Mature] <<<FORMULA>>>sqrt(A)*c0 + A**2*c1 + A*c2 + c3 + c4*sin(c5*log(A*c6 + 1) + c7)<<<END_FORMULA>>>
+     params: c0=-1.3672e-01, c1=-1.1890e-01, c2=1.7602e-02, c3=-1.5079e-01, c4=9.7323e-01, c5=9.7361e-01, c6=9.1443e-01, c7=1.5968e-01
+     train=2.43e-13  test=1.92e-13  ood=2.88e-08
+  6. [Mature] <<<FORMULA>>>A**2*c0 + A*c1/(A + c2)**2 + A**c3*c4*sin(A*c5 + c6) + c7<<<END_FORMULA>>>
+     params: c0=-1.2283e-01, c1=1.1123e+01, c2=3.9205e+00, c3=-2.0000e+00, c4=-1.9527e-03, c5=1.7830e+00, c6=5.6925e+00, c7=-3.0897e-02
+     train=2.44e-13  test=1.92e-13  ood=2.89e-08
+  7. [Mature] <<<FORMULA>>>A*c0 + A**c1*c2 + A**c3*c4 + c5 + c6*sin(c7*log(A*c8 + 1) + c9)<<<END_FORMULA>>>
+     params: c0=5.2518e-01, c1=5.0000e-01, c2=-1.5898e-01, c3=1.9213e+00, c4=-1.6618e-01, c5=-8.4204e+00, c6=8.5408e+00, c7=5.2630e-01, c8=5.3173e-01, c9=1.4086e+00
+     train=2.43e-13  test=1.92e-13  ood=2.88e-08
+  8. [Mature] <<<FORMULA>>>A**c0*c1 + A**c2*c3 + c4 + c5*sin(c6*log(A*c7 + 1) + c8)<<<END_FORMULA>>>
+     params: c0=-5.0000e-01, c1=8.6803e-03, c2=1.9881e+00, c3=-1.2350e-01, c4=2.6574e-02, c5=6.3081e-01, c6=1.0957e+00, c7=1.0650e+00, c8=6.1595e+00
+     train=2.43e-13  test=1.92e-13  ood=2.88e-08
+  9. [Mature] <<<FORMULA>>>A**2*c0 + c1 + c2*sin(c3*log(A*c4 + 1) + c5) + c6/sqrt(A)<<<END_FORMULA>>>
+     params: c0=-1.1918e-01, c1=-1.7790e-01, c2=8.0479e-01, c3=1.0525e+00, c4=9.0157e-01, c5=1.4323e-01, c6=1.2709e-02
+     train=2.43e-13  test=1.92e-13  ood=2.88e-08
+  10. [Mature] <<<FORMULA>>>A**2*c0 + c1 + c2*exp(c3/A**2) + c4*sin(c5*log(A*c6 + 1) + c7)<<<END_FORMULA>>>
+     params: c0=-1.1911e-01, c1=-1.8108e-01, c2=-6.5126e-03, c3=-2.1054e-01, c4=8.2073e-01, c5=1.0501e+00, c6=8.7726e-01, c7=1.7534e-01
+     train=2.43e-13  test=1.92e-13  ood=2.88e-08
+  11. [Mature] <<<FORMULA>>>A**2*c0 + c1 + c2*exp(sqrt(A)*c3) + c4*log(A*c5 + 1)*sin(A*c6 + c7)<<<END_FORMULA>>>
+     params: c0=-2.8827e-02, c1=2.4567e-01, c2=-2.1641e-01, c3=1.1575e+00, c4=2.5406e+00, c5=8.1143e-01, c6=7.6660e-02, c7=2.5252e+00
+     train=2.44e-13  test=1.92e-13  ood=2.89e-08
+  12. [Mature] <<<FORMULA>>>A**3*c0/(A*c1 + c2) + A**2*c3/(A*c1 + c2) + A*A**c4*c5/(A*c1 + c2) + A*c6/(A*c1 + c2) + A**c4*c7/(A*c1 + c2) + c8/(A*c1 + c2) + c9/(A*c1 + c2)<<<END_FORMULA>>>
+     params: c0=-9.4373e-02, c1=7.6462e-01, c2=1.4400e+00, c3=-5.7985e-01, c4=1.5000e+00, c5=7.0564e-02, c6=7.7905e-01, c7=5.2296e-01, c8=-1.4217e-02, c9=-1.4217e-02
+     train=2.43e-13  test=1.92e-13  ood=2.88e-08
+  13. [Mature] <<<FORMULA>>>A**2*c0 + c1 + c2*exp(A**c3*c4) + c5*sin(c6*log(A*c7 + 1) + c8)<<<END_FORMULA>>>
+     params: c0=-1.1910e-01, c1=-1.8355e-01, c2=-6.5422e-03, c3=-2.0000e+00, c4=-2.1023e-01, c5=8.2315e-01, c6=1.0492e+00, c7=8.7605e-01, c8=1.7783e-01
+     train=2.43e-13  test=1.92e-13  ood=2.88e-08
+  14. [Mature] <<<FORMULA>>>A**4*c0*exp(A*c1) + A**2*c2 + c3 + c4*exp(A*c5)<<<END_FORMULA>>>
+     params: c0=-1.2601e-02, c1=-2.3994e+00, c2=-1.2552e-01, c3=7.4180e-01, c4=-7.7076e-01, c5=-9.0674e-01
+     train=2.43e-13  test=1.92e-13  ood=2.89e-08
+  15. [Mature] <<<FORMULA>>>A**3*c0/(A*c1 + c2) + A**2*c3/(A*c1 + c2) + A*c4/(A*c1 + c2) + A*c5*exp(c6/A**(1/3))/(A*c1 + c2) + c7/(A*c1 + c2) + c8*exp(c6/A**(1/3))/(A*c1 + c2) + c9/(A*c1 + c2)<<<END_FORMULA>>>
+     params: c0=-6.9056e-02, c1=6.0163e-01, c2=1.4586e+00, c3=-2.5622e-01, c4=9.4298e-01, c5=-1.2026e+00, c6=-3.6918e+00, c7=-1.6117e-02, c8=2.8300e+00, c9=-1.6117e-02
+     train=2.43e-13  test=1.92e-13  ood=2.88e-08
+  16. [Mature] <<<FORMULA>>>A**2*c0 + A**c1*c2/(A**c1 + c3) + c4 + c5*exp(A**c6*c7)<<<END_FORMULA>>>
+     params: c0=-1.0390e-01, c1=-1.0000e+00, c2=-2.4541e+00, c3=4.5203e-01, c4=3.9742e+00, c5=-1.5246e+00, c6=7.4185e-01, c7=2.0761e-01
+     train=2.43e-13  test=1.92e-13  ood=2.88e-08
+  17. [Mature] <<<FORMULA>>>A**2*c0 + c1 + c2*exp(A**c3*c4) + c5*log(A*c6 + 1)*sin(A*c7 + c8)<<<END_FORMULA>>>
+     params: c0=9.0990e-03, c1=2.1894e-01, c2=-1.9152e-01, c3=5.0000e-01, c4=1.2703e+00, c5=-2.1819e+00, c6=7.8257e-01, c7=1.3019e-01, c8=5.5083e+00
+     train=2.44e-13  test=1.92e-13  ood=2.89e-08
+  18. [Mature] <<<FORMULA>>>A**2*c0 + A*c1/(A + c2)**2 + c3 + c4*sin(c5*log(A*c6 + 1) + c7)<<<END_FORMULA>>>
+     params: c0=-1.2009e-01, c1=-2.5716e+00, c2=1.8917e+00, c3=2.8569e-01, c4=6.7892e-01, c5=1.0623e+00, c6=2.0289e+00, c7=5.8223e+00
+     train=2.43e-13  test=1.92e-13  ood=2.88e-08
+  19. [Mature] <<<FORMULA>>>A**c0*c1 + A**c2*c3 + A**c4*c5/(A**c4 + c6) + c7<<<END_FORMULA>>>
+     params: c0=4.0000e+00, c1=-4.6895e-05, c2=1.8685e+00, c3=-1.6894e-01, c4=1.0729e+00, c5=1.4235e+00, c6=1.8965e+00, c7=-1.8584e-02
+     train=2.43e-13  test=1.92e-13  ood=2.88e-08
+  20. [Mature] <<<FORMULA>>>sqrt(A)*c0 + A*c1 + A**c2*c3 + c4 + c5*sin(c6*log(A*c7 + 1) + c8)<<<END_FORMULA>>>
+     params: c0=-1.0699e-01, c1=2.3143e-02, c2=2.0000e+00, c3=-1.1967e-01, c4=-7.5565e-02, c5=8.3259e-01, c6=1.0362e+00, c7=9.4362e-01, c8=8.7017e-02
+     train=2.45e-13  test=1.92e-13  ood=2.89e-08
+  21. [Mature] <<<FORMULA>>>A**3*c0/(A + c1) + A**2*c2/(A + c1) + A*A**c3*c4/(A + c1) + A*c5/(A + c1) + A*c6/(A + c1) + A**c3*c7/(A + c1) + c8/(A + c1)<<<END_FORMULA>>>
+     params: c0=-1.2284e-01, c1=1.8662e+00, c2=-7.5048e-01, c3=1.5000e+00, c4=8.8808e-02, c5=5.0234e-01, c6=5.0234e-01, c7=6.8721e-01, c8=-3.6425e-02
+     train=2.43e-13  test=1.92e-13  ood=2.88e-08
+  22. [Mature] <<<FORMULA>>>A**2*c0 + A**c1*c2*exp(A*c3) + c4 + c5*exp(A**c6*c7)<<<END_FORMULA>>>
+     params: c0=-1.2552e-01, c1=4.0000e+00, c2=-1.2718e-02, c3=-2.3998e+00, c4=7.4170e-01, c5=-7.7057e-01, c6=1.0003e+00, c7=-9.0681e-01
+     train=2.43e-13  test=1.92e-13  ood=2.89e-08
+  23. [Mature] <<<FORMULA>>>A**2*c0 + A*c1 + c2*log(A*c3 + 1) + c4*sin(c5*log(A*c6 + 1) + c7)<<<END_FORMULA>>>
+     params: c0=-1.1718e-01, c1=-1.2070e-02, c2=-3.9653e-01, c3=1.6530e+00, c4=1.4752e+00, c5=8.0826e-01, c6=1.1164e+00, c7=6.2666e+00
+     train=2.43e-13  test=1.92e-13  ood=2.88e-08
+  24. [Mature] <<<FORMULA>>>A**2*c0 + A*c1*sin(c2*log(A*c3 + 1) + c4) + A*c5 + c6<<<END_FORMULA>>>
+     params: c0=-1.3422e-01, c1=2.2386e-01, c2=1.0132e+00, c3=2.7429e+00, c4=1.5194e+00, c5=3.9441e-01, c6=-1.9236e-02
+     train=2.43e-13  test=1.92e-13  ood=2.88e-08
+  25. [Mature] <<<FORMULA>>>A**2*c0 + A*c1 + c2 + c3*sin(c4*log(A*c5 + 1) + c6)<<<END_FORMULA>>>
+     params: c0=-1.1640e-01, c1=-7.2570e-02, c2=2.7787e-01, c3=5.9513e-01, c4=1.0391e+00, c5=1.3837e+00, c6=5.7502e+00
+     train=2.43e-13  test=1.92e-13  ood=2.88e-08
+  26. [Mature] <<<FORMULA>>>A*c0 + A**c1*c2 + A**c3*c4/(A**c3 + c5) + c6<<<END_FORMULA>>>
+     params: c0=-1.8531e-01, c1=2.0000e+00, c2=-1.1380e-01, c3=1.0472e+00, c4=1.9333e+00, c5=2.1020e+00, c6=-2.0267e-02
+     train=2.44e-13  test=1.92e-13  ood=2.89e-08
+  27. [Mature] <<<FORMULA>>>A**2*c0 + A*c1/(A + c2)**2 + A*c3 + c4 + c5*sin(c6*log(A*c7 + 1) + c8)<<<END_FORMULA>>>
+     params: c0=-1.1818e-01, c1=1.3148e+00, c2=1.6114e+00, c3=-3.7556e-02, c4=2.7551e-01, c5=3.1709e-01, c6=1.4107e+00, c7=1.3658e+00, c8=5.0410e+00
+     train=2.43e-13  test=1.92e-13  ood=2.88e-08
+  28. [Mature] <<<FORMULA>>>A**c0*c1 + A**c2*c3 + c4*t/(A*c5 + c6) + c7/(A*c5 + c6) + c8<<<END_FORMULA>>>
+     params: c0=2.0000e+00, c1=-1.1522e-01, c2=7.7893e-01, c3=-3.5919e-01, c4=-1.6122e-11, c5=3.1460e+00, c6=6.9377e+00, c7=-1.7440e+01, c8=2.5078e+00
+     train=2.43e-13  test=1.93e-13  ood=2.88e-08
+  29. [Mature] <<<FORMULA>>>A*c0/(A*c1 + c2) + A**c3*c4 + A**c5*c6 + c7/(A*c1 + c2) + c8<<<END_FORMULA>>>
+     params: c0=1.5655e+00, c1=7.1454e-01, c2=1.5757e+00, c3=2.0000e+00, c4=-1.1522e-01, c5=7.7893e-01, c6=-3.5920e-01, c7=-5.0878e-01, c8=3.1690e-01
+     train=2.43e-13  test=1.93e-13  ood=2.88e-08
+  30. [Mature] <<<FORMULA>>>A*c0/(A + c1) + A**c2*c3 + A**c4*c5 + c6<<<END_FORMULA>>>
+     params: c0=2.5138e+00, c1=2.2052e+00, c2=2.0000e+00, c3=-1.1522e-01, c4=7.7892e-01, c5=-3.5920e-01, c6=-5.9906e-03
+     train=2.43e-13  test=1.93e-13  ood=2.88e-08
+  31. [Mature] <<<FORMULA>>>A**2*c0 + c1 + c2*exp(A**c3*c4) + c5*log(c6*exp(A*c7) + 1)<<<END_FORMULA>>>
+     params: c0=-1.2500e-01, c1=7.2656e-01, c2=-2.0324e-01, c3=1.5000e+00, c4=-3.7642e-01, c5=-4.8239e+00, c6=1.2099e-01, c7=-1.2890e+00
+     train=2.43e-13  test=1.93e-13  ood=2.88e-08
+  32. [Mature] <<<FORMULA>>>A**3*c0/(A + c1) + A**2*c2/(A + c1) + A*c3/(A + c1) + A*c4/(A + c1) + A*c5*exp(A*c6)/(A + c1) + c7/(A + c1) + c8*exp(A*c6)/(A + c1)<<<END_FORMULA>>>
+     params: c0=-1.1267e-01, c1=2.2101e+00, c2=-4.5504e-01, c3=8.2689e-01, c4=8.2689e-01, c5=-8.2097e-03, c6=-2.8153e+00, c7=-1.1311e-01, c8=5.0032e-02
+     train=2.44e-13  test=1.93e-13  ood=2.89e-08
+  33. [Mature] <<<FORMULA>>>A**2*c0 + c1 + c2*exp(A**c3*c4) + c5*exp(A*c6)*sin(A*c7 + c8)<<<END_FORMULA>>>
+     params: c0=-1.2495e-01, c1=7.2521e-01, c2=-3.0187e-01, c3=1.5000e+00, c4=-3.7787e-01, c5=-4.8338e-01, c6=-1.2755e+00, c7=4.7324e-01, c8=1.9434e+00
+     train=2.43e-13  test=1.93e-13  ood=2.88e-08
+  34. [Mature] <<<FORMULA>>>A**c0*A**c1*c2/(A**c1 + c3) + A**c0*c4/(A**c1 + c3) + A**c1*c5/(A**c1 + c3) + A**c1*c6/(A**c1 + c3) + c7/(A**c1 + c3)<<<END_FORMULA>>>
+     params: c0=2.0000e+00, c1=1.0528e+00, c2=-1.1480e-01, c3=2.1874e+00, c4=-4.5022e-01, c5=7.9048e-01, c6=7.9048e-01, c7=-4.7390e-02
+     train=2.47e-13  test=1.93e-13  ood=2.89e-08
+  35. [Mature] <<<FORMULA>>>A*c0 + A**c1*c2 + A**c3*c4*sin(A*c5 + c6) + c7<<<END_FORMULA>>>
+     params: c0=-1.9660e+00, c1=-5.0000e-01, c2=-2.4467e+00, c3=-3.5807e-01, c4=2.9979e+01, c5=1.3885e-01, c6=1.6397e-01, c7=-4.2234e+00
+     train=2.44e-13  test=1.94e-13  ood=2.88e-08
+  36. [Mature] <<<FORMULA>>>A**c0*c1 + A**c2*c3 + A**c4*c5*exp(A*c6) + c7<<<END_FORMULA>>>
+     params: c0=1.0000e+00, c1=4.3711e-01, c2=1.7307e+00, c3=-2.9847e-01, c4=3.9558e-02, c5=-3.1364e-01, c6=-1.2476e+00, c7=2.5531e-01
+     train=2.44e-13  test=1.94e-13  ood=2.88e-08
+  37. [Mature] <<<FORMULA>>>A**c0*c1 + A**c2*c3 + c4 + c5*cos(A**c6*c7)<<<END_FORMULA>>>
+     params: c0=5.0000e-01, c1=-2.0737e+00, c2=2.5400e+00, c3=-2.3240e-02, c4=1.9230e+00, c5=-1.7267e+00, c6=3.6635e-01, c7=1.8511e+00
+     train=2.47e-13  test=1.94e-13  ood=2.89e-08
+  38. [Mature] <<<FORMULA>>>A**4*c0/(A**2 + c1) + A**2*c2/(A**2 + c1) + A**2*c3/(A**2 + c1) + A**2*c4*exp(A*c5)/(A**2 + c1) + A*c6/(A**2 + c1) + c7/(A**2 + c1) + c8*exp(A*c5)/(A**2 + c1)<<<END_FORMULA>>>
+     params: c0=-1.2496e-01, c1=2.2484e+00, c2=1.9795e-01, c3=1.9795e-01, c4=-8.7898e-01, c5=-8.1519e-01, c6=3.3197e-01, c7=1.4356e+00, c8=-1.4970e+00
+     train=2.45e-13  test=1.94e-13  ood=2.88e-08
+  39. [Mature] <<<FORMULA>>>A**2*c0 + c1 + c2*exp(A*c3) + c4*sin(A*c5 + c6)/sqrt(A)<<<END_FORMULA>>>
+     params: c0=-1.1689e-01, c1=4.7026e-01, c2=-5.9197e-01, c3=-1.0254e+00, c4=2.9432e-01, c5=5.1738e-01, c6=6.8822e-02
+     train=2.45e-13  test=1.95e-13  ood=2.88e-08
+  40. [Mature] <<<FORMULA>>>A**2*c0 + c1 + c2*exp(A**c3*c4) + c5*sin(A*c6 + c7)/sqrt(A)<<<END_FORMULA>>>
+     params: c0=-1.1689e-01, c1=4.7035e-01, c2=-5.9202e-01, c3=1.0000e+00, c4=-1.0253e+00, c5=2.9422e-01, c6=5.1737e-01, c7=6.8799e-02
+     train=2.45e-13  test=1.95e-13  ood=2.88e-08
+  41. [Mature] <<<FORMULA>>>A**c0*c1 + A**c2*c3 + c4*exp(A*c5) + c6<<<END_FORMULA>>>
+     params: c0=1.5000e+00, c1=-3.2315e+00, c2=1.4377e+00, c3=3.3020e+00, c4=-3.6005e-01, c5=-1.2342e+00, c6=3.3820e-01
+     train=2.45e-13  test=1.95e-13  ood=2.88e-08
+  42. [Mature] <<<FORMULA>>>A**3*c0 + A**c1*c2 + A**c3*c4 + A**c5*c6 + c7<<<END_FORMULA>>>
+     params: c0=-3.8167e-03, c1=1.0000e+00, c2=-2.1559e+01, c3=9.4361e-01, c4=2.5659e+01, c5=6.6201e-01, c6=-3.9468e+00, c7=1.5388e-01
+     train=2.49e-13  test=1.96e-13  ood=2.89e-08
+  43. [Mature] <<<FORMULA>>>A*c0 + A**c1*c2 + c3 + c4*sin(c5*log(A*c6 + 1) + c7)<<<END_FORMULA>>>
+     params: c0=-1.0600e-01, c1=2.0000e+00, c2=-1.1479e-01, c3=3.6512e-01, c4=6.3949e-01, c5=9.7642e-01, c6=1.5224e+00, c7=5.6319e+00
+     train=2.47e-13  test=1.96e-13  ood=2.88e-08
+  44. [Mature] <<<FORMULA>>>A*c0 + c1*log(A*c2 + 1) + c3*sin(c4*log(A*c5 + 1) + c6)<<<END_FORMULA>>>
+     params: c0=-1.4960e+01, c1=7.5887e+02, c2=1.9988e-02, c3=2.8838e-01, c4=1.5095e+00, c5=1.0879e+00, c6=6.1915e+00
+     train=2.46e-13  test=1.96e-13  ood=2.88e-08
+  45. [Mature] <<<FORMULA>>>A**c0*c1 + A**c2*c3 + c4*sin(A*c5 + c6) + c7<<<END_FORMULA>>>
+     params: c0=-3.3333e-01, c1=1.1851e-01, c2=1.4311e+00, c3=-1.1023e+00, c4=1.5105e+01, c5=1.2641e-01, c6=5.6256e+00, c7=8.9393e+00
+     train=2.51e-13  test=1.97e-13  ood=2.89e-08
+  46. [Mature] <<<FORMULA>>>A*c0*sin(c1*log(A*c2 + 1) + c3) + A*c4 + A**c5*c6 + c7<<<END_FORMULA>>>
+     params: c0=-2.3488e-01, c1=1.0324e+00, c2=2.0197e+00, c3=5.0085e+00, c4=4.3526e-01, c5=2.0000e+00, c6=-1.3822e-01, c7=-2.4471e-02
+     train=2.54e-13  test=1.97e-13  ood=2.90e-08
+  47. [Mature] <<<FORMULA>>>A*c0 + A**c1*c2 + c3 + c4*sin(A**c5*c6 + c7)<<<END_FORMULA>>>
+     params: c0=2.4184e+02, c1=2.0000e+00, c2=-1.6167e+00, c3=-6.0861e+03, c4=6.0863e+03, c5=5.0178e-01, c6=2.8089e-01, c7=1.5717e+00
+     train=2.50e-13  test=1.97e-13  ood=2.89e-08
+  48. [Mature] <<<FORMULA>>>A**c0*c1 + c2 + c3*sin(c4*log(A*c5 + 1) + c6) + c7/sqrt(A)<<<END_FORMULA>>>
+     params: c0=2.0000e+00, c1=-1.1841e-01, c2=-5.2040e-01, c3=1.1368e+00, c4=9.4229e-01, c5=7.9094e-01, c6=4.0135e-01, c7=1.7659e-02
+     train=2.49e-13  test=1.98e-13  ood=2.88e-08
+  49. [Mature] <<<FORMULA>>>A*c0 + A**c1*c2*sin(A*c3 + c4) + c5 + c6/sqrt(A)<<<END_FORMULA>>>
+     params: c0=-2.1833e+00, c1=-3.3333e-01, c2=-3.3061e+01, c3=1.3026e-01, c4=3.2831e+00, c5=-4.3423e+00, c6=-2.0439e+00
+     train=2.53e-13  test=1.98e-13  ood=2.90e-08
+  50. [Mature] <<<FORMULA>>>A*c0 + c1 + c2/sqrt(A) + c3*sin(A*c4 + c5)/A**(1/3)<<<END_FORMULA>>>
+     params: c0=-2.1833e+00, c1=-4.3423e+00, c2=-2.0439e+00, c3=-3.3061e+01, c4=1.3026e-01, c5=3.2831e+00
+     train=2.53e-13  test=1.98e-13  ood=2.90e-08
+  51. [Mature] <<<FORMULA>>>sqrt(A)*c0 + A**3*c1 + A*c2 + A**c3*c4 + c5<<<END_FORMULA>>>
+     params: c0=-1.5656e+00, c1=-3.7338e-03, c2=2.9023e+01, c3=1.0310e+00, c4=-2.7352e+01, c5=2.0198e-01
+     train=2.53e-13  test=2.00e-13  ood=2.88e-08
+  52. [Mature] <<<FORMULA>>>A**2*c0 + c1 + c2*sin(A*c3 + c4) + c5*exp(A*c6)<<<END_FORMULA>>>
+     params: c0=-1.2139e-01, c1=6.6128e-01, c2=3.0620e-02, c3=7.5686e-01, c4=6.1250e+00, c5=-6.8774e-01, c6=-9.9893e-01
+     train=2.50e-13  test=2.00e-13  ood=2.88e-08
+  53. [Mature] <<<FORMULA>>>A**3*c0 + A*c1 + A**c2*c3 + A**c4*c5 + c6<<<END_FORMULA>>>
+     params: c0=-3.7329e-03, c1=2.8877e+01, c2=5.0000e-01, c3=-1.5646e+00, c4=1.0312e+00, c5=-2.7207e+01, c6=2.0184e-01
+     train=2.53e-13  test=2.00e-13  ood=2.88e-08
+============================================================
+
+============================================================
+Final search results
+============================================================
+Best expression     : A**3*c0/(A*c1 + 1) + A**2*c2/(A*c1 + 1) + A*c3/(A*c1 + 1) + A*c4*exp(A**c5*c6)/(A*c1 + 1) + c7/(A*c1 + 1) + c8/(A*c1 + 1) + c9*exp(A**c5*c6)/(A*c1 + 1)
+Structure desc      : top-level additive combination, contains transcendental functions exp, contains fractions, 8 additive terms, complex structure (depth 5)
+Fitted params       : c0=-4.6853e-02, c1=4.5393e-01, c2=-1.7509e-01, c3=9.8910e-01, c4=6.9139e-04, c5=5.0000e-01, c6=1.5075e+00, c7=5.0172e-02, c8=5.0172e-02, c9=-9.4973e-02
+Train NMSE          : 2.43e-13
+Test NMSE           : 1.91e-13
+OOD Test NMSE       : 2.89e-08
+
+============================================================
+GT Equivalence Verification (CRK33)
+============================================================
+GT: -c0*sqrt(A) - c1*A**c2 + c3*_t*sin(log(A + c4))
+Candidate formulas: 53
+
+I need to determine if any candidate formula can match the GT:
+
+**GT:** `-0.11847*sqrt(A) - 0.11847*A**2 + 0.84638*sin(log(A + 1))`
+
+Note that `_t` is a fixed constant (7.14436), so `c3*_t = 0.11847 * 7.14436 = 0.84638`. The GT is a function of A only (t doesn't appear as a variable, `_t` is fixed).
+
+The GT has three terms:
+1. `-0.11847*sqrt(A)` (A^0.5 term)
+2. `-0.11847*A**2` (A^2 term)
+3. `0.84638*sin(log(A + 1))` (sin of log term)
+
+Let me check candidates systematically:
+
+**Candidate 5:** `sqrt(A)*c0 + A**2*c1 + A*c2 + c3 + c4*sin(c5*log(A*c6 + 1) + c7)`
+
+Set c2=0 (kill A term), c3=0 (kill constant), c0=-0.11847, c1=-0.11847, c5=1, c6=1, c7=0, c4=0.84638.
+This gives: `-0.11847*sqrt(A) - 0.11847*A**2 + 0.84638*sin(log(A+1))` ✓
+
+This matches! But let me verify the sin(log) structure: `sin(c5*log(A*c6 + 1) + c7)` with c5=1, c6=1, c7=0 gives `sin(log(A+1))`. Yes!
+
+**Candidate 20:** `sqrt(A)*c0 + A*c1 + A**c2*c3 + c4 + c5*sin(c6*log(A*c7 + 1) + c8)`
+
+Set c1=0, c2=2, c3=-0.11847, c4=0, c0=-0.11847, c5=0.84638, c6=1, c7=1, c8=0.
+This also works.
+
+**Candidate 7:** `A*c0 + A**c1*c2 + A**c3*c4 + c5 + c6*sin(c7*log(A*c8 + 1) + c9)`
+
+Set c0=0, c1=0.5, c2=-0.11847, c3=2, c4=-0.11847, c5=0, c6=0.84638, c7=1, c8=1, c9=0. ✓
+
+**Candidate 8:** `A**c0*c1 + A**c2*c3 + c4 + c5*sin(c6*log(A*c7 + 1) + c8)`
+
+Set c0=0.5, c1=-0.11847, c2=2, c3=-0.11847, c4=0, c5=0.84638, c6=1, c7=1, c8=0. ✓
+
+**Candidate 43:** `A*c0 + A**c1*c2 + c3 + c4*sin(c5*log(A*c6 + 1) + c7)`
+
+Set c0=0, c1=0.5 (gives sqrt(A)), c2=-0.11847... but then we need A**2 term. Only one power term A**c1. Can't have both sqrt(A) and A**2. ✗
+
+**Candidate 48:** `A**c0*c1 + c2 + c3*sin(c4*log(A*c5 + 1) + c6) + c7/sqrt(A)`
+
+Only one power term A**c0 plus 1/sqrt(A). Set c0=2 for A^2, but then no sqrt(A) term. c7/sqrt(A) is A^(-0.5), not A^(0.5). ✗
+
+So multiple candidates match. The clearest match is **Candidate 5**.
+
+[MATCH FOUND]
+
+**Candidate 5** matches the GT: `sqrt(A)*c0 + A**2*c1 + A*c2 + c3 + c4*sin(c5*log(A*c6 + 1) + c7)`
+
+By setting: c0 = -0.11847, c1 = -0.11847, c2 = 0, c3 = 0, c4 = 0.84638, c5 = 1, c6 = 1, c7 = 0, the candidate becomes:
+`-0.11847*sqrt(A) - 0.11847*A**2 + 0.84638*sin(log(A + 1))`
+which exactly equals the GT.
+
+Other matching candidates include **7**, **8**, and **20**, which also have sufficient flexibility with power terms and the sin(log(...)) structure.
+
+Conclusion: Match found
+============================================================
+
+GT Equivalence Verification (CRK33)
+============================================================
+GT: -c0*sqrt(A) - c1*A**c2 + c3*_t*sin(log(A + c4))
+Candidates evaluated: 53
+Matched candidate IDs: [5, 7, 8, 20]
+Matched candidates: ["sqrt(A)*c0 + A**2*c1 + A*c2 + c3 + c4*sin(c5*log(A*c6 + 1) + c7)", "A*c0 + A**c1*c2 + A**c3*c4 + c5 + c6*sin(c7*log(A*c8 + 1) + c9)", "A**c0*c1 + A**c2*c3 + c4 + c5*sin(c6*log(A*c7 + 1) + c8)", "sqrt(A)*c0 + A*c1 + A**c2*c3 + c4 + c5*sin(c6*log(A*c7 + 1) + c8)"]
+
+I need to compare each candidate against the Ground Truth (GT):
+
+**GT:** `-0.11847*sqrt(A) - 0.11847*A^2 + 0.84638*sin(log(A + 1))`
+
+Note: The GT has `_t` multiplied by `c3`, giving `c3*_t = 0.11847 * 7.1444 = 0.84638`. So the GT is effectively a function of A only (t is fixed as a constant).
+
+The GT consists of three basis functions:
+1. `sqrt(A)` term
+2. `A^2` term
+3. `sin(log(A + 1))` term
+
+Let me check each candidate for the ability to match these three terms.
+
+**Candidate 1:** Rational functions with exponentials. No `sqrt(A)` or `sin(log(...))` terms. **[NO MATCH]**
+
+**Candidate 2:** `A^2*c0 + A*c1/(A+c2)^2 + c3 + c4*sin(A*c5+c6)/A^2`. Has `sin(A*c5+c6)` not `sin(log(A+1))`. **[NO MATCH]**
+
+**Candidate 3:** Rational functions with exponentials. No `sin(log(...))`. **[NO MATCH]**
+
+**Candidate 4:** `A^2*c0 + A^c1*c2*sin(A*c3+c4) + c5 + c6*exp(A^c7*c8)`. Has `sin(A*c3+c4)` not `sin(log(A+1))`. **[NO MATCH]**
+
+**Candidate 5:** `sqrt(A)*c0 + A^2*c1 + A*c2 + c3 + c4*sin(c5*log(A*c6+1)+c7)`. This has `sqrt(A)`, `A^2`, and `sin(c5*log(A*c6+1)+c7)`. Set c2=0 (eliminate A term), c3=0, c5=1, c6=1, c7=0. Then: `c0*sqrt(A) + c1*A^2 + c4*sin(log(A+1))`. This matches the GT structure! Set c0=-0.11847, c1=-0.11847, c4=0.84638. **[MATCH]**
+
+**Candidate 6:** Has `sin(A*c5+c6)` not `sin(log(...))`. **[NO MATCH]**
+
+**Candidate 7:** `A*c0 + A^c1*c2 + A^c3*c4 + c5 + c6*sin(c7*log(A*c8+1)+c9)`. Set c1=0.5 (sqrt(A)), c3=2 (A^2), c0=0, c5=0. Then: `c2*sqrt(A) + c4*A^2 + c6*sin(c7*log(A*c8+1)+c9)`. With c7=1, c8=1, c9=0. **[MATCH]**
+
+**Candidate 8:** `A^c0*c1 + A^c2*c3 + c4 + c5*sin(c6*log(A*c7+1)+c8)`. Set c0=0.5, c2=2, c4=0, c6=1, c7=1, c8=0. **[MATCH]**
+
+**Candidate 9:** Has `c6/sqrt(A)` instead of `c*sqrt(A)`. These are different: `A^(-0.5)` vs `A^(0.5)`. **[NO MATCH]**
+
+**Candidate 10:** Has `exp(c3/A^2)` - can set c3=0 making it constant, absorbed into c1. Then: `A^2*c0 + (c1+c2) + c4*sin(...)`. Missing `sqrt(A)`. **[NO MATCH]**
+
+**Candidate 11:** Has `log(...)*sin(...)` not `sin(log(...))`. **[NO MATCH]**
+
+**Candidate 12-15:** Rational/exponential forms without `sin(log(...))`. **[NO MATCH]** for all.
+
+**Candidate 16-19:** Missing `sin(log(...))` or `sqrt(A)`. **[NO MATCH]**
+
+**Candidate 20:** `sqrt(A)*c0 + A*c1 + A^c2*c3 + c4 + c5*sin(c6*log(A*c7+1)+c8)`. Set c2=2, c1=0, c4=0, c6=1, c7=1, c8=0. **[MATCH]**
+
+**Candidate 25:** `A^2*c0 + A*c1 + c2 + c3*sin(c4*log(A*c5+1)+c6)`. Missing `sqrt(A)`. **[NO MATCH]**
+
+**Candidate 43:** `A*c0 + A^c1*c2 + c3 + c4*sin(c5*log(A*c6+1)+c7)`. Set c1=2 or 0.5 - can only get one power term plus A. Need both sqrt(A) and A^2. Set c0=0, c1=2, but missing sqrt(A). Or c1=0.5, missing A^2. **[NO MATCH]**
+
+**Candidate 48:** `A^c0*c1 + c2 + c3*sin(c4*log(A*c5+1)+c6) + c7/sqrt(A)`. Has `A^c0` (set c0=2) and `1/sqrt(A)` ≠ `sqrt(A)`. **[NO MATCH]**
+
+Remaining candidates similarly lack the required combination. Let me verify candidates 5, 7, 8, 20.
+
+Matched candidate IDs: [5, 7, 8, 20]
+
+Candidate 1 verdict: [NO MATCH]
+Candidate 2 verdict: [NO MATCH]
+Candidate 3 verdict: [NO MATCH]
+Candidate 4 verdict: [NO MATCH]
+Candidate 5 verdict: [MATCH]
+Candidate 6 verdict: [NO MATCH]
+Candidate 7 verdict: [MATCH]
+Candidate 8 verdict: [MATCH]
+Candidate 9 verdict: [NO MATCH]
+Candidate 10 verdict: [NO MATCH]
+Candidate 11 verdict: [NO MATCH]
+Candidate 12 verdict: [NO MATCH]
+Candidate 13 verdict: [NO MATCH]
+Candidate 14 verdict: [NO MATCH]
+Candidate 15 verdict: [NO MATCH]
+Candidate 16 verdict: [NO MATCH]
+Candidate 17 verdict: [NO MATCH]
+Candidate 18 verdict: [NO MATCH]
+Candidate 19 verdict: [NO MATCH]
+Candidate 20 verdict: [MATCH]
+Candidate 21 verdict: [NO MATCH]
+Candidate 22 verdict: [NO MATCH]
+Candidate 23 verdict: [NO MATCH]
+Candidate 24 verdict: [NO MATCH]
+Candidate 25 verdict: [NO MATCH]
+Candidate 26 verdict: [NO MATCH]
+Candidate 27 verdict: [NO MATCH]
+Candidate 28 verdict: [NO MATCH]
+Candidate 29 verdict: [NO MATCH]
+Candidate 30 verdict: [NO MATCH]
+Candidate 31 verdict: [NO MATCH]
+Candidate 32 verdict: [NO MATCH]
+Candidate 33 verdict: [NO MATCH]
+Candidate 34 verdict: [NO MATCH]
+Candidate 35 verdict: [NO MATCH]
+Candidate 36 verdict: [NO MATCH]
+Candidate 37 verdict: [NO MATCH]
+Candidate 38 verdict: [NO MATCH]
+Candidate 39 verdict: [NO MATCH]
+Candidate 40 verdict: [NO MATCH]
+Candidate 41 verdict: [NO MATCH]
+Candidate 42 verdict: [NO MATCH]
+Candidate 43 verdict: [NO MATCH]
+Candidate 44 verdict: [NO MATCH]
+Candidate 45 verdict: [NO MATCH]
+Candidate 46 verdict: [NO MATCH]
+Candidate 47 verdict: [NO MATCH]
+Candidate 48 verdict: [NO MATCH]
+Candidate 49 verdict: [NO MATCH]
+Candidate 50 verdict: [NO MATCH]
+Candidate 51 verdict: [NO MATCH]
+Candidate 52 verdict: [NO MATCH]
+Candidate 53 verdict: [NO MATCH]
+
+Matched candidate IDs: [5, 7, 8, 20]
+
+[MATCH FOUND]
+
+Conclusion: Match found
+============================================================
+

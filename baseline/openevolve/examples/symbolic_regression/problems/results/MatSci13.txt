@@ -1,0 +1,162 @@
+=== Verification Report for MatSci13 ===
+Target File: matsci/MatSci13/openevolve_output/best/best_program.py
+--------------------------------------------------
+[verify] Equation name: MatSci13
+[verify] GT symbolic expression: -c0*(T - c1) + epsilon*c2*exp(-(T - c3)**c4)
+[verify] Feature variables: epsilon;T
+[verify] Processing 1 candidate Python snippet(s)
+[verify] Calling LLM for equivalence check...
+[LLMClient] Requests mode, URL: https://llm-gateway.example.com/api/google/v1/publishers/anthropic/models/claude-opus-4-6:rawPredict, model: claude-opus-4-6
+[API Warning] Empty response received. Full response: {'model': 'claude-opus-4-6', 'id': 'msg_vrtx_01YSH2wf4LULFfnbFCNKrEuX', 'type': 'message', 'role': 'assistant', 'content': [{'type': 'text', 'text': '# Analysis of Candidate 1\n\n## Ground Truth Expression\n\nThe GT expression is:\n$$\\sigma = -0.6057(T - 298.0) + \\epsilon \\cdot 3.1474 \\cdot \\exp(-(T - 298.0)^2)$$\n\nThis has two terms:\n1. A linear term in T (independent of ε)\n2. A term linear in ε multiplied by a Gaussian in T\n\n## Candidate 1 Mathematical Translation\n\nLet me trace through the code carefully:\n\n```python\neps = x[:, 0]  # ε\nT = x[:, 1]    # T\neps_safe = |ε| + 1e-12\nn = log(1 + exp(clip(p4))) + 0.05  # some positive constant\neps_power = |ε|^n · sign(ε)\nrate = clip(p7 + p8·T)\nvoce = 1 - exp(-rate · eps_safe)\nbase = p0 + p1·ε + p2·eps_power + p3·voce\nexp_arg = clip(-p5·T)\ntemp_factor = exp(-p5·T) + p6·T\nresult = base · temp_factor + p9\n```\n\nSo the result is:\n$$\\sigma = (p_0 + p_1\\epsilon + p_2|\\epsilon|^n\\text{sign}(\\epsilon) + p_3(1 - e^{-\\text{rate}\\cdot|\\epsilon|}))(e^{-p_5 T} + p_6 T) + p_9$$\n\n## Checking for Equivalence\n\nThe GT has the form:\n$$\\sigma = a_1 T + a_0 + \\epsilon \\cdot b \\cdot e^{-c(T-d)^2}$$\n\nThe candidate has the form of a product of two groups:\n- A "base" function of ε (with possible T-dependence in the Voce term)\n- A "temp_factor" that is $e^{-p_5 T} + p_6 T$\n\nMultiplied out, this gives terms like:\n- $p_0 \\cdot e^{-p_5 T}$ — exponential in T (not Gaussian)\n- $p_0 \\cdot p_6 T$ — linear in T\n- $p_1 \\epsilon \\cdot e^{-p_5 T}$ — ε times exponential in T\n- $p_1 \\epsilon \\cdot p_6 T$ — ε times T\n- Various power-law and Voce terms...\n\nThe GT requires a **Gaussian** in T: $e^{-(T-298)^2}$. The candidate only has $e^{-p_5 T}$, which is a simple exponential in T, not a Gaussian. There is no way to make $e^{-p_5 T}$ equal to $e^{-(T-c)^2}$ for all T by choosing constants.\n\nAdditionally, the Voce term introduces $e^{-(p_7 + p_8 T)|\\epsilon|}$ type terms, which involve products of T and ε in the exponent — fundamentally different from the GT\'s structure where the Gaussian in T multiplies ε linearly.\n\nEven if we try to zero out many terms (set $p_2 = 0$, $p_3 = 0$), we\'re left with:\n$$(p_0 + p_1\\epsilon)(e^{-p_5 T} + p_6 T) + p_9$$\n\nThis expands to:\n$$p_0 e^{-p_5 T} + p_0 p_6 T + p_1 \\epsilon e^{-p_5 T} + p_1 p_6 \\epsilon T + p_9$$\n\nThe GT needs $\\epsilon \\cdot e^{-(T-298)^2}$ but the candidate can only produce $\\epsilon \\cdot e^{-p_5 T}$. These are fundamentally different basis functions:\n- $e^{-(T-c)^2}$ is a Gaussian (bell curve)\n- $e^{-p_5 T}$ is a monotonic exponential\n\nThese are linearly independent and cannot be made equal for all T.\n\n## Conclusion\n\nThe candidate cannot reproduce the Gaussian dependence $e^{-(T-298)^2}$ present in the GT. The exponential basis functions are fundamentally different, and no choice of constants can bridge this gap.\n\n[NO MATCH]'}], 'stop_reason': 'end_turn', 'stop_sequence': None, 'stop_details': None, 'usage': {'input_tokens': 1605, 'cache_creation_input_tokens': 0, 'cache_read_input_tokens': 0, 'cache_creation': {'ephemeral_5m_input_tokens': 0, 'ephemeral_1h_input_tokens': 0}, 'output_tokens': 1110}}
+
+============================================================
+GT Equivalence Verification (MatSci13)
+============================================================
+GT: -c0*(T - c1) + epsilon*c2*exp(-(T - c3)**c4)
+Candidate snippets: 1
+
+# Analysis of Candidate 1
+
+## Ground Truth Expression
+
+The GT expression is:
+$$\sigma = -0.6057(T - 298.0) + \epsilon \cdot 3.1474 \cdot \exp(-(T - 298.0)^2)$$
+
+This has two terms:
+1. A linear term in T (independent of ε)
+2. A term linear in ε multiplied by a Gaussian in T
+
+## Candidate 1 Mathematical Translation
+
+Let me trace through the code carefully:
+
+```python
+eps = x[:, 0]  # ε
+T = x[:, 1]    # T
+eps_safe = |ε| + 1e-12
+n = log(1 + exp(clip(p4))) + 0.05  # some positive constant
+eps_power = |ε|^n · sign(ε)
+rate = clip(p7 + p8·T)
+voce = 1 - exp(-rate · eps_safe)
+base = p0 + p1·ε + p2·eps_power + p3·voce
+exp_arg = clip(-p5·T)
+temp_factor = exp(-p5·T) + p6·T
+result = base · temp_factor + p9
+```
+
+So the result is:
+$$\sigma = (p_0 + p_1\epsilon + p_2|\epsilon|^n\text{sign}(\epsilon) + p_3(1 - e^{-\text{rate}\cdot|\epsilon|}))(e^{-p_5 T} + p_6 T) + p_9$$
+
+## Checking for Equivalence
+
+The GT has the form:
+$$\sigma = a_1 T + a_0 + \epsilon \cdot b \cdot e^{-c(T-d)^2}$$
+
+The candidate has the form of a product of two groups:
+- A "base" function of ε (with possible T-dependence in the Voce term)
+- A "temp_factor" that is $e^{-p_5 T} + p_6 T$
+
+Multiplied out, this gives terms like:
+- $p_0 \cdot e^{-p_5 T}$ — exponential in T (not Gaussian)
+- $p_0 \cdot p_6 T$ — linear in T
+- $p_1 \epsilon \cdot e^{-p_5 T}$ — ε times exponential in T
+- $p_1 \epsilon \cdot p_6 T$ — ε times T
+- Various power-law and Voce terms...
+
+The GT requires a **Gaussian** in T: $e^{-(T-298)^2}$. The candidate only has $e^{-p_5 T}$, which is a simple exponential in T, not a Gaussian. There is no way to make $e^{-p_5 T}$ equal to $e^{-(T-c)^2}$ for all T by choosing constants.
+
+Additionally, the Voce term introduces $e^{-(p_7 + p_8 T)|\epsilon|}$ type terms, which involve products of T and ε in the exponent — fundamentally different from the GT's structure where the Gaussian in T multiplies ε linearly.
+
+Even if we try to zero out many terms (set $p_2 = 0$, $p_3 = 0$), we're left with:
+$$(p_0 + p_1\epsilon)(e^{-p_5 T} + p_6 T) + p_9$$
+
+This expands to:
+$$p_0 e^{-p_5 T} + p_0 p_6 T + p_1 \epsilon e^{-p_5 T} + p_1 p_6 \epsilon T + p_9$$
+
+The GT needs $\epsilon \cdot e^{-(T-298)^2}$ but the candidate can only produce $\epsilon \cdot e^{-p_5 T}$. These are fundamentally different basis functions:
+- $e^{-(T-c)^2}$ is a Gaussian (bell curve)
+- $e^{-p_5 T}$ is a monotonic exponential
+
+These are linearly independent and cannot be made equal for all T.
+
+## Conclusion
+
+The candidate cannot reproduce the Gaussian dependence $e^{-(T-298)^2}$ present in the GT. The exponential basis functions are fundamentally different, and no choice of constants can bridge this gap.
+
+[NO MATCH]
+
+Conclusion: No match
+============================================================
+
+
+GT Equivalence Verification (MatSci13)
+============================================================
+GT: -c0*(T - c1) + epsilon*c2*exp(-(T - c3)**c4)
+Candidates evaluated: 2
+Matched candidate IDs: []
+Matched candidates: []
+
+I need to analyze whether either candidate can be equivalent to the Ground Truth:
+
+**GT:** `-0.6057*(T - 298.0) + epsilon*3.1474*exp(-(T - 298.0)^2)`
+
+This has two terms:
+1. A linear term in T (independent of epsilon)
+2. A term linear in epsilon, multiplied by a Gaussian in T
+
+Let me analyze the candidates.
+
+### Candidate 1 and Candidate 2 Analysis
+
+Both candidates appear identical, so I'll analyze them together.
+
+The candidate computes:
+```
+result = base · temp_factor + p9
+```
+
+where:
+- `base = p0 + p1·ε + p2·|ε|^n·sign(ε) + p3·(1 - exp(-rate · (|ε|+1e-12)))`
+- `temp_factor = exp(-p5·T) + p6·T`
+- `n = log(1 + exp(p4)) + 0.05` (some positive constant)
+- `rate = p7 + p8·T`
+
+So the result is:
+`result = (p0 + p1·ε + p2·|ε|^n·sign(ε) + p3·(1 - exp(-rate·|ε|))) · (exp(-p5·T) + p6·T) + p9`
+
+**GT structure analysis:**
+- GT = (linear in T, no ε dependence) + (linear in ε) · (Gaussian in T)
+- The Gaussian is `exp(-(T-298)^2)`, which is NOT of the form `exp(-p5·T)`.
+
+**Candidate structure analysis:**
+- The T-dependence in `temp_factor` is `exp(-p5·T) + p6·T`, which is an exponential decay in T plus a linear term in T.
+- The candidate's result expands to terms like: `p0·exp(-p5·T) + p0·p6·T + p1·ε·exp(-p5·T) + p1·ε·p6·T + ...`
+
+For the candidate to match GT, I need:
+1. The ε-dependent part multiplied by T-dependent functions must produce `ε · exp(-(T-298)^2)`
+2. The ε-independent part must produce a linear function of T
+
+**Critical issue:** The candidate's T-dependence is through `exp(-p5·T) + p6·T`. The ε·T coupling produces terms like `ε·exp(-p5·T)` and `ε·T`. 
+
+The GT requires `ε·exp(-(T-298)^2)` — a **Gaussian** in T. But the candidate only has `exp(-p5·T)` — a simple **exponential decay** in T. 
+
+`exp(-p5·T)` is NEVER equivalent to `exp(-(T-c)^2)` for any choice of constants. These are fundamentally different basis functions:
+- `exp(-p5·T)` is a one-sided exponential
+- `exp(-(T-298)^2)` is a Gaussian bell curve
+
+No choice of free parameters can make an exponential decay equal a Gaussian across all T. These are linearly independent function classes.
+
+Additionally, the candidate has no mechanism to produce a Gaussian in T anywhere in its structure. The `voce` term involves `exp(-rate·|ε|)`, which is exponential in ε, not Gaussian in T.
+
+Even if we try to set various parameters to zero to simplify, we cannot generate the required `exp(-(T-298)^2)` term from the available building blocks.
+
+Candidate 1 verdict: [NO MATCH]
+Candidate 2 verdict: [NO MATCH]
+
+Matched candidate IDs: []
+
+[NO MATCH]
+
+Conclusion: No match
+============================================================
+

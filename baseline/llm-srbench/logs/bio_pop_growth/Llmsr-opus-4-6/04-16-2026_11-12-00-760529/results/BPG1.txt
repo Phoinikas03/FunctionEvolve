@@ -1,0 +1,69 @@
+
+============================================================
+GT Equivalence Verification (BPG1)
+============================================================
+GT: c0*P*exp(-c1*t) + c2*P**c3/(c4*P + c5)
+Candidates evaluated: 1
+
+# Analysis of Candidate 1
+
+## Ground Truth (GT)
+The GT expression is:
+$$f(t, P) = 0.3156 \cdot P \cdot e^{-0.0541t} + \frac{0.3156 \cdot P^2}{9.871P + 1}$$
+
+This is a sum of two terms:
+1. An exponential decay term multiplied by P
+2. A rational function of P (specifically P²/(linear in P))
+
+## Candidate 1 Analysis
+
+The candidate implements:
+$$f(t, P) = c_0 \cdot P^{c_1} \cdot \left(1 - \left(\frac{P}{K}\right)^{c_3}\right) \cdot \left(1 - \frac{c_4}{P + |c_5|}\right) + c_7$$
+
+where $K = |c_2| \cdot e^{c_6 \cdot t}$.
+
+Let me expand this and see if it can match the GT.
+
+### Attempting to match
+
+Let me try setting some parameters to simplify. First, let me try $c_4 = 0$ (no Allee effect), so the allee_factor = 1. And $c_7 = 0$.
+
+Then:
+$$f = c_0 \cdot P^{c_1} \cdot \left(1 - \left(\frac{P}{K}\right)^{c_3}\right)$$
+
+With $K = |c_2| \cdot e^{c_6 t}$:
+
+$$f = c_0 \cdot P^{c_1} - c_0 \cdot P^{c_1} \cdot \frac{P^{c_3}}{K^{c_3}}$$
+
+$$= c_0 \cdot P^{c_1} - \frac{c_0 \cdot P^{c_1 + c_3}}{|c_2|^{c_3} \cdot e^{c_3 c_6 t}}$$
+
+This gives us a difference of two terms, each being a power of P times an exponential in t. But the GT has a term $P \cdot e^{-0.0541t}$ plus a rational function $\frac{P^2}{9.871P + 1}$.
+
+The rational function $\frac{P^2}{9.871P + 1}$ cannot be expressed as $P^a$ for any constant $a$. It's a ratio of polynomials, not a power function.
+
+### Trying with Allee effect ($c_4 \neq 0$)
+
+With the Allee factor included:
+$$f = c_0 \cdot P^{c_1} \cdot \left(1 - \left(\frac{P}{K}\right)^{c_3}\right) \cdot \left(1 - \frac{c_4}{P + |c_5|}\right) + c_7$$
+
+Expanding the Allee factor:
+$$1 - \frac{c_4}{P + |c_5|} = \frac{P + |c_5| - c_4}{P + |c_5|}$$
+
+So:
+$$f = \frac{c_0 \cdot P^{c_1} \cdot (P + |c_5| - c_4)}{P + |c_5|} \cdot \left(1 - \left(\frac{P}{K}\right)^{c_3}\right) + c_7$$
+
+This is a product of a rational-type expression in P with a density-dependent term that involves $P^{c_3}/K^{c_3}$. When expanded, every term will have the form of power functions of P divided by $(P + |c_5|)$, multiplied by exponentials of t (from K).
+
+The GT requires one term with $e^{-0.0541t}$ and another term with NO time dependence. In the candidate, the time dependence enters only through $K = |c_2| e^{c_6 t}$, and appears as $K^{-c_3} = |c_2|^{-c_3} e^{-c_3 c_6 t}$.
+
+Expanding the candidate (with $c_7 = 0$):
+$$f = \frac{c_0 P^{c_1}(P + |c_5| - c_4)}{P + |c_5|} - \frac{c_0 P^{c_1+c_3}(P + |c_5| - c_4)}{|c_2|^{c_3}(P + |c_5|)} e^{-c_3 c_6 t}$$
+
+For the GT, we need one time-independent rational term and one exponentially decaying term. The second term has $e^{-c_3 c_6 t}$, and the first term is time-independent. However, the first term is $\frac{c_0 P^{c_1}(P + |c_5| - c_4)}{P + |c_5|}$, and we need it to equal $\frac{0.3156 P^2}{9.871P + 1}$. Setting $c_1 = 1$: $\frac{c_0 P(P + |c_5| - c_4)}{P + |c_5|}$. With $|c_5| - c_4 = 0$, this becomes $\frac{c_0 P^2}{P + |c_5|}$. This matches $\frac{0.3156 P^2}{9.871P + 1}$ with $c_0 = 0.3156/9.871$... wait, we need $|c_5| = 1/9.871$. But then the second term must give $0.3156 P e^{-0.0541t}$, which requires $c_1 + c_3 = 1$ → $c_3 = 0$, but $c_3$ is clipped to minimum 0.01. Even ignoring the clip, $c_3 = 0$ makes the second term vanish. This doesn't work.
+
+The structural mismatch is fundamental: the candidate cannot simultaneously produce the required rational and exponential terms.
+
+[NO MATCH]
+
+Conclusion: No match
+============================================================

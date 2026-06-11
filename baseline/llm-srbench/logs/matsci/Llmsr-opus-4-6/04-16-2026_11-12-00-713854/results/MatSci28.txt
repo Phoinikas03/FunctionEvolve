@@ -1,0 +1,72 @@
+
+============================================================
+GT Equivalence Verification (MatSci28)
+============================================================
+GT: c0*epsilon**c1 + c2*epsilon*(-c3*(T - c4) + c5) + c6*(T - c7)*log(epsilon + c8)
+Candidates evaluated: 1
+
+# Analysis of Candidate 1
+
+## Ground Truth Formula
+
+Let me first expand the GT:
+
+$$\sigma_{GT} = 11.119\,\epsilon^2 + 11.119\,\epsilon\left(-0.0920(T - 352.0) + 1\right) + 4.370\,(T - 352.0)\ln(\epsilon + 1)$$
+
+Expanding:
+$$\sigma_{GT} = 11.119\,\epsilon^2 + 11.119\,\epsilon - 1.0225\,\epsilon(T - 352.0) + 4.370\,(T - 352.0)\ln(\epsilon + 1)$$
+
+The key basis functions in the GT are:
+1. $\epsilon^2$ (quadratic in strain)
+2. $\epsilon$ (linear in strain)
+3. $\epsilon \cdot T$ (strain-temperature interaction, linear in both)
+4. $T \cdot \ln(\epsilon + 1)$ (temperature times logarithm of shifted strain)
+5. $\ln(\epsilon + 1)$ (logarithm of shifted strain, from expanding the $T - 352$ term)
+
+## Candidate 1 Formula
+
+The candidate implements:
+$$\sigma = E_{\text{eff}} \cdot \epsilon + \text{voce} \cdot \text{sat\_thermal} + a\,\epsilon^2 + b\,\tanh(c\,\Delta T) + \text{offset}$$
+
+where:
+- $E_{\text{eff}} = E_0 \cdot \max(1 - \alpha_1 \Delta T, 0.01)$ — piecewise linear, not smooth
+- voce $= \sigma_{\text{sat}} \cdot \text{sign}(\epsilon) \cdot (1 - e^{-k|\epsilon|})$
+- sat_thermal $= \max(1 - \alpha_5 \Delta T, 0.01)$
+
+The basis functions present in the candidate are:
+1. $\epsilon^2$ ✓
+2. $\epsilon$ ✓
+3. $\epsilon \cdot \Delta T$ ✓ (from $E_{\text{eff}} \cdot \epsilon$)
+4. $\text{sign}(\epsilon)(1 - e^{-k|\epsilon|})$ — exponential saturation term
+5. $\text{sign}(\epsilon)(1 - e^{-k|\epsilon|}) \cdot \Delta T$ — exponential saturation × temperature
+6. $\tanh(c \cdot \Delta T)$ — hyperbolic tangent of temperature
+7. constant offset
+
+## Comparison of Basis Functions
+
+The GT requires $T \cdot \ln(\epsilon + 1)$ (and $\ln(\epsilon + 1)$). The candidate has NO logarithmic terms at all.
+
+Instead, the candidate has:
+- Exponential terms: $e^{-k|\epsilon|}$ — these are fundamentally different from $\ln(\epsilon + 1)$
+- $\tanh$ of temperature — not present in GT
+
+**Can $\text{sign}(\epsilon)(1 - e^{-k|\epsilon|})$ equal $\ln(\epsilon + 1)$ for all $\epsilon \geq 0$?**
+
+For $\epsilon \geq 0$: $1 - e^{-k\epsilon}$ vs $\ln(\epsilon + 1)$
+
+These are linearly independent functions. $1 - e^{-k\epsilon}$ is bounded (approaches 1 as $\epsilon \to \infty$), while $\ln(\epsilon + 1)$ is unbounded. No constant multiple of $1 - e^{-k\epsilon}$ can equal $\ln(\epsilon + 1)$ for all $\epsilon \geq 0$.
+
+Even multiplied by $\Delta T$, the exponential saturation term cannot reproduce the $T \cdot \ln(\epsilon + 1)$ term.
+
+Additionally, $\tanh(c \cdot \Delta T)$ is a bounded function of $T$, while the GT has terms linear in $T$ (unbounded). No combination of $\tanh$ can reproduce linear $T$ dependence exactly.
+
+The `max` clipping operations also introduce piecewise behavior not present in the GT.
+
+## Conclusion
+
+The candidate uses fundamentally different basis functions (exponential saturation, tanh) compared to the GT (logarithm, polynomial). These are linearly independent function families and cannot be made equivalent by any choice of constants.
+
+[NO MATCH]
+
+Conclusion: No match
+============================================================

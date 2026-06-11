@@ -1,0 +1,74 @@
+
+============================================================
+GT Equivalence Verification (BPG13)
+============================================================
+GT: c0*(-c1 + P/c2)*(c3 - P/c4)*P + c5*P + c6*P/(c7 + exp(-c8*(-c9 + P)))
+Candidates evaluated: 1
+
+# Analysis of Candidate 1
+
+## Step 1: Deduce the mathematical formula
+
+The candidate implements:
+
+$$f(t, P) = a_0 \cdot P^{a_1} \cdot (1 - (P/K)^c) + a_4 + a_5 \cdot P$$
+
+where $K = a_2^2 + \epsilon$ and $c = a_3^2 + \epsilon$ (with $\epsilon$ negligibly small).
+
+Simplifying (ignoring eps), this is:
+
+$$f = a_0 \cdot P^{a_1} \cdot (1 - P^c / K^c) + a_4 + a_5 \cdot P$$
+
+## Step 2: Analyze the Ground Truth
+
+The GT is:
+
+$$f_{GT} = c_0 \cdot \left(-1 + \frac{P}{c_2}\right)\left(1 - \frac{P}{c_4}\right) P + c_5 P + \frac{c_6 P}{1 + \exp(-c_8(-c_9 + P))}$$
+
+Let me expand the first term:
+$$c_0 \cdot \left(\frac{P}{c_2} - 1\right)\left(1 - \frac{P}{c_4}\right) P$$
+
+This is a cubic polynomial in P:
+$$c_0 \cdot P \cdot \left(\frac{P}{c_2} - 1\right)\left(1 - \frac{P}{c_4}\right) = c_0 P \left(\frac{P}{c_2} - \frac{P^2}{c_2 c_4} - 1 + \frac{P}{c_4}\right)$$
+
+So the GT has three components:
+1. A **cubic polynomial** in P
+2. A **linear term** $c_5 P$
+3. A **sigmoidal term** $\frac{c_6 P}{1 + \exp(-c_8(P - c_9))}$
+
+## Step 3: Compare basis functions
+
+The candidate has:
+- $a_0 \cdot P^{a_1} \cdot (1 - P^c/K^c)$: This is a generalized power-law growth term
+- $a_4$: A constant
+- $a_5 \cdot P$: A linear term
+
+**Critical observation:** The GT contains a **sigmoidal term** $\frac{c_6 P}{1 + \exp(-c_8(P - c_9))}$. This is a logistic sigmoid multiplied by P.
+
+The candidate has NO sigmoid/exponential component. It only has power-law terms, a constant, and a linear term.
+
+Can we set $c_6 = 0$ to eliminate the sigmoid? Let's check: $c_6 = c_0 = 0.201...$, and $c_0$ also appears as the coefficient of the cubic term. Since $c_0 = c_5 = c_6$ in the GT, setting $c_6 = 0$ would also zero out the cubic and linear terms (since they share the same constant value). But wait — the GT constants are **FIXED**. We cannot change them.
+
+So the GT definitively contains a sigmoidal component that cannot be zero.
+
+Can the candidate produce a sigmoid? The candidate's terms are:
+- $P^{a_1}(1 - P^c/K^c)$: This is a difference of power functions. No matter what values $a_1$ and $c$ take, this remains a combination of power functions $P^{a_1} - P^{a_1+c}/K^c$.
+- A constant $a_4$
+- A linear term $a_5 P$
+
+Power functions are linearly independent from sigmoid functions. There is no choice of parameters that can make a sum of power functions equal a sigmoid function over all P ≥ 0.
+
+## Step 4: Verify the mismatch
+
+The GT's sigmoidal term $\frac{c_6 P}{1 + \exp(-c_8(P-c_9))}$ with $c_6 \approx 0.201$ and $c_8 \approx 5.637$ creates a smooth step-like transition around $P \approx c_9 \approx 0.634$. This behavior cannot be replicated by any finite combination of power-law terms.
+
+By the principle of **linear independence of basis functions** (Rule 3), power functions cannot exactly equal a sigmoid for all values of P.
+
+## Conclusion
+
+The candidate lacks the sigmoidal component present in the GT, and no parameter assignment can create one from power-law terms. The candidate cannot be made equivalent to the GT.
+
+[NO MATCH]
+
+Conclusion: No match
+============================================================

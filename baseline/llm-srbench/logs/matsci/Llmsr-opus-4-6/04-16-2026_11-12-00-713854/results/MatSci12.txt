@@ -1,0 +1,70 @@
+
+============================================================
+GT Equivalence Verification (MatSci12)
+============================================================
+GT: c0*epsilon*(-c1*(T - c2) + c3) + c4*epsilon**c5*exp(-c6/(c7*T)) + epsilon*c8*exp(-(T - c9)**c10)
+Candidates evaluated: 1
+
+# Analysis of Candidate 1
+
+## Step 1: Understand the Ground Truth
+
+The GT expression is:
+$$\text{GT} = 3.6246\,\epsilon\,(-0.05899(T - 367.02) + 1) + 94.205\,\epsilon^{0.4475}\,\exp\!\left(\frac{-55.016}{8.314\,T}\right) + 5.1243\,\epsilon\,\exp\!\left(-(T - 367.02)^2\right)$$
+
+This has three distinct terms:
+1. **Linear in ε, linear in T**: $\epsilon \cdot (\text{linear function of } T)$
+2. **Power-law in ε, Arrhenius in T**: $\epsilon^{0.4475} \cdot \exp(-\text{const}/T)$
+3. **Linear in ε, Gaussian in T**: $\epsilon \cdot \exp(-(T - T_0)^2)$
+
+## Step 2: Analyze the Candidate's Mathematical Structure
+
+The candidate computes:
+
+$$\text{stress} = \text{sign}(\epsilon) \cdot (A + B\,|\epsilon|^n) \cdot (1 - T^{*m}_{\text{clip}}) + C\,\epsilon\,T + E_{\text{mod}}\,\epsilon\,\exp(-T^*_{\text{clip}}) + D$$
+
+where $T^* = (T - T_{\text{ref}})/T_{\text{scale}}$, clipped to $[0, 0.9999]$.
+
+### Key structural differences:
+
+**Term 1 (Candidate):** $\text{sign}(\epsilon) \cdot (A + B\,|\epsilon|^n) \cdot (1 - T^{*m}_{\text{clip}})$
+
+Under the non-negative domain assumption ($\epsilon \geq 0$), $\text{sign}(\epsilon) = 1$ and $|\epsilon| = \epsilon$, so this becomes:
+$(A + B\,\epsilon^n) \cdot (1 - T^{*m}_{\text{clip}})$
+
+This expands to: $A(1 - T^{*m}) + B\,\epsilon^n(1 - T^{*m})$
+
+**Term 2 (Candidate):** $C\,\epsilon\,T$ — linear in both $\epsilon$ and $T$
+
+**Term 3 (Candidate):** $E_{\text{mod}}\,\epsilon\,\exp(-T^*_{\text{clip}})$ — this is $\epsilon \cdot \exp(-\text{linear}(T))$, an exponential decay in $T$
+
+**Term 4 (Candidate):** $D$ — constant offset
+
+## Step 3: Compare Basis Functions
+
+### GT has:
+- $\epsilon^{0.4475} \cdot \exp(-\text{const}/T)$ — **Arrhenius-type** dependence on $T$
+- $\epsilon \cdot \exp(-(T-T_0)^2)$ — **Gaussian** dependence on $T$
+
+### Candidate has:
+- $\epsilon^n \cdot (1 - T^{*m})$ — **power-law** dependence on $T$ (not Arrhenius)
+- $\epsilon \cdot \exp(-T^*)$ — **simple exponential** decay in $T$ (not Gaussian)
+
+### Critical mismatches:
+
+1. **$\exp(-\text{const}/T)$ vs $(1 - T^{*m})$**: The Arrhenius function $\exp(-c/T)$ is fundamentally different from any power of a linear function of $T$. These are linearly independent basis functions and cannot be made equivalent for all $T$.
+
+2. **$\exp(-(T-T_0)^2)$ vs $\exp(-\text{linear}(T))$**: A Gaussian $\exp(-T^2 + \ldots)$ is fundamentally different from a simple exponential $\exp(-aT + b)$. The quadratic term in the exponent cannot be replicated.
+
+3. **Constant offset $D$**: GT has no constant offset term (all GT terms vanish when $\epsilon = 0$). Setting $D = 0$ and $A = 0$ can eliminate this, but the functional form mismatches above remain.
+
+4. **The `np.clip` operation**: This introduces non-analytic behavior that doesn't appear in the GT.
+
+## Conclusion
+
+The candidate uses fundamentally different basis functions (power-law temperature softening instead of Arrhenius, simple exponential instead of Gaussian). These are linearly independent functions that cannot be made equivalent regardless of parameter choices.
+
+[NO MATCH]
+
+Conclusion: No match
+============================================================

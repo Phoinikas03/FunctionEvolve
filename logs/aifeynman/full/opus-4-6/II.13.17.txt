@@ -1,0 +1,390 @@
+Code version: fd2edd491+dirty
+Run config: dataset=aifeynman, split=feynmanequations, equation=II.13.17
+optimizer=Structure, max_steps=30, n_seeds=20
+global_workers=400, eval_owner_id=aifeynman:feynmanequations:II.13.17
+sample_size=10000
+GT_MULTIPLIER=1.5
+Degenerated components: none
+  generator: mode=requests, model=claude-opus-4-6, base_url=https://llm-gateway.example.com/api/google/v1/publishers/anthropic/models/claude-opus-4-6:rawPredict, api_key=REDACTED_API_KEY, anthropic_version=vertex-2023-10-16, temperature=1.0, max_tokens=128000
+  selector: mode=requests, model=claude-opus-4-6, base_url=https://llm-gateway.example.com/api/google/v1/publishers/anthropic/models/claude-opus-4-6:rawPredict, api_key=REDACTED_API_KEY, anthropic_version=vertex-2023-10-16, temperature=0.3, max_tokens=128000
+  mutator: mode=requests, model=claude-opus-4-6, base_url=https://llm-gateway.example.com/api/google/v1/publishers/anthropic/models/claude-opus-4-6:rawPredict, api_key=REDACTED_API_KEY, anthropic_version=vertex-2023-10-16, temperature=0.7, max_tokens=128000
+Log file: /home/xaa5sgh/symregression/logs/aifeynman/full/opus-4-6/2026-06-01/II.13.17_20260601_204531.txt
+=== Dataset: II.13.17 (aifeynman:feynmanequations) ===
+Symbols     : ['B', 'epsilon', 'c', 'I', 'r']
+Features    : ['epsilon', 'c', 'I', 'r']
+Reference   : 1/(4*pi*epsilon*c**2)*2*I/r
+Train set   : X=(10000, 4), y=(10000,)
+Test set    : X=(10000, 4), y=(10000,)
+Full source : 1000000 rows
+
+[Ground Truth] Expression: 1/(4*pi*epsilon*c**2)*2*I/r
+[Ground Truth] train=1.39e+00  test=1.39e+00  ood=—
+
+[Early stop threshold] Auto-set based on GT*1.5: train<2.09e+00
+Generating domain knowledge...
+Domain knowledge ready:
+
+## Dimension/Variable Knowledge
+**Domain**: dimension-aware symbolic regression
+**Analysis**: The target B has dimensions m^-2 s^1 V^1. Dimensional analysis shows that I/(epsilon * c^2 * r) has dimensions (m^2 s^-3 kg V^-1) / (m kg s^-2 V^-2 * m^2 s^-2 * m) = (m^2 s^-3 kg V^-1) / (m^4 s^-4 kg V^-2) = m^-2 s^1 V^1, which matches B exactly. This corresponds to the Feynman formula B = I / (2 * epsilon * c^2 * r) from the Biot-Savart context (with 1/(4*pi*epsilon_0*c^2) = mu_0/(4*pi)).
+
+**Common formula structures** (generic dimension/variable-name priors + LLM suggestions):
+- Dimensional monomial: y = c0 * x1**c1 * x2**c2 (match output units through products and powers)
+- Same-unit ratio: y = c0 * x1 / (x2 + c1) (use when two variables have compatible dimensions)
+- Compatible additive terms: y = c0 * x1 + c1 * x2 (use only for variables with matching dimensions after scaling)
+- Dimensionless nonlinear transform: y = c0 * sin(c1 * u) (use for dimensionless or angle-like variables)
+- Positive-range logarithm: y = c0 * log(1 + c1 * u) (use for positive dimensionless variables or scaled combinations)
+- Positive-range exponential: y = c0 * exp(c1 * u) (use for dimensionless inputs over moderate ranges)
+- Square-root product: y = c0 * sqrt(x1**2 + c1 * x2**2) (use for magnitude-like combinations of compatible variables)
+- Rational saturation: y = c0 * u / (u + c1) (use for positive dimensionless variables with bounded response)
+- Simple ratio: B = c0 * I / (epsilon * c * c * r) (dimensionally exact match)
+- Power product: B = c0 * I**c1 * epsilon**c2 * c**c3 * r**c4 (generic dimensional monomial)
+- Specific Feynman form: B = c0 * I * (epsilon * c * c * r)**(-1) (known physics formula structure)
+- Ratio with power: B = c0 * I / (epsilon * c**c1 * r) (allowing flexible c exponent near 2)
+- Two-term sum: B = c0 * I / (epsilon * c * c * r) + c1 (constant offset, likely c1=0)
+- Inverse square velocity: B = c0 * I / (epsilon * r * c**2) (rewritten standard form)
+- Generalized inverse: B = c0 * I / (epsilon**c1 * c**c2 * r**c3) (flexible exponents)
+- Product form: B = c0 * I * epsilon**(-1) * c**(-2) * r**(-1) (explicit negative exponents)
+- Nested ratio: B = c0 * (I / r) / (epsilon * c**2) (grouping current density-like term)
+- Logarithmic correction: B = c0 * I / (epsilon * c**2 * r) * (1 + c1 * log(c2 * r)) (log correction, likely c1=0)
+
+**Formula structure heuristic features** (dimension/variable-name based):
+- Dimensional matching → Products, ratios, and powers can combine input units to match the target units
+- Dimensionless arguments → sin/cos/log/exp/tanh should receive dimensionless variables or dimensionless combinations
+- Same-unit variables → Sums, differences, ratios, and Euclidean magnitudes are often plausible
+- Positive finite ranges → sqrt, power, rational, and log(1+x) structures are numerically plausible
+- Angle-like variable names → theta/phi or dimensionless angular variables can justify trigonometric terms
+- Dimensional analysis strongly constrains the formula: B = I/(epsilon*c^2*r) is the unique monomial matching target dimensions, up to a dimensionless constant.
+- The known Feynman equation II.13.17 is B = I/(2*epsilon*c^2*r), so the constant c0 should be near 1/(2*pi) * pi or simply 0.5 depending on convention.
+- All feature variables have positive ranges [1,5], supporting power-law and ratio structures without sign or zero issues.
+- Since no variable is dimensionless, trigonometric and exponential functions are unlikely unless applied to dimensionless ratios of variables.
+- The velocity c appears squared in the denominator, consistent with electromagnetic formulas relating magnetic and electric quantities via c^2.
+- Variables epsilon, r, and c^2 all appear in the denominator while I appears in the numerator — a single rational monomial structure.
+- No angle-like or periodic variables are present, ruling out trigonometric terms.
+- The problem is likely exactly solvable with a single monomial term times a numerical constant, no additive terms needed.
+- Feature ranges are all O(1), so numerical coefficients in the formula should also be O(1) or simple fractions like 1/2.
+
+Calling LLM to generate initial seed formulas...
+Initializing 20 seed nodes...
+
+    ↳ Seed degenerated (simplified): c0=-2.0000->snapped to -2
+    ↳ Seed degenerated (simplified): c1=1.0000->snapped to 1
+    ↳ Seed degenerated (simplified): c0=-2.0000->snapped to -2; c2=-1.0000->snapped to -1; c3=-1.0000->snapped to -1
+    ↳ Seed degenerated (simplified): c0=1.0000->snapped to 1
+    ↳ Seed degenerated (simplified): c1=-1.0000->snapped to -1
+    ↳ Seed degenerated (simplified): c0=-2.0000->snapped to -2; c2=-1.0000->snapped to -1
+    ↳ Seed degenerated (simplified): c1=1.0000->snapped to 1; c2=-1.0000->snapped to -1
+    ↳ Seed degenerated (simplified): max|c1|<=0.001->term->0
+    ↳ Seed degenerated (simplified): Taylor absorbed (log(const+delta)), max|delta|<=0.001
+    ↳ Seed degenerated (simplified): max|c1|<=0.001->term->0
+    ↳ Seed degenerated (overfitting): c1~-8.882e-16->small term,I*c1/(c**2*epsilon*r)->0; no feature variables after simplification->overfitting
+    ↳ Seed degenerated (simplified): c1~9.370e-18->small term,I*c1/(c**2*epsilon*r**2)->0
+    ↳ Seed degenerated (simplified): c1~-3.130e-20->small term,c**2*c1*epsilon*r->0
+    ↳ Seed degenerated (simplified): c0~6.444e-18->small term,I**2*c0/(c**4*epsilon**2*r**2)->0
+  [Seed] [Degenerated] I*c**c0*c1/(epsilon*r)
+         params: c0=-2.0000e+00, c1=1.5915e-01
+         description: top-level product form, contains fractions, simple structure
+         train=8.19e-32  test=6.02e-30  ood=—
+  [Seed] [Degenerated] c0*(I/(c**2*epsilon*r))**c1
+         params: c0=1.5915e-01, c1=1.0000e+00
+         description: top-level product form, contains fractions, moderate structure
+         train=7.77e-32  test=5.99e-30  ood=—
+  [Seed] [Degenerated] I*c**c0*c1*epsilon**c2*r**c3
+         params: c0=-2.0000e+00, c1=1.5915e-01, c2=-1.0000e+00, c3=-1.0000e+00
+         description: top-level product form, contains powers, simple structure
+         train=8.56e-32  test=6.00e-30  ood=—
+  [Seed] [Degenerated] I**c0*c1/(c**2*epsilon*r)
+         params: c0=1.0000e+00, c1=1.5915e-01
+         description: top-level product form, contains fractions, simple structure
+         train=7.77e-32  test=6.01e-30  ood=—
+  [Seed] [Degenerated] I*c0*r**c1/(c**2*epsilon)
+         params: c0=1.5915e-01, c1=-1.0000e+00
+         description: top-level product form, contains fractions, simple structure
+         train=7.92e-32  test=5.97e-30  ood=—
+  [Seed] [Degenerated] I*c**c0*c1*epsilon**c2/r
+         params: c0=-2.0000e+00, c1=1.5915e-01, c2=-1.0000e+00
+         description: top-level product form, contains fractions, simple structure
+         train=8.70e-32  test=6.04e-30  ood=—
+  [Seed] [Degenerated] c0*(I/r)**c1*(c**2*epsilon)**c2
+         params: c0=1.5915e-01, c1=1.0000e+00, c2=-1.0000e+00
+         description: top-level product form, contains fractions, moderate structure
+         train=7.80e-32  test=6.02e-30  ood=—
+  [Seed] [Degenerated] I*c0/(epsilon*r*(c**2 + c1))
+         params: c0=1.5915e-01, c1=2.2204e-16
+         description: top-level product form, contains fractions, 1 additive terms, moderate structure
+         train=4.35e-32  test=6.60e-30  ood=—
+  [Seed] [Degenerated] c0*log(I*c1/(c**2*epsilon*r) + 1)
+         params: c0=2.6648e+04, c1=5.9725e-06
+         description: top-level product form, contains transcendental functions log, contains fractions, 1 additive terms, complex structure (depth 5)
+         train=4.86e-12  test=4.46e-12  ood=—
+  [Seed] [Degenerated] I*c0/(c**2*epsilon*r + c1)
+         params: c0=1.5915e-01, c1=-4.4409e-16
+         description: top-level product form, contains fractions, 1 additive terms, complex structure (depth 5)
+         train=4.86e-32  test=5.39e-30  ood=—
+  [Seed] [Degenerated] c0*tanh(I*c1/(c**2*epsilon*r))
+         params: c0=-1.7919e+14, c1=-8.8818e-16
+         description: top-level product form, contains transcendental functions tan, contains fractions, moderate structure
+         train=7.77e-32  test=7.35e-31  ood=—
+  [Seed] I*c0/(c**2*epsilon*r)
+         params: c0=1.5915e-01
+         description: top-level product form, contains fractions, simple structure
+         train=3.01e-32  test=6.01e-30  ood=—
+  [Seed] [Degenerated] I*c0/(c**2*epsilon*r) + I*c1/(c**2*epsilon*r**2)
+         params: c0=1.5915e-01, c1=9.3698e-18
+         description: top-level additive combination, contains fractions, 1 additive terms, moderate structure
+         train=3.01e-32  test=6.01e-30  ood=—
+  [Seed] [Degenerated] (I*c0 + c**2*c1*epsilon*r)/(c**2*epsilon*r)
+         params: c0=1.5915e-01, c1=-3.1296e-20
+         description: top-level product form, contains fractions, 1 additive terms, moderate structure
+         train=3.01e-32  test=6.01e-30  ood=—
+  [Seed] [Degenerated] I**2*c0/(c**4*epsilon**2*r**2) + I*c1/(c**2*epsilon*r)
+         params: c0=6.4436e-18, c1=1.5915e-01
+         description: top-level additive combination, contains fractions, 1 additive terms, moderate structure
+         train=2.85e-32  test=5.96e-30  ood=—
+  [Seed] c0*exp(I*c1/(c**2*epsilon*r))
+         params: c0=1.5712e-02, c1=1.4580e+00
+         description: top-level product form, contains transcendental functions exp, contains fractions, moderate structure
+         train=5.14e-01  test=4.85e-01  ood=—
+  [Mature] I*c0/(c**2*epsilon*r)
+         train=3.01e-32  test=6.01e-30  ood=—
+  [Mature] c0*exp(I*c1/(c**2*epsilon*r))
+         train=5.14e-01  test=4.85e-01  ood=—
+
+Evolution tree initialization complete: EvolutionTree(total=16, evaluated=2, best_train=0.0000)
+
+============================================================
+Evolution tree search started
+[Early stop threshold] train<2.09e+00
+============================================================
+
+============================================================
+Step 1/30
+============================================================
+  All available nodes have exhausted their budget, skipping.
+
+============================================================
+Step 2/30
+============================================================
+  All available nodes have exhausted their budget, skipping.
+
+============================================================
+Step 3/30
+============================================================
+  All available nodes have exhausted their budget, skipping.
+
+============================================================
+Step 4/30
+============================================================
+  All available nodes have exhausted their budget, skipping.
+
+============================================================
+Step 5/30
+============================================================
+  All available nodes have exhausted their budget, skipping.
+
+============================================================
+Step 6/30
+============================================================
+  All available nodes have exhausted their budget, skipping.
+
+============================================================
+Step 7/30
+============================================================
+  All available nodes have exhausted their budget, skipping.
+
+============================================================
+Step 8/30
+============================================================
+  All available nodes have exhausted their budget, skipping.
+
+============================================================
+Step 9/30
+============================================================
+  All available nodes have exhausted their budget, skipping.
+
+============================================================
+Step 10/30
+============================================================
+  All available nodes have exhausted their budget, skipping.
+
+============================================================
+Step 11/30
+============================================================
+  All available nodes have exhausted their budget, skipping.
+
+============================================================
+Step 12/30
+============================================================
+  All available nodes have exhausted their budget, skipping.
+
+============================================================
+Step 13/30
+============================================================
+  All available nodes have exhausted their budget, skipping.
+
+============================================================
+Step 14/30
+============================================================
+  All available nodes have exhausted their budget, skipping.
+
+============================================================
+Step 15/30
+============================================================
+  All available nodes have exhausted their budget, skipping.
+
+============================================================
+Step 16/30
+============================================================
+  All available nodes have exhausted their budget, skipping.
+
+============================================================
+Step 17/30
+============================================================
+  All available nodes have exhausted their budget, skipping.
+
+============================================================
+Step 18/30
+============================================================
+  All available nodes have exhausted their budget, skipping.
+
+============================================================
+Step 19/30
+============================================================
+  All available nodes have exhausted their budget, skipping.
+
+============================================================
+Step 20/30
+============================================================
+  All available nodes have exhausted their budget, skipping.
+
+============================================================
+Step 21/30
+============================================================
+  All available nodes have exhausted their budget, skipping.
+
+============================================================
+Step 22/30
+============================================================
+  All available nodes have exhausted their budget, skipping.
+
+============================================================
+Step 23/30
+============================================================
+  All available nodes have exhausted their budget, skipping.
+
+============================================================
+Step 24/30
+============================================================
+  All available nodes have exhausted their budget, skipping.
+
+============================================================
+Step 25/30
+============================================================
+  All available nodes have exhausted their budget, skipping.
+
+============================================================
+Step 26/30
+============================================================
+  All available nodes have exhausted their budget, skipping.
+
+============================================================
+Step 27/30
+============================================================
+  All available nodes have exhausted their budget, skipping.
+
+============================================================
+Step 28/30
+============================================================
+  All available nodes have exhausted their budget, skipping.
+
+============================================================
+Step 29/30
+============================================================
+  All available nodes have exhausted their budget, skipping.
+
+============================================================
+Step 30/30
+============================================================
+  All available nodes have exhausted their budget, skipping.
+
+============================================================
+Search completed, elapsed 0.0s
+Explored 16 nodes total, global best (train): train=3.01e-32  test=6.01e-30  ood=—
+Best formula: I*c0/(c**2*epsilon*r)
+Best expression params: c0=1.5915e-01
+
+Final output 2 formulas (mature 2, supplement 0):
+  1. [Mature] <<<FORMULA>>>I*c0/(c**2*epsilon*r)<<<END_FORMULA>>>  [first appeared: round seed]
+     params: c0=1.5915e-01
+     train=3.01e-32  test=6.01e-30  ood=—
+  2. [Mature] <<<FORMULA>>>c0*exp(I*c1/(c**2*epsilon*r))<<<END_FORMULA>>>  [first appeared: round seed]
+     params: c0=1.5712e-02, c1=1.4580e+00
+     train=5.14e-01  test=4.85e-01  ood=—
+============================================================
+
+============================================================
+Final search results
+============================================================
+Best expression     : I*c0/(c**2*epsilon*r)
+Structure desc      : top-level product form, contains fractions, simple structure
+Fitted params       : c0=1.5915e-01
+Train NMSE          : 3.01e-32
+Test NMSE           : 6.01e-30
+OOD Test NMSE       : —
+
+============================================================
+GT Equivalence Verification (II.13.17)
+============================================================
+GT: 1/(4*pi*epsilon*c**2)*2*I/r
+Candidates evaluated: 2
+Matched candidate IDs: [1]
+Matched candidates: ["I*c0/(c**2*epsilon*r)"]
+
+# Analysis
+
+## Ground Truth
+
+The GT expression is:
+
+$$\text{GT} = \frac{1}{4\pi\epsilon c^2} \cdot \frac{2I}{r} = \frac{2I}{4\pi\epsilon c^2 r} = \frac{I}{2\pi\epsilon c^2 r}$$
+
+This simplifies to:
+
+$$\text{GT} = \frac{1}{2\pi} \cdot \frac{I}{\epsilon c^2 r}$$
+
+The key constant factor is $\frac{1}{2\pi} \approx 0.15915...$
+
+## Candidate 1: $\frac{c_0 \cdot I}{c^2 \cdot \epsilon \cdot r}$
+
+This has the form:
+
+$$\text{Candidate 1} = c_0 \cdot \frac{I}{c^2 \epsilon r}$$
+
+The GT is $\frac{1}{2\pi} \cdot \frac{I}{c^2 \epsilon r}$.
+
+By setting $c_0 = \frac{1}{2\pi}$, Candidate 1 exactly equals the GT.
+
+The functional form is identical: both are proportional to $\frac{I}{c^2 \epsilon r}$.
+
+Candidate 1 verdict: [MATCH]
+
+## Candidate 2: $c_0 \cdot \exp\left(\frac{c_1 \cdot I}{c^2 \cdot \epsilon \cdot r}\right)$
+
+This has the form:
+
+$$\text{Candidate 2} = c_0 \cdot e^{c_1 \cdot I/(c^2 \epsilon r)}$$
+
+The GT is a rational function $\frac{I}{2\pi c^2 \epsilon r}$, while Candidate 2 is an exponential function of the same argument. 
+
+An exponential function $e^{f(x)}$ can never be equivalent to a linear function $f(x)$ for all values of the argument (by linear independence of basis functions — exponentials vs. polynomials/rational functions). No choice of constants $c_0, c_1$ can make $c_0 \cdot e^{c_1 u} = \frac{u}{2\pi}$ for all $u$ where $u = I/(c^2 \epsilon r)$.
+
+Candidate 2 verdict: [NO MATCH]
+
+## Summary
+
+Matched candidate IDs: [1]
+
+[MATCH FOUND]
+
+Conclusion: Match found
+============================================================

@@ -1,0 +1,68 @@
+
+============================================================
+GT Equivalence Verification (PO27)
+============================================================
+GT: F0*sin(t) - alpha*v**c0 - c1*beta*v - beta*exp(-Abs(v))*v
+Candidates evaluated: 1
+
+# Analysis of Candidate 1
+
+## Ground Truth (GT)
+The GT expression is:
+$$f(x,t,v) = -0.0586 \cdot v^3 - 0.7167 \cdot v - 0.3583 \cdot v \cdot e^{-|v|} + 0.6686 \cdot \sin(t)$$
+
+Key basis functions in GT:
+1. $v^3$ (cubic in velocity)
+2. $v$ (linear in velocity)
+3. $v \cdot e^{-|v|}$ (velocity times exponential of absolute velocity)
+4. $\sin(t)$ (sinusoidal driving)
+
+## Candidate 1 Analysis
+
+The candidate implements:
+$$f = p_0 x + p_1 x^3 + p_2 x^2 + p_3 v + p_4 x^2 v + p_5 \cos(p_6 t + p_7) + p_8 v|v| + p_9$$
+
+Basis functions in the candidate:
+1. $x$ (linear position)
+2. $x^3$ (cubic position)
+3. $x^2$ (quadratic position)
+4. $v$ (linear velocity)
+5. $x^2 v$ (position-velocity coupling)
+6. $\cos(p_6 t + p_7)$ (cosine driving, which can become $\sin(t)$ with appropriate phase shift)
+7. $v|v|$ (quadratic drag with sign preservation)
+8. Constant offset
+
+## Comparison
+
+Let me check if we can set constants to make these equivalent.
+
+**Setting position-dependent terms to zero:** We can set $p_0 = 0$, $p_1 = 0$, $p_2 = 0$, $p_4 = 0$, $p_9 = 0$ to eliminate all $x$-dependent terms and the constant.
+
+After zeroing those, the candidate becomes:
+$$f = p_3 v + p_5 \cos(p_6 t + p_7) + p_8 v|v|$$
+
+**Driving term:** $p_5 \cos(p_6 t + p_7)$ can match $0.6686 \sin(t)$ by setting $p_6 = 1$, $p_7 = \pi/2$, and $p_5 = 0.6686$. ✓
+
+**Linear velocity term:** $p_3 v$ can match part of the GT's velocity terms. ✓
+
+**Now the critical missing terms:**
+
+The GT requires:
+- $v^3$: The candidate has NO $v^3$ term. The candidate has $v|v|$ which equals $v^2 \cdot \text{sign}(v)$, NOT $v^3$. Note that $v|v| = v^2 \cdot \text{sign}(v)$, while $v^3 = v^2 \cdot v$. These are the same! Wait: $v \cdot |v| = |v| \cdot v = v \cdot |v|$. For $v > 0$: $v|v| = v^2$ and $v^3 = v^3$. These are NOT the same.
+
+  Actually, let me reconsider. $v|v| = v \cdot |v|$. For $v > 0$: $v|v| = v^2$. For $v < 0$: $v|v| = -v^2$. Meanwhile $v^3$: for $v > 0$: $v^3$, for $v < 0$: $v^3$ (negative). These are clearly different functions. ✗
+
+- $v \cdot e^{-|v|}$: The candidate has NO exponential term at all. This is a fundamentally different basis function that cannot be constructed from polynomials. ✗
+
+## Conclusion
+
+The candidate is missing two critical basis functions:
+1. **$v^3$** — the candidate only has $v|v|$ which is $v^2 \cdot \text{sign}(v)$, not $v^3$
+2. **$v \cdot e^{-|v|}$** — no exponential function exists in the candidate at all
+
+By the principle of linear independence of basis functions, polynomials and exponentials cannot be combined to produce each other. The candidate cannot match the GT regardless of parameter choices.
+
+[NO MATCH]
+
+Conclusion: No match
+============================================================

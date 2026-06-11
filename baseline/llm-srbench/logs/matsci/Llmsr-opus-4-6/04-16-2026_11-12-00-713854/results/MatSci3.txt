@@ -1,0 +1,59 @@
+
+============================================================
+GT Equivalence Verification (MatSci3)
+============================================================
+GT: c0*epsilon**c1 + c2*epsilon**c3*exp(-c4/(c5*T)) + epsilon**c6*c7*(T - c8)
+Candidates evaluated: 1
+
+# Analysis of Candidate 1
+
+## Ground Truth (GT)
+The GT expression is:
+$$\sigma = 2.097 \epsilon^3 + 71.356 \epsilon^{0.2} \exp\left(\frac{-5.003}{8.314 T}\right) + 3.305 \epsilon^3 (T - 370.17)$$
+
+This can be rewritten as:
+$$\sigma = \epsilon^3 (2.097 + 3.305T - 1222.8) + 71.356 \epsilon^{0.2} \exp\left(\frac{-0.6017}{T}\right)$$
+$$= \epsilon^3 (3.305T - 1220.7) + 71.356 \epsilon^{0.2} \exp\left(\frac{-0.6017}{T}\right)$$
+
+## Candidate 1 Structure
+
+The candidate computes:
+$$\sigma = \epsilon \cdot \left[(\text{hardening}) \cdot (\text{thermal\_softening}) + \text{linear\_term}\right] + p_9 \cdot \text{sign}(\epsilon)$$
+
+Where:
+- hardening = $p_0 + p_1 |\epsilon|^{p_2} \exp(-p_3 |\epsilon|)$
+- thermal\_softening = $1 - p_4 \left(\frac{|T|}{|T| + p_5}\right)^{p_6}$
+- linear\_term = $p_7 + p_8 T$
+
+So the full expression is:
+$$\sigma = \epsilon \left[(p_0 + p_1 |\epsilon|^{p_2} e^{-p_3|\epsilon|})(1 - p_4 f(T)) + p_7 + p_8 T\right] + p_9 \cdot \text{sign}(\epsilon)$$
+
+For non-negative epsilon (domain constraint), $|\epsilon| = \epsilon$ and $\text{sign}(\epsilon) = 1$:
+
+$$\sigma = \epsilon \left[(p_0 + p_1 \epsilon^{p_2} e^{-p_3 \epsilon})(1 - p_4 f(T)) + p_7 + p_8 T\right] + p_9$$
+
+## Key Structural Differences
+
+1. **The GT has $\epsilon^3$ and $\epsilon^{0.2}$ terms.** The candidate multiplies everything by $\epsilon$, so the internal terms would need to produce $\epsilon^2$ and $\epsilon^{-0.8}$ behavior. The power-law part $\epsilon^{p_2}$ could give $\epsilon^2$ (with $p_2 = 2$), but it's multiplied by $e^{-p_3 \epsilon}$, which cannot be eliminated (setting $p_3 = 0$ gives a pure power law).
+
+   Wait - if we set $p_3 = 0$, then $e^{-p_3 \epsilon} = 1$, and we get $\epsilon \cdot p_1 \epsilon^{p_2} = p_1 \epsilon^{p_2+1}$. Setting $p_2 = -0.8$ gives $\epsilon^{0.2}$. ✓
+
+2. **Temperature dependence in GT:** The GT has $\exp(-c/T)$ and a linear $T$ term. The candidate's thermal softening is $\left(\frac{T}{T + p_5}\right)^{p_6}$, which is a rational function of $T$, NOT an exponential in $1/T$. These are fundamentally different basis functions - a rational function $\frac{T}{T+p_5}$ raised to a power can never equal $\exp(-c/T)$ for all $T$.
+
+3. **The $\epsilon^{0.2} \exp(-c/T)$ term in GT** requires the product of a fractional power of epsilon with an exponential in $1/T$. The candidate cannot produce $\exp(-c/T)$ from its structure.
+
+4. **The constant offset $p_9$** in the candidate has no counterpart in the GT (GT has no constant term independent of $\epsilon$). We could set $p_9 = 0$.
+
+5. **The $\epsilon^3 T$ term** in GT could come from $\epsilon \cdot p_8 T$ only if we get $\epsilon^2$ from somewhere else, but the linear term $p_8 T$ is just multiplied by $\epsilon^1$, giving $\epsilon T$, not $\epsilon^3 T$.
+
+## Conclusion
+
+The candidate cannot reproduce the GT because:
+- It cannot generate $\exp(-c/T)$ (only rational functions of $T$)
+- It cannot generate $\epsilon^3 T$ (the $T$-linear term only produces $\epsilon T$)
+- The structural mismatch in both temperature and strain dependence is fundamental
+
+[NO MATCH]
+
+Conclusion: No match
+============================================================

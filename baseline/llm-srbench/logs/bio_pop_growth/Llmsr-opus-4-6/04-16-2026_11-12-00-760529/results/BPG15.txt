@@ -1,0 +1,53 @@
+
+============================================================
+GT Equivalence Verification (BPG15)
+============================================================
+GT: c0*P**c1 + c2*P*exp(-c3*t)
+Candidates evaluated: 1
+
+# Analysis of Candidate 1
+
+## Ground Truth (GT)
+The GT expression is:
+$$f(t, P) = 0.4867 \cdot P^{1/3} + 0.4867 \cdot P \cdot e^{-0.08577t}$$
+
+Key basis functions:
+1. $P^{1/3}$ (cube root of P)
+2. $P \cdot e^{-0.08577t}$ (P times exponential decay in t)
+
+## Candidate 1 Analysis
+
+The candidate implements:
+$$f(t, P) = a_0 P + a_1 P \cdot P^{|a_2|} + a_3 P \ln(P) + a_4 + a_5 t + a_6 P t$$
+
+Let me identify the basis functions available:
+1. $P$ (linear in P)
+2. $P^{1+|a_2|}$ (power of P, where exponent is $1 + |a_2| \geq 1$)
+3. $P \ln(P)$ (Gompertz term)
+4. Constant term
+5. $t$ (linear in time)
+6. $P \cdot t$ (interaction term)
+
+## Checking for Equivalence
+
+The GT requires:
+- **$P^{1/3}$**: This needs $1 + |a_2| = 1/3$, which means $|a_2| = -2/3$. But $|a_2| \geq 0$ by definition (it's an absolute value), so this is **impossible**. The power term $P^{1+|a_2|}$ always has exponent $\geq 1$, and we need exponent $1/3 < 1$.
+
+Even without the absolute value constraint, looking at the code: `power = np.abs(params[2]) + 1e-6`, so `power` is always positive, and the term is $P^{1+\text{power}}$ where power > 0, giving exponent > 1.
+
+- **$P \cdot e^{-0.08577t}$**: The candidate has no exponential function of $t$. The only time-dependent terms are $a_5 t$ and $a_6 P t$. The term $P \cdot t$ is NOT equivalent to $P \cdot e^{-ct}$ for any constant choice — these are fundamentally different basis functions (polynomial vs. exponential in $t$). By Rule 2, we cannot use asymptotic approximations.
+
+## Conclusion
+
+The candidate lacks two critical basis functions:
+1. $P^{1/3}$ (fractional power less than 1) — cannot be produced since the power term always has exponent ≥ 1
+2. $P \cdot e^{-ct}$ (exponential decay in time) — no exponential function of $t$ exists in the candidate
+
+By Rule 3 (linear independence), polynomial functions of $t$ cannot equal exponential functions of $t$, and $P \ln(P)$ cannot substitute for $P^{1/3}$.
+
+There is no way to choose constants to make the candidate equivalent to the GT.
+
+[NO MATCH]
+
+Conclusion: No match
+============================================================

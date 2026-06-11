@@ -1,0 +1,63 @@
+
+============================================================
+GT Equivalence Verification (PO25)
+============================================================
+GT: F0*sin(t) - beta*sin(v)
+Candidates evaluated: 1
+
+# Analysis of Candidate 1
+
+## Ground Truth
+The GT is: `0.938430539170744*sin(t) - 0.866974142258927*sin(v)`
+
+This consists of two basis functions:
+1. `sin(t)` — a sinusoidal function of the time variable `t`
+2. `sin(v)` — a sinusoidal function of the velocity variable `v`
+
+## Candidate 1 Analysis
+
+The candidate returns:
+```
+output = params[0]*v + params[1]*v**3 + params[2]*v**2 + params[3]*sin(params[4]*t + params[5]) + params[6]*cos(params[4]*t + params[5]) + params[7]*v*sin(params[4]*t + params[5]) + params[8] + params[9]*v**5
+```
+
+Let me identify the basis functions present in the candidate:
+1. `v` (linear in v)
+2. `v**3` (cubic in v)
+3. `v**2` (quadratic in v)
+4. `sin(params[4]*t + params[5])` (sinusoidal in t with adjustable frequency and phase)
+5. `cos(params[4]*t + params[5])` (cosinusoidal in t with adjustable frequency and phase)
+6. `v * sin(params[4]*t + params[5])` (cross-coupling term)
+7. Constant term
+8. `v**5` (quintic in v)
+
+## Checking for Equivalence
+
+To match the GT, we need:
+- A `sin(t)` term: ✅ We can set `params[4] = 1`, `params[5] = 0`, giving `params[3]*sin(t)`. Set `params[3] = 0.938430539170744`.
+- A `sin(v)` term: ❌ **This is the critical issue.** The candidate has polynomial terms in `v` (linear, quadratic, cubic, quintic), but **no `sin(v)` term**.
+
+The GT requires `sin(v)`, which is a transcendental function of `v`. The candidate only has polynomial powers of `v`: `v`, `v²`, `v³`, `v⁵`. 
+
+By the principle of **linear independence of basis functions** (Rule 3), polynomial functions of `v` cannot exactly equal `sin(v)` for all values of `v`. A polynomial can approximate `sin(v)` via Taylor series (e.g., `sin(v) ≈ v - v³/6 + v⁵/120 - ...`), but this is only an approximation, not an exact equivalence. Rule 2 explicitly forbids asymptotic approximations.
+
+Even if we tried to use the polynomial terms as a Taylor expansion:
+- `sin(v) = v - v³/6 + v⁵/120 - ...` requires infinitely many terms
+- The candidate only provides terms up to `v⁵`, which would leave residual error from `v⁷/5040` and higher-order terms
+- This is NOT exact mathematical equivalence
+
+Additionally, we can zero out unwanted terms by setting:
+- `params[6] = 0` (remove cos term)
+- `params[7] = 0` (remove cross-coupling)
+- `params[8] = 0` (remove constant)
+
+But we still cannot produce `sin(v)` from polynomial terms in `v`.
+
+## Conclusion
+
+The candidate lacks the essential `sin(v)` basis function. Polynomial terms in `v` cannot exactly replicate `sin(v)` across the entire domain. Therefore, no assignment of constants can make the candidate exactly equal to the GT.
+
+[NO MATCH]
+
+Conclusion: No match
+============================================================

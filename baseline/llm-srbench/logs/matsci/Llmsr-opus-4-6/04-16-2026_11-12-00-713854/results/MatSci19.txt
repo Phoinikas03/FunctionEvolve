@@ -1,0 +1,69 @@
+
+============================================================
+GT Equivalence Verification (MatSci19)
+============================================================
+GT: c0*epsilon*(-c1*(T - c2) + c3) - c4*(T - c5) + c6*(T - c7)*log(epsilon + c8)
+Candidates evaluated: 1
+
+# Analysis of Candidate 1
+
+## Ground Truth (GT) Simplified
+
+Let me first simplify the GT expression. Let $\Delta T = T - 352.18178...$
+
+$$\text{GT} = 96.829\epsilon(-0.00975\Delta T + 1) - 0.4784\Delta T + 8.062\Delta T\ln(\epsilon + 1)$$
+
+Expanding:
+$$= 96.829\epsilon - 0.9443\epsilon\Delta T - 0.4784\Delta T + 8.062\Delta T\ln(\epsilon + 1)$$
+
+The key basis functions in GT are:
+1. $\epsilon$ (linear in strain)
+2. $\epsilon \cdot T$ (strain-temperature coupling, linear)
+3. $T$ (linear in temperature)
+4. $T \cdot \ln(\epsilon + 1)$ (temperature times logarithm of shifted strain)
+
+Plus constant terms that arise from expanding $\Delta T$.
+
+## Candidate 1 Analysis
+
+The candidate implements:
+$$\sigma = \frac{E\epsilon}{1 + (|\epsilon|/\epsilon_0)^{n}} \cdot (1 - \alpha_T(T - T_{ref})) + \sigma_{sat}\tanh(\epsilon/\epsilon_y)\exp(-\beta_T T) + c_0$$
+
+### Basis Functions in Candidate 1:
+
+1. **Backbone term:** $\frac{E\epsilon}{1 + (|\epsilon|/\epsilon_0)^n}$ — This is a **rational/power-law** function of $\epsilon$. For this to become linear in $\epsilon$, we'd need the denominator to be constant, which requires $n = 0$ (making denominator = 2) or the power term to vanish. If $n \to 0$, denominator → 2, giving $E\epsilon/2$, which is linear. This is achievable.
+
+2. **Thermal softening on backbone:** If backbone is linear ($E\epsilon/2$), then this term becomes $(E/2)\epsilon(1 - \alpha_T(T-T_{ref}))$, giving us $\epsilon$ and $\epsilon \cdot T$ terms. ✓
+
+3. **Plastic saturation term:** $\sigma_{sat}\tanh(\epsilon/\epsilon_y)\exp(-\beta_T T)$ — This involves $\tanh(\epsilon/\epsilon_y) \cdot \exp(-\beta_T T)$.
+
+The GT requires a $T \cdot \ln(\epsilon + 1)$ term. The candidate has $\tanh(\epsilon/\epsilon_y) \cdot \exp(-\beta_T T)$.
+
+**Can $\tanh(\epsilon/\epsilon_y) \cdot \exp(-\beta_T T)$ equal $T \cdot \ln(\epsilon + 1)$?**
+
+No. $\tanh$ is a bounded function (between -1 and 1), while $\ln(\epsilon + 1)$ is unbounded as $\epsilon \to \infty$. Also, $\exp(-\beta_T T)$ cannot equal $T$ for all $T$ (exponential vs. linear — linearly independent basis functions).
+
+Even if we set $\beta_T = 0$, we get $\exp(0) = 1$, which gives a constant times $\tanh(\epsilon/\epsilon_y)$, not $T \cdot \ln(\epsilon+1)$.
+
+4. **Missing $T$ term:** The GT has a standalone $T$ (or $\Delta T$) term. The candidate has a constant $c_0$ but no standalone linear $T$ term. The thermal backbone provides $\epsilon \cdot T$ but not a pure $T$ term (unless $\epsilon = 0$, but that's not for all $\epsilon$).
+
+### Critical Mismatch:
+
+The GT fundamentally requires:
+- $T \cdot \ln(\epsilon + 1)$: a product of temperature and logarithm of shifted strain
+
+The candidate has:
+- $\tanh(\cdot) \cdot \exp(\cdot)$: fundamentally different basis functions
+
+These are **linearly independent** function classes. No choice of constants can make $\tanh$ equal $\ln$ or $\exp$ equal a linear function across the entire domain.
+
+The candidate also lacks a pure linear $T$ term that cannot be generated from its structure without simultaneously affecting other terms.
+
+## Conclusion
+
+The candidate uses fundamentally different basis functions ($\tanh$, $\exp$) compared to the GT ($\ln$, polynomial). By the principle of linear independence of these function families, no assignment of constants can make them equivalent.
+
+[NO MATCH]
+
+Conclusion: No match
+============================================================

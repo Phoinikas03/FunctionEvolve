@@ -1,0 +1,54 @@
+
+============================================================
+GT Equivalence Verification (MatSci11)
+============================================================
+GT: c0*epsilon**c1*exp(-c2/(c3*T)) + epsilon**c4*c5*(T - c6)
+Candidates evaluated: 1
+
+# Analysis of Candidate 1
+
+## Ground Truth Structure
+The GT is:
+$$\sigma = 61.56 \cdot \epsilon^{0.478} \cdot \exp\left(\frac{-55.88}{8.314 \cdot T}\right) + 7.641 \cdot \epsilon^3 \cdot (T - 344.46)$$
+
+This consists of two terms:
+1. A fractional power of epsilon times a Boltzmann-type exponential in 1/T
+2. A cubic epsilon term times a linear function of T
+
+## Candidate 1 Structure
+The candidate implements:
+$$\sigma = (p_0 + p_1 T) \cdot \epsilon + [p_2 \cdot \text{sign}(\epsilon)(1 - e^{-100|\epsilon|}) + p_3 \cdot |\epsilon|^n \cdot \text{sign}(\epsilon) + p_6 \cdot \tanh(p_7 \epsilon)] \cdot (1 + p_5 T) + p_8 T + p_9$$
+
+Let me identify the basis functions present in the candidate:
+- **Linear in epsilon**: $\epsilon$ (with T-dependent coefficient)
+- **Power-law hardening**: $|\epsilon|^n \cdot \text{sign}(\epsilon)$ — this is an odd function of epsilon
+- **tanh saturation**: $\tanh(p_7 \epsilon)$ — bounded, odd function
+- **Yield term**: $\text{sign}(\epsilon)(1 - e^{-100|\epsilon|})$ — essentially $\text{sign}(\epsilon)$ for any non-tiny epsilon
+- **Thermal terms**: Linear in T, constant offset
+- **Multiplicative thermal softening**: $(1 + p_5 T)$ — linear in T
+
+## Key Differences
+
+### Missing basis function: $\exp(-c/T)$
+The GT contains $\exp(-55.88/(8.314 T))$, which is an exponential function of $1/T$. The candidate has NO term involving $\exp(\text{anything}/T)$ or any function of $1/T$. The candidate only has polynomial/linear dependence on $T$.
+
+The term $(1 + p_5 T)$ is linear in T, and when multiplied by the power-law term, gives $|\epsilon|^n \cdot T$ type terms. This is fundamentally different from $\epsilon^{0.478} \cdot \exp(-c/T)$.
+
+### Can we approximate $\exp(-c/T)$ with linear T?
+No — by Rule 2, we cannot use asymptotic approximations. $\exp(-c/T)$ is a nonlinear function of $1/T$ that cannot be exactly represented as a linear function of $T$ (or any polynomial in $T$).
+
+### Missing basis function: $\epsilon^3 \cdot T$
+The GT has $\epsilon^3 \cdot T$. The candidate could potentially produce this if $n = 3$ and we use the $p_3 |\epsilon|^3 \text{sign}(\epsilon) \cdot p_5 T$ term. Under the non-negative domain assumption ($\epsilon \geq 0$), $|\epsilon|^3 \text{sign}(\epsilon) = \epsilon^3$. So this particular term could be matched.
+
+But the first GT term $\epsilon^{0.478} \exp(-c/T)$ still cannot be matched. Even if we set $n = 0.478$, the T-dependence would be $(1 + p_5 T)$, which is linear in T, not $\exp(-c/T)$.
+
+### Can we zero out the problematic terms?
+If we try to match just the $\epsilon^3 (T - c_6)$ part by zeroing out the first GT term... no, we can't zero out GT terms — GT is fixed.
+
+## Conclusion
+The candidate lacks the essential $\exp(-\text{const}/T)$ basis function present in the GT. By the principle of linear independence (Rule 3), no combination of polynomial/linear functions of T can exactly equal an exponential function of $1/T$. Therefore, the candidate cannot be algebraically equivalent to the GT for all values of $\epsilon$ and $T$.
+
+[NO MATCH]
+
+Conclusion: No match
+============================================================

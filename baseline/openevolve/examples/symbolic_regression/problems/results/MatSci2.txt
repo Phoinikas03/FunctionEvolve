@@ -1,0 +1,165 @@
+=== Verification Report for MatSci2 ===
+Target File: matsci/MatSci2/openevolve_output/best/best_program.py
+--------------------------------------------------
+[verify] Equation name: MatSci2
+[verify] GT symbolic expression: c0*epsilon**c1 + c2*(T - c3)*exp(-epsilon)
+[verify] Feature variables: epsilon;T
+[verify] Processing 1 candidate Python snippet(s)
+[verify] Calling LLM for equivalence check...
+[LLMClient] Requests mode, URL: https://llm-gateway.example.com/api/google/v1/publishers/anthropic/models/claude-opus-4-6:rawPredict, model: claude-opus-4-6
+[API Warning] Empty response received. Full response: {'model': 'claude-opus-4-6', 'id': 'msg_vrtx_015E2xeFKyE2m4YbFE8u1oUF', 'type': 'message', 'role': 'assistant', 'content': [{'type': 'text', 'text': "# Analysis of Candidate 1\n\n## Ground Truth Expression\n$$\\sigma = 7.317 \\cdot \\epsilon^3 + 7.950 \\cdot (T - 287.09) \\cdot e^{-\\epsilon}$$\n\nThis consists of two terms:\n1. A cubic power of epsilon: $c_0 \\epsilon^3$\n2. A thermal term times exponential decay: $c_2(T - c_3)e^{-\\epsilon}$\n\n## Translating Candidate 1 to Mathematics\n\nLet me trace through the code carefully:\n\n```python\nabs_eps = |ε| + 1e-12  ≈ ε  (for ε ≥ 0)\nn_exp = clip(p2, 0.05, 3.0)\nhardening = p0 + p1 * ε^n_exp\n```\n\n```python\ninv_scale = |p7| + 1e-8 + p8 * T\ninv_scale_safe = clip(|inv_scale| + 1e-8, 1e-8, 200)\nvoce = p6 * (1 - exp(-clip(inv_scale_safe * ε, 0, 50)))\n```\n\n```python\nthermal_factor = 1 + p3*T + p4*T²\nresult = (hardening + voce) * thermal_factor + p5 + p9*ε*T\n```\n\nSo the full expression is:\n$$\\sigma = (p_0 + p_1 \\epsilon^{n} + p_6(1 - e^{-s(\\epsilon,T)\\cdot\\epsilon})) \\cdot (1 + p_3 T + p_4 T^2) + p_5 + p_9 \\epsilon T$$\n\nwhere $s(\\epsilon, T) = |p_7| + p_8 T$ (approximately).\n\n## Checking for Equivalence\n\nThe GT has the form: $A\\epsilon^3 + B(T-C)e^{-\\epsilon}$\n\nExpanding GT: $A\\epsilon^3 + BTe^{-\\epsilon} - BCe^{-\\epsilon}$\n\nThe basis functions in GT are: $\\{\\epsilon^3, Te^{-\\epsilon}, e^{-\\epsilon}\\}$\n\nNow let's look at the candidate. The Voce term involves $e^{-s \\cdot \\epsilon}$ where $s$ depends on $T$. For this to match $e^{-\\epsilon}$, we'd need $s = 1$ (constant, independent of T). We could set $p_8 = 0$ and $|p_7| = 1$.\n\nWith $p_8 = 0$, $s = 1$, the voce term becomes: $p_6(1 - e^{-\\epsilon})$\n\nThe expression becomes:\n$$\\sigma = (p_0 + p_1\\epsilon^n + p_6 - p_6 e^{-\\epsilon})(1 + p_3 T + p_4 T^2) + p_5 + p_9 \\epsilon T$$\n\nExpanding:\n$$(p_0 + p_6 + p_1\\epsilon^n)(1 + p_3 T + p_4 T^2) - p_6 e^{-\\epsilon}(1 + p_3 T + p_4 T^2) + p_5 + p_9 \\epsilon T$$\n\nFor the exponential part to match GT, we need:\n- $-p_6 e^{-\\epsilon}(1 + p_3 T + p_4 T^2)$ to equal $-BCe^{-\\epsilon} + BTe^{-\\epsilon}$\n\nThis requires $p_4 = 0$ (no $T^2 e^{-\\epsilon}$ term in GT), giving: $-p_6(1 + p_3 T)e^{-\\epsilon} = -p_6 e^{-\\epsilon} - p_6 p_3 T e^{-\\epsilon}$\n\nMatching: $-p_6 = -BC = -7.950 \\times 287.09$ and $-p_6 p_3 = B = 7.950$. So $p_3 = -1/287.09$.\n\nFor the polynomial part with $p_4 = 0$, $n = 3$:\n$$(p_0 + p_6 + p_1\\epsilon^3)(1 + p_3 T) + p_5 + p_9 \\epsilon T$$\n\nThis expands to include terms: constant, $T$, $\\epsilon^3$, $\\epsilon^3 T$, $\\epsilon T$.\n\nBut GT has NO $\\epsilon^3 T$ term, no constant term, no pure $T$ term, no $\\epsilon T$ term.\n\nSetting $p_1 p_3 = 0$: since $p_3 \\neq 0$, we need $p_1 = 0$. But then we lose $\\epsilon^3$!\n\nThere's no way to get $\\epsilon^3$ without also getting $\\epsilon^3 T$ (since $p_3 \\neq 0$). This is a fundamental structural mismatch.\n\nThe candidate cannot produce the GT expression.\n\n[NO MATCH]"}], 'stop_reason': 'end_turn', 'stop_sequence': None, 'stop_details': None, 'usage': {'input_tokens': 1599, 'cache_creation_input_tokens': 0, 'cache_read_input_tokens': 0, 'cache_creation': {'ephemeral_5m_input_tokens': 0, 'ephemeral_1h_input_tokens': 0}, 'output_tokens': 1319}}
+
+============================================================
+GT Equivalence Verification (MatSci2)
+============================================================
+GT: c0*epsilon**c1 + c2*(T - c3)*exp(-epsilon)
+Candidate snippets: 1
+
+# Analysis of Candidate 1
+
+## Ground Truth Expression
+$$\sigma = 7.317 \cdot \epsilon^3 + 7.950 \cdot (T - 287.09) \cdot e^{-\epsilon}$$
+
+This consists of two terms:
+1. A cubic power of epsilon: $c_0 \epsilon^3$
+2. A thermal term times exponential decay: $c_2(T - c_3)e^{-\epsilon}$
+
+## Translating Candidate 1 to Mathematics
+
+Let me trace through the code carefully:
+
+```python
+abs_eps = |ε| + 1e-12  ≈ ε  (for ε ≥ 0)
+n_exp = clip(p2, 0.05, 3.0)
+hardening = p0 + p1 * ε^n_exp
+```
+
+```python
+inv_scale = |p7| + 1e-8 + p8 * T
+inv_scale_safe = clip(|inv_scale| + 1e-8, 1e-8, 200)
+voce = p6 * (1 - exp(-clip(inv_scale_safe * ε, 0, 50)))
+```
+
+```python
+thermal_factor = 1 + p3*T + p4*T²
+result = (hardening + voce) * thermal_factor + p5 + p9*ε*T
+```
+
+So the full expression is:
+$$\sigma = (p_0 + p_1 \epsilon^{n} + p_6(1 - e^{-s(\epsilon,T)\cdot\epsilon})) \cdot (1 + p_3 T + p_4 T^2) + p_5 + p_9 \epsilon T$$
+
+where $s(\epsilon, T) = |p_7| + p_8 T$ (approximately).
+
+## Checking for Equivalence
+
+The GT has the form: $A\epsilon^3 + B(T-C)e^{-\epsilon}$
+
+Expanding GT: $A\epsilon^3 + BTe^{-\epsilon} - BCe^{-\epsilon}$
+
+The basis functions in GT are: $\{\epsilon^3, Te^{-\epsilon}, e^{-\epsilon}\}$
+
+Now let's look at the candidate. The Voce term involves $e^{-s \cdot \epsilon}$ where $s$ depends on $T$. For this to match $e^{-\epsilon}$, we'd need $s = 1$ (constant, independent of T). We could set $p_8 = 0$ and $|p_7| = 1$.
+
+With $p_8 = 0$, $s = 1$, the voce term becomes: $p_6(1 - e^{-\epsilon})$
+
+The expression becomes:
+$$\sigma = (p_0 + p_1\epsilon^n + p_6 - p_6 e^{-\epsilon})(1 + p_3 T + p_4 T^2) + p_5 + p_9 \epsilon T$$
+
+Expanding:
+$$(p_0 + p_6 + p_1\epsilon^n)(1 + p_3 T + p_4 T^2) - p_6 e^{-\epsilon}(1 + p_3 T + p_4 T^2) + p_5 + p_9 \epsilon T$$
+
+For the exponential part to match GT, we need:
+- $-p_6 e^{-\epsilon}(1 + p_3 T + p_4 T^2)$ to equal $-BCe^{-\epsilon} + BTe^{-\epsilon}$
+
+This requires $p_4 = 0$ (no $T^2 e^{-\epsilon}$ term in GT), giving: $-p_6(1 + p_3 T)e^{-\epsilon} = -p_6 e^{-\epsilon} - p_6 p_3 T e^{-\epsilon}$
+
+Matching: $-p_6 = -BC = -7.950 \times 287.09$ and $-p_6 p_3 = B = 7.950$. So $p_3 = -1/287.09$.
+
+For the polynomial part with $p_4 = 0$, $n = 3$:
+$$(p_0 + p_6 + p_1\epsilon^3)(1 + p_3 T) + p_5 + p_9 \epsilon T$$
+
+This expands to include terms: constant, $T$, $\epsilon^3$, $\epsilon^3 T$, $\epsilon T$.
+
+But GT has NO $\epsilon^3 T$ term, no constant term, no pure $T$ term, no $\epsilon T$ term.
+
+Setting $p_1 p_3 = 0$: since $p_3 \neq 0$, we need $p_1 = 0$. But then we lose $\epsilon^3$!
+
+There's no way to get $\epsilon^3$ without also getting $\epsilon^3 T$ (since $p_3 \neq 0$). This is a fundamental structural mismatch.
+
+The candidate cannot produce the GT expression.
+
+[NO MATCH]
+
+Conclusion: No match
+============================================================
+
+
+GT Equivalence Verification (MatSci2)
+============================================================
+GT: c0*epsilon**c1 + c2*(T - c3)*exp(-epsilon)
+Candidates evaluated: 6
+Matched candidate IDs: []
+Matched candidates: []
+
+I need to compare each candidate against the Ground Truth:
+
+**GT: 7.317 * ε³ + 7.950 * (T - 287.09) * exp(-ε)**
+
+This has two terms: a power-law term in ε (cubic) and a term linear in T multiplied by exp(-ε).
+
+### Candidate 1:
+`hardening = p0 + p1 * ε^n_exp` where `n_exp = clip(p2, 0.05, 3.0)`
+
+This gives: `p0 + p1 * ε^n_exp`
+
+With appropriate constants: set p0 = 0, p1 = 7.317, p2 = 3.0 (which clips to 3.0).
+Result: `7.317 * ε³`
+
+This is missing the `(T - c3)*exp(-ε)` term entirely. There's no T dependence and no exponential term. This cannot match the GT.
+
+Candidate 1 verdict: [NO MATCH]
+
+### Candidate 2:
+`voce = p6 * (1 - exp(-inv_scale_safe * ε))`
+
+This is a Voce-type saturation function. It has the form `A*(1 - exp(-B*ε))` where B depends on T. This is fundamentally different from the GT which has `ε³ + (T-c)*exp(-ε)`. The basis functions (1-exp(-Bε)) vs ε³ and exp(-ε) are structurally different. No constant assignment can make these equivalent.
+
+Candidate 2 verdict: [NO MATCH]
+
+### Candidate 3:
+`result = (hardening + voce) * thermal_factor + p5 + p9*ε*T`
+
+This combines candidates 1 and 2 with a thermal factor and additional terms. It involves `(p0 + p1*ε^n + A*(1-exp(-B*ε))) * (1 + p3*T + p4*T²) + p5 + p9*ε*T`.
+
+The GT has `c0*ε³ + c2*T*exp(-ε) - c2*c3*exp(-ε)`. The candidate has terms like `ε^n * T²`, `(1-exp(-Bε))*T²`, etc. Even trying to zero out many terms, the exponential structure `exp(-ε)` in the GT cannot be produced from `(1-exp(-Bε))` terms (which would give `exp(-Bε)` with B dependent on T, not a pure `exp(-ε)`). The structural mismatch in the exponential terms prevents equivalence.
+
+Candidate 3 verdict: [NO MATCH]
+
+### Candidate 4:
+Same as Candidate 1: `hardening = p0 + p1 * ε^n_exp`
+
+Same analysis - missing T dependence and exp(-ε) term.
+
+Candidate 4 verdict: [NO MATCH]
+
+### Candidate 5:
+Same as Candidate 2: `voce = p6 * (1 - exp(-inv_scale_safe * ε))`
+
+Same analysis - wrong functional form.
+
+Candidate 5 verdict: [NO MATCH]
+
+### Candidate 6:
+Same as Candidate 3: `result = (hardening + voce) * thermal_factor + p5 + p9*ε*T`
+
+Same analysis as Candidate 3.
+
+Candidate 6 verdict: [NO MATCH]
+
+Matched candidate IDs: []
+
+[NO MATCH]
+
+Conclusion: No match
+============================================================
+

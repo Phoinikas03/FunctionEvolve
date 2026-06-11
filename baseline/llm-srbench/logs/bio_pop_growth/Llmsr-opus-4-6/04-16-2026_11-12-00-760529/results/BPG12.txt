@@ -1,0 +1,77 @@
+
+============================================================
+GT Equivalence Verification (BPG12)
+============================================================
+GT: c0*P*sin(c1*t) + c2*(c3 - P/c4)*P
+Candidates evaluated: 1
+
+# Analysis of Candidate 1
+
+## Ground Truth (GT)
+The GT expression is:
+$$\frac{dP}{dt} = 0.877 \cdot P \cdot \sin(0.5672 \cdot t) + 0.7014 \cdot (1 - P/65.75) \cdot P$$
+
+Expanding:
+$$= 0.877 \cdot P \cdot \sin(0.5672 \cdot t) + 0.7014 \cdot P - 0.01067 \cdot P^2$$
+
+This has three basis function components:
+1. $P \cdot \sin(\omega t)$ — periodic forcing
+2. $P$ — linear growth
+3. $P^2$ — quadratic density dependence
+
+## Candidate 1 Analysis
+
+The candidate implements:
+$$f = \text{logistic\_term} + \text{allee\_term} + \text{linear} + \text{constant} + \text{periodic}$$
+
+Let me trace through each term:
+
+**logistic_term:** $p_0 \cdot P \cdot (1 - (|P|/K)^{\theta})$
+
+If $\theta = 1$: this becomes $p_0 \cdot P \cdot (1 - P/K) = p_0 \cdot P - (p_0/K) \cdot P^2$
+
+**allee_term:** $-p_3 \cdot p_0 \cdot P \cdot \exp(-|P|/A)$
+
+This involves $P \cdot \exp(-P/A)$, which is NOT a polynomial or trigonometric basis function. This term cannot be expressed as any combination of $P$, $P^2$, or $P \cdot \sin(\omega t)$.
+
+**However**, we can set $p_3 = 0$ (since candidate constants are free), which eliminates the allee_term entirely. Let me also set $p_0 = 0$ to eliminate the logistic_term (which also eliminates the allee_term dependency on $p_0$).
+
+Wait, let me reconsider. If $p_3 = 0$, then $A = |p_3| + \epsilon \approx \epsilon$, and the allee_term becomes $-0 \cdot p_0 \cdot P \cdot \exp(-|P|/\epsilon) \approx 0$ for $P > 0$. So the allee_term vanishes.
+
+With $p_3 = 0$, the remaining terms are:
+
+**logistic_term:** $p_0 \cdot P \cdot (1 - (P/K)^{\theta})$
+
+Set $\theta = p_2 = 1$: $p_0 \cdot P - (p_0/K) \cdot P^2$
+
+**linear:** $p_4 \cdot P$
+
+**constant:** $p_5$ — set $p_5 = 0$
+
+**periodic:** $p_6 \cdot P \cdot \sin(p_7 \cdot t + p_8)$
+
+So the total becomes:
+$$(p_0 + p_4) \cdot P - \frac{p_0}{K} \cdot P^2 + p_6 \cdot P \cdot \sin(p_7 \cdot t + p_8)$$
+
+Now matching to GT:
+- $p_0 + p_4 = 0.7014$ ✓ (free to choose)
+- $p_0 / K = 0.7014 / 65.75 = 0.01067$ ✓ (free to choose $p_0$ and $K = |p_1|$)
+- $p_6 = 0.877$ ✓
+- $p_7 = 0.5672$ ✓
+- $p_8 = 0$ ✓ (to match $\sin(\omega t)$ without phase shift)
+
+For example: $p_0 = 0.7014$, $K = p_1 = 65.75$, $p_2 = 1$, $p_3 = 0$, $p_4 = 0$, $p_5 = 0$, $p_6 = 0.877$, $p_7 = 0.5672$, $p_8 = 0$.
+
+This gives exactly:
+$$0.7014 \cdot P \cdot (1 - P/65.75) + 0.877 \cdot P \cdot \sin(0.5672 \cdot t)$$
+
+Which matches the GT perfectly.
+
+**Note on the epsilon:** The $\epsilon = 10^{-10}$ is a numerical safeguard and doesn't affect mathematical equivalence. With $p_3 = 0$, $A = \epsilon$, and the allee_term is $-0 \cdot p_0 \cdot P \cdot \exp(-P/\epsilon)$. The factor of 0 from $p_3$ makes this exactly 0 regardless.
+
+The candidate can exactly reproduce the GT with appropriate parameter choices.
+
+[MATCH FOUND]
+
+Conclusion: Match found
+============================================================

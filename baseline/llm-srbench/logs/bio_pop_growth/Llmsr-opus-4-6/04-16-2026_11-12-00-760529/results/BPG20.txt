@@ -1,0 +1,73 @@
+
+============================================================
+GT Equivalence Verification (BPG20)
+============================================================
+GT: c0*(-c1 + P/c2)*(c3 - P/c4)*P + c5*(c6 - P/c7)*P + c8*P/(c9 + exp(-c10*(-c11 + P)))
+Candidates evaluated: 1
+
+# Analysis of Candidate 1
+
+## Step 1: Extract the mathematical formula from the candidate code
+
+The candidate implements:
+$$f(P) = r \cdot (P - A) \cdot \left(1 - \left(\frac{P}{K}\right)^\theta\right) + m$$
+
+where $r, A, K, \theta, m$ are free parameters.
+
+(Note: The `P_safe = np.abs(P) + 1e-10` is used for the ratio computation, but under our domain constraint P ≥ 0, `np.abs(P)` = P, and the 1e-10 is negligible. So effectively the formula is as above.)
+
+## Step 2: Expand the Ground Truth
+
+The GT is:
+$$f_{GT}(P) = 0.1387 \cdot \left(\frac{P}{8.038} - 1\right) \cdot \left(1 - \frac{P}{70.018}\right) \cdot P + 0.1387 \cdot \left(1 - \frac{P}{70.018}\right) \cdot P + \frac{0.1387 \cdot P}{1 + \exp(-8.038 \cdot (P - 0.5894))}$$
+
+Let me simplify the first two terms by combining them:
+
+First term: $0.1387 \cdot \left(\frac{P}{8.038} - 1\right) \cdot \left(1 - \frac{P}{70.018}\right) \cdot P$
+
+Second term: $0.1387 \cdot \left(1 - \frac{P}{70.018}\right) \cdot P$
+
+Combining: $0.1387 \cdot \left(1 - \frac{P}{70.018}\right) \cdot P \cdot \left[\frac{P}{8.038} - 1 + 1\right]$
+
+$= 0.1387 \cdot \left(1 - \frac{P}{70.018}\right) \cdot P \cdot \frac{P}{8.038}$
+
+$= \frac{0.1387}{8.038} \cdot P^2 \cdot \left(1 - \frac{P}{70.018}\right)$
+
+$= 0.01726 \cdot P^2 \cdot \left(1 - \frac{P}{70.018}\right)$
+
+So the GT becomes:
+$$f_{GT}(P) = 0.01726 \cdot P^2 \cdot \left(1 - \frac{P}{70.018}\right) + \frac{0.1387 \cdot P}{1 + \exp(-8.038 \cdot (P - 0.5894))}$$
+
+## Step 3: Compare with the candidate
+
+The candidate is:
+$$r \cdot (P - A) \cdot \left(1 - \left(\frac{P}{K}\right)^\theta\right) + m$$
+
+This is a polynomial/power-law expression plus a constant $m$. It contains NO sigmoid/logistic term.
+
+The GT contains a sigmoid term: $\frac{0.1387 \cdot P}{1 + \exp(-8.038(P - 0.5894))}$
+
+This sigmoid term is a function of $P$ that varies smoothly between approximately 0 (for $P \ll 0.5894$) and approximately $0.1387 \cdot P$ (for $P \gg 0.5894$). It cannot be represented as a polynomial, power law, or constant.
+
+## Step 4: Check if the sigmoid term could be zero
+
+The coefficient $c_8 = 0.1387 \neq 0$ in the GT, and this is a FIXED constant. We cannot set it to zero.
+
+## Step 5: Basis function analysis
+
+The GT requires:
+1. A polynomial/power-law component in $P$
+2. A sigmoid component: $\frac{P}{1 + \exp(-\alpha(P - \beta))}$
+
+The candidate only provides:
+1. A polynomial/power-law component in $P$
+2. A constant $m$
+
+Since $\frac{P}{1+\exp(-\alpha(P-\beta))}$ is not a polynomial, power law, or constant, and it's a fundamentally different basis function (sigmoid), the candidate cannot match the GT regardless of parameter choices.
+
+The sigmoid term is linearly independent from any polynomial or power-law terms, so no choice of candidate parameters can reproduce it.
+
+[NO MATCH]
+
+Conclusion: No match
+============================================================

@@ -1,0 +1,132 @@
+=== Verification Report for CRK27 ===
+Target File: chem_react/CRK27/openevolve_output/best/best_program.py
+--------------------------------------------------
+[verify] Equation name: CRK27
+[verify] GT symbolic expression: -c0*A**c1 - c2*A*exp(-c3*_s*t) + c4*_f*A**c5
+[verify] Feature variables: t;A
+[verify] Processing 1 candidate Python snippet(s)
+[verify] Calling LLM for equivalence check...
+[LLMClient] Requests mode, URL: https://llm-gateway.example.com/api/google/v1/publishers/anthropic/models/claude-opus-4-6:rawPredict, model: claude-opus-4-6
+[API Warning] Empty response received. Full response: {'model': 'claude-opus-4-6', 'id': 'msg_vrtx_01MpfjdTuPf4UaTnv3DkqE56', 'type': 'message', 'role': 'assistant', 'content': [{'type': 'text', 'text': '# Analysis of Candidate 1\n\n## Step 1: Translate the Python code to a mathematical expression\n\nLet me carefully parse the Python code:\n\n```python\nt = x[:, 0]\nA = x[:, 1]\nA_safe = max(|A|, 1e-30)  # For non-negative domain, A_safe ≈ A\nlog_A = ln(A)\n\nresult = p0 + p1*A + p2*A² + p3*t*A + p4*t*ln(A) + p5*A^p6 + p7*ln(A) + p8/A + p9*exp(p9*t)*A\n```\n\nNote the last term: `params[9]` is used both as the coefficient AND as the exponent argument multiplier. This is:\n\n$$f(t, A) = p_0 + p_1 A + p_2 A^2 + p_3 t A + p_4 t \\ln(A) + p_5 A^{p_6} + p_7 \\ln(A) + \\frac{p_8}{A} + p_9 e^{p_9 t} A$$\n\n## Step 2: Compare with Ground Truth\n\nThe GT expression is:\n$$f_{GT}(t, A) = 0.2332 \\cdot A^{1/3} - 0.3115 \\cdot A^2 - 0.3115 \\cdot A \\cdot e^{-0.08476 \\cdot t}$$\n\nThe GT has three terms:\n1. $c \\cdot A^{1/3}$ — a power-law term\n2. $c \\cdot A^2$ — a quadratic term\n3. $c \\cdot A \\cdot e^{-\\alpha t}$ — an exponential-time-modulated linear term\n\n## Step 3: Attempt to match by setting constants\n\n**Term matching:**\n\n- **$A^2$ term:** Set $p_2 = -0.3115$. ✓\n- **$A^{1/3}$ term:** Set $p_5 = 0.2332$ and $p_6 = 1/3$. ✓\n- **$A \\cdot e^{-\\alpha t}$ term:** The candidate has $p_9 \\cdot e^{p_9 t} \\cdot A$. For this to match $-0.3115 \\cdot A \\cdot e^{-0.08476 t}$, we need:\n  - $p_9 = -0.08476$ (for the exponent)\n  - But then the coefficient becomes $p_9 = -0.08476$, not $-0.3115$.\n  \n  **Problem:** The same parameter $p_9$ serves as both the coefficient and the rate constant in the exponential. We need $p_9 \\cdot e^{p_9 t} \\cdot A = -0.3115 \\cdot e^{-0.08476 t} \\cdot A$. This requires $p_9 = -0.08476$ AND $p_9 = -0.3115$ simultaneously, which is impossible.\n\n- **Unwanted terms:** We can set $p_0 = 0$, $p_1 = 0$, $p_3 = 0$, $p_4 = 0$, $p_7 = 0$, $p_8 = 0$ to eliminate them. ✓\n\n## Step 4: Conclusion\n\nThe critical issue is the exponential term. The candidate code reuses `params[9]` for both the coefficient and the exponential rate:\n\n$$p_9 \\cdot e^{p_9 \\cdot t} \\cdot A$$\n\nThis constrains the coefficient and rate to be the same value. The GT requires them to be different ($-0.3115$ vs $-0.08476$). Since these are different numerical values, there is no way to make this term match.\n\nThe candidate cannot reproduce the GT expression because of this structural constraint in the exponential term.\n\n[NO MATCH]'}], 'stop_reason': 'end_turn', 'stop_sequence': None, 'stop_details': None, 'usage': {'input_tokens': 1683, 'cache_creation_input_tokens': 0, 'cache_read_input_tokens': 0, 'cache_creation': {'ephemeral_5m_input_tokens': 0, 'ephemeral_1h_input_tokens': 0}, 'output_tokens': 1007}}
+
+============================================================
+GT Equivalence Verification (CRK27)
+============================================================
+GT: -c0*A**c1 - c2*A*exp(-c3*_s*t) + c4*_f*A**c5
+Candidate snippets: 1
+
+# Analysis of Candidate 1
+
+## Step 1: Translate the Python code to a mathematical expression
+
+Let me carefully parse the Python code:
+
+```python
+t = x[:, 0]
+A = x[:, 1]
+A_safe = max(|A|, 1e-30)  # For non-negative domain, A_safe ≈ A
+log_A = ln(A)
+
+result = p0 + p1*A + p2*A² + p3*t*A + p4*t*ln(A) + p5*A^p6 + p7*ln(A) + p8/A + p9*exp(p9*t)*A
+```
+
+Note the last term: `params[9]` is used both as the coefficient AND as the exponent argument multiplier. This is:
+
+$$f(t, A) = p_0 + p_1 A + p_2 A^2 + p_3 t A + p_4 t \ln(A) + p_5 A^{p_6} + p_7 \ln(A) + \frac{p_8}{A} + p_9 e^{p_9 t} A$$
+
+## Step 2: Compare with Ground Truth
+
+The GT expression is:
+$$f_{GT}(t, A) = 0.2332 \cdot A^{1/3} - 0.3115 \cdot A^2 - 0.3115 \cdot A \cdot e^{-0.08476 \cdot t}$$
+
+The GT has three terms:
+1. $c \cdot A^{1/3}$ — a power-law term
+2. $c \cdot A^2$ — a quadratic term
+3. $c \cdot A \cdot e^{-\alpha t}$ — an exponential-time-modulated linear term
+
+## Step 3: Attempt to match by setting constants
+
+**Term matching:**
+
+- **$A^2$ term:** Set $p_2 = -0.3115$. ✓
+- **$A^{1/3}$ term:** Set $p_5 = 0.2332$ and $p_6 = 1/3$. ✓
+- **$A \cdot e^{-\alpha t}$ term:** The candidate has $p_9 \cdot e^{p_9 t} \cdot A$. For this to match $-0.3115 \cdot A \cdot e^{-0.08476 t}$, we need:
+  - $p_9 = -0.08476$ (for the exponent)
+  - But then the coefficient becomes $p_9 = -0.08476$, not $-0.3115$.
+  
+  **Problem:** The same parameter $p_9$ serves as both the coefficient and the rate constant in the exponential. We need $p_9 \cdot e^{p_9 t} \cdot A = -0.3115 \cdot e^{-0.08476 t} \cdot A$. This requires $p_9 = -0.08476$ AND $p_9 = -0.3115$ simultaneously, which is impossible.
+
+- **Unwanted terms:** We can set $p_0 = 0$, $p_1 = 0$, $p_3 = 0$, $p_4 = 0$, $p_7 = 0$, $p_8 = 0$ to eliminate them. ✓
+
+## Step 4: Conclusion
+
+The critical issue is the exponential term. The candidate code reuses `params[9]` for both the coefficient and the exponential rate:
+
+$$p_9 \cdot e^{p_9 \cdot t} \cdot A$$
+
+This constrains the coefficient and rate to be the same value. The GT requires them to be different ($-0.3115$ vs $-0.08476$). Since these are different numerical values, there is no way to make this term match.
+
+The candidate cannot reproduce the GT expression because of this structural constraint in the exponential term.
+
+[NO MATCH]
+
+Conclusion: No match
+============================================================
+
+
+GT Equivalence Verification (CRK27)
+============================================================
+GT: -c0*A**c1 - c2*A*exp(-c3*_s*t) + c4*_f*A**c5
+Candidates evaluated: 2
+Matched candidate IDs: []
+Matched candidates: []
+
+# Analysis
+
+## Ground Truth (GT)
+
+The GT numerical expression is:
+$$\text{GT} = 0.2332 \cdot A^{0.3333} - 0.3115 \cdot A^2 - 0.3115 \cdot A \cdot e^{-0.08476 \cdot t}$$
+
+This has three basis function terms:
+1. $A^{1/3}$ (fractional power)
+2. $A^2$ (polynomial)
+3. $A \cdot e^{-\alpha t}$ (exponential decay times A)
+
+## Candidate 1 Analysis
+
+The candidate formula is:
+$$\text{result} = p_0 + p_1 A + p_2 A^2 + p_3 t A + p_4 t \ln(A) + p_5 A^{p_6} + p_7 \ln(A) + p_8/A + p_9 e^{p_9 t} A$$
+
+To match GT, we need:
+- $p_5 A^{p_6}$ → set $p_6 = 1/3$, $p_5 = 0.2332$ ✓ (matches $A^{1/3}$ term)
+- $p_2 A^2$ → set $p_2 = -0.3115$ ✓ (matches $A^2$ term)
+- $p_9 e^{p_9 t} A$ → This term has the form $p_9 \cdot A \cdot e^{p_9 t}$. Note that the constant in front of $A$ and the constant in the exponent are **the same parameter** $p_9$. For GT we need $A \cdot e^{-0.08476 t}$ with coefficient $-0.3115$. Setting $p_9 = -0.08476$ gives $-0.08476 \cdot A \cdot e^{-0.08476 t}$. But we need the coefficient to be $-0.3115$, not $-0.08476$. These are **coupled** — we cannot independently set the coefficient and the exponent rate. This is a structural mismatch.
+
+- Set unwanted terms to zero: $p_0 = 0, p_1 = 0, p_3 = 0, p_4 = 0, p_7 = 0, p_8 = 0$ ✓
+
+The critical issue is the $p_9 e^{p_9 t} A$ term. The coefficient of $A$ and the exponential rate are tied to the same parameter. In the GT, the coefficient is $-0.3115$ and the rate is $-0.08476$. These are different values, so we cannot match both simultaneously with a single parameter $p_9$.
+
+**Candidate 1 verdict: [NO MATCH]**
+
+## Candidate 2 Analysis
+
+Candidate 2 appears to be identical to Candidate 1:
+$$\text{result} = p_0 + p_1 A + p_2 A^2 + p_3 t A + p_4 t \ln(A) + p_5 A^{p_6} + p_7 \ln(A) + p_8/A + p_9 e^{p_9 t} A$$
+
+The same analysis applies. The $p_9 e^{p_9 t} A$ term couples the coefficient and exponential rate to the same parameter, making it impossible to independently match the GT's coefficient ($-0.3115$) and rate ($-0.08476$).
+
+**Candidate 2 verdict: [NO MATCH]**
+
+---
+
+Candidate 1 verdict: [NO MATCH]
+Candidate 2 verdict: [NO MATCH]
+
+Matched candidate IDs: []
+
+[NO MATCH]
+
+Conclusion: No match
+============================================================
+

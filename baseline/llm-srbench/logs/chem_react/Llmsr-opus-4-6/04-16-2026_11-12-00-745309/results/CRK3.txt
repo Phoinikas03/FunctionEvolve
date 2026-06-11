@@ -1,0 +1,61 @@
+
+============================================================
+GT Equivalence Verification (CRK3)
+============================================================
+GT: -c0*A**c1 - c2*A*exp(-c3*_s*t) + c4*_w*cos(log(A + c5))
+Candidates evaluated: 1
+
+# Analysis of Candidate 1
+
+## Ground Truth (GT)
+The GT numerical expression is:
+$$f(t, A) = -0.5475 A^2 - 0.5475 A \cdot e^{-0.03708t} + 0.7049 \cos(\log(A + 1))$$
+
+This has three distinct terms:
+1. A power-law term: $-0.5475 A^2$
+2. An exponential-decay-modulated linear term: $-0.5475 A \cdot e^{-0.03708t}$
+3. A cosine-of-logarithm term: $0.7049 \cos(\log(A+1))$
+
+## Candidate 1 Analysis
+
+The candidate implements:
+$$f(t, A) = -k_1 A^{n_1} (1 + \alpha e^{-t/\tau}) - k_2 A (1 + \alpha e^{-t/\tau}) + k_3(A_{eq} - A) + k_4 A^{n_2} + c$$
+
+Expanding:
+$$= -k_1 A^{n_1} - k_1 \alpha A^{n_1} e^{-t/\tau} - k_2 A - k_2 \alpha A e^{-t/\tau} + k_3 A_{eq} - k_3 A + k_4 A^{n_2} + c$$
+
+The basis functions available in the candidate are:
+- $A^{n_1}$ (constant part)
+- $A^{n_1} e^{-t/\tau}$ (time-modulated power)
+- $A$ (linear, constant part)
+- $A e^{-t/\tau}$ (time-modulated linear)
+- Constant terms
+- $A^{n_2}$ (secondary power)
+
+## Matching Attempt
+
+The GT requires a $\cos(\log(A+1))$ term. Let me check if this can be produced by any combination of the candidate's basis functions.
+
+The candidate only has:
+- Power-law terms in $A$: $A^{n_1}$, $A^{n_2}$, $A$, constants
+- Exponential decay in $t$: $e^{-t/\tau}$
+- Products of the above
+
+**The function $\cos(\log(A+1))$ is NOT a power law.** It is a transcendental function that oscillates (albeit slowly for large $A$). No finite combination of power-law terms $A^{n}$ can exactly equal $\cos(\log(A+1))$ for all $A \geq 0$.
+
+To verify: $\cos(\log(A+1))$ at $A=0$ equals $\cos(0) = 1$, and it oscillates as $A$ grows. Power laws are monotonic (for fixed exponent), so no sum of power laws can reproduce this oscillatory behavior.
+
+Even if we try to set $k_4 A^{n_2}$ to approximate it, power laws cannot exactly match a cosine-of-log function. These are fundamentally different basis functions — they are linearly independent in any function space.
+
+Additionally, the candidate's time-modulated terms couple the exponential decay with the power-law terms (e.g., $A^{n_1} e^{-t/\tau}$), but the GT only has $A \cdot e^{-t/\tau}$ (i.e., the exponential decay multiplies only the linear $A$ term, not $A^2$). We could handle this by setting $\alpha = 0$ for the $A^{n_1}$ term, but the coupling structure in the candidate forces the same $\alpha$ and $\tau$ for both terms.
+
+However, we could try: set $k_1 = 0.5475$, $n_1 = 2$, $\alpha = 0$ (eliminating time modulation on the power term), then $k_2 \alpha / \tau$ handles the exponential term. But with $\alpha = 0$, the $A e^{-t/\tau}$ term also vanishes.
+
+Alternatively, set $k_1 = 0$, use $k_4 A^{n_2}$ with $n_2 = 2$ for the $-A^2$ term (but $k_4$ gives positive sign... we can make $k_4$ negative). Then use $k_2, \alpha, \tau$ for the exponential term. But we still cannot produce $\cos(\log(A+1))$.
+
+**The critical missing basis function is $\cos(\log(A+1))$.** No combination of power laws and exponentials can reproduce this.
+
+[NO MATCH]
+
+Conclusion: No match
+============================================================

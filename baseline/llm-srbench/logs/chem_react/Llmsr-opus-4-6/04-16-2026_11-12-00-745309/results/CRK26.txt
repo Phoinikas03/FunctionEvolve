@@ -1,0 +1,64 @@
+
+============================================================
+GT Equivalence Verification (CRK26)
+============================================================
+GT: -c0*A**c1 - c2*A*exp(-c3*_s*t) + c4*_m*sin(sqrt(A))
+Candidates evaluated: 1
+
+# Analysis of Candidate 1
+
+## Ground Truth (GT)
+The GT expression is:
+$$\text{GT} = -0.3324 \cdot A^2 - 0.3324 \cdot A \cdot e^{-0.0707t} + 0.1365 \cdot \sin(\sqrt{A})$$
+
+This contains three basis functions:
+1. $A^2$ (power term)
+2. $A \cdot e^{-\alpha t}$ (exponential decay times concentration)
+3. $\sin(\sqrt{A})$ (sine of square root)
+
+## Candidate 1 Analysis
+
+The candidate implements:
+$$f(t, A) = -k_1 \cdot A^n + k_2 \cdot (k_3 - A)^m + k_4 + k_5 \cdot A \cdot e^{-|k_6| \cdot |t|}$$
+
+(Using the domain constraint that A ≥ 0 and t ≥ 0, so `np.abs(A)` → A and `np.abs(t)` → t, and `np.sign(A)` → 1.)
+
+This simplifies to:
+$$f(t, A) = -k_1 \cdot A^n + k_2 \cdot (k_3 - A)^m + k_4 + k_5 \cdot A \cdot e^{-k_6 t}$$
+
+### Matching term by term with GT:
+
+**Term 1: $-k_1 \cdot A^n$**
+Setting $n = 2$, $k_1 = 0.3324$: this gives $-0.3324 \cdot A^2$ ✓
+
+**Term 4: $k_5 \cdot A \cdot e^{-k_6 t}$**
+Setting $k_5 = -0.3324$, $k_6 = 0.0707$: this gives $-0.3324 \cdot A \cdot e^{-0.0707t}$ ✓
+
+**Remaining terms from candidate:** $k_2 \cdot (k_3 - A)^m + k_4$
+
+**Required remaining term from GT:** $0.1365 \cdot \sin(\sqrt{A})$
+
+### Can $k_2 \cdot (k_3 - A)^m + k_4$ equal $0.1365 \cdot \sin(\sqrt{A})$?
+
+The expression $(k_3 - A)^m$ is a power function. For any real value of $m$, $(k_3 - A)^m$ is a power/algebraic function. The function $\sin(\sqrt{A})$ is a transcendental function involving a trigonometric composition with a square root.
+
+By the principle of linear independence of basis functions, a power function $(k_3 - A)^m$ (which is algebraic for rational $m$, or a generalized power for irrational $m$) plus a constant $k_4$ **cannot** equal $\sin(\sqrt{A})$ for all values of $A$.
+
+More specifically:
+- $\sin(\sqrt{A})$ oscillates (though for $A \geq 0$, it oscillates as $A$ grows)
+- $(k_3 - A)^m + k_4$ is monotonic or has at most one turning point for any fixed $m$, and does not oscillate
+
+Even if we consider that in a restricted domain $A$ might be small, the Taylor expansion of $\sin(\sqrt{A}) = \sqrt{A} - \frac{A^{3/2}}{6} + \ldots$ involves half-integer powers, while $(k_3 - A)^m$ expanded around $A = 0$ gives $k_3^m - m k_3^{m-1} A + \ldots$, which for any single value of $m$ cannot reproduce the $\sqrt{A}$ leading term (unless $m = 1/2$ and $k_3 = 0$, giving $(-A)^{1/2}$ which is imaginary for $A > 0$).
+
+There is no way to make a power function equal a sine-of-square-root function across the domain. The candidate is **missing the $\sin(\sqrt{A})$ basis function**, and the available terms cannot substitute for it.
+
+Setting $k_2 = 0$ would eliminate the reverse reaction term, but then $k_4$ alone (a constant) cannot match $0.1365 \cdot \sin(\sqrt{A})$ which varies with $A$.
+
+## Conclusion
+
+The candidate lacks the $\sin(\sqrt{A})$ transcendental basis function present in the GT, and no combination of its available terms can reproduce it.
+
+[NO MATCH]
+
+Conclusion: No match
+============================================================

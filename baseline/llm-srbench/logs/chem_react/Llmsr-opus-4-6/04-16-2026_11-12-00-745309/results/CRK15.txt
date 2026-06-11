@@ -1,0 +1,59 @@
+
+============================================================
+GT Equivalence Verification (CRK15)
+============================================================
+GT: -c0*sqrt(A) - c1*A*exp(-c2*_s*t) + c3*_t*sin(log(A + c4))
+Candidates evaluated: 1
+
+# Analysis of Candidate 1
+
+## Ground Truth (GT) Formula
+
+The GT numerical expression is:
+$$f(t, A) = -0.1207\sqrt{A} - 0.1207 \cdot A \cdot e^{-0.0686t} + 0.8537 \cdot \sin(\log(A + 1))$$
+
+This contains three distinct basis functions:
+1. $\sqrt{A}$ — a square root term
+2. $A \cdot e^{-kt}$ — an exponential decay modulated by concentration
+3. $\sin(\log(A + 1))$ — a sine of logarithm composition
+
+## Candidate 1 Formula
+
+The candidate implements:
+$$f(t, A) = -k_1 \frac{A^{n_1}}{K_m + A^{n_1}} + k_2 \cdot \text{sign}(A_{eq} - A) \cdot |A_{eq} - A|^{n_2} + k_3 \cdot A \cdot e^{-|k_4| t}$$
+
+This contains three terms:
+1. **Saturating term:** $-k_1 \frac{A^{n_1}}{K_m + A^{n_1}}$ — a Michaelis-Menten/Hill-type rational function
+2. **Reverse term:** $k_2 \cdot \text{sign}(A_{eq} - A) \cdot |A_{eq} - A|^{n_2}$ — a power-law term
+3. **Time-dependent term:** $k_3 \cdot A \cdot e^{-|k_4| t}$ — exponential decay times concentration
+
+## Comparison
+
+### Term 3 (time-dependent): 
+The candidate has $k_3 \cdot A \cdot e^{-|k_4| t}$, which matches the GT's $-0.1207 \cdot A \cdot e^{-0.0686t}$ by setting $k_3 = -0.1207$ and $k_4 = 0.0686$. ✓
+
+### Term 1 (GT: $\sqrt{A}$):
+The candidate's saturating term is $-k_1 \frac{A^{n_1}}{K_m + A^{n_1}}$. This is a rational function of $A^{n_1}$. No matter what values we assign to $k_1$, $n_1$, and $K_m$, this is always a rational function — it can never equal $\sqrt{A}$ (which is an algebraic but non-rational function that grows unboundedly). The Michaelis-Menten term is bounded (approaches $k_1$ as $A \to \infty$), while $\sqrt{A} \to \infty$. So this term **cannot** reproduce $\sqrt{A}$.
+
+Could we try to use the reverse term to produce $\sqrt{A}$? If we set $n_2 = 0.5$ and $A_{eq} = 0$, we'd get $k_2 \cdot \text{sign}(-A) \cdot |A|^{0.5} = -k_2 \sqrt{A}$ (for $A > 0$). This could match $-0.1207\sqrt{A}$ with $k_2 = 0.1207$. ✓
+
+But then we've used the reverse term for $\sqrt{A}$, and we have no term left to produce $\sin(\log(A+1))$.
+
+### Term 2 (GT: $\sin(\log(A+1))$):
+The GT requires $\sin(\log(A+1))$, which is a transcendental oscillatory function. The candidate has:
+- A rational/Michaelis-Menten term (bounded, monotonic — cannot oscillate)
+- A power-law term (monotonic — cannot oscillate)
+- An exponential decay term (already matched)
+
+Neither the saturating term nor the power-law term can produce $\sin(\log(A+1))$. The sine function oscillates (albeit slowly in log-space), and no combination of rational functions and power laws can reproduce this behavior exactly.
+
+Even if we set the saturating term's coefficient $k_1 = 0$ (eliminating it), we still only have a power-law term and the exponential term — neither can produce $\sin(\log(A+1))$.
+
+## Conclusion
+
+The candidate lacks the necessary basis function $\sin(\log(A+1))$. Since trigonometric/oscillatory functions are linearly independent from rational functions and power laws, there is no assignment of constants that makes the candidate equivalent to the GT.
+
+[NO MATCH]
+
+Conclusion: No match
+============================================================

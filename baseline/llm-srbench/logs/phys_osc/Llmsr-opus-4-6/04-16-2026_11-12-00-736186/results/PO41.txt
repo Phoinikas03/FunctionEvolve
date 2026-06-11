@@ -1,0 +1,64 @@
+
+============================================================
+GT Equivalence Verification (PO41)
+============================================================
+GT: -mu*(c0 - x**c1)*v - omega0**c2*x*exp(-Abs(x))
+Candidates evaluated: 1
+
+# Analysis of Candidate 1
+
+## Ground Truth (GT)
+The GT expression is:
+$$f(x, v) = -0.493165631499977 \cdot v \cdot (1 - x^2) - 1.16769962902767 \cdot x \cdot \exp(-|x|)$$
+
+This expands to:
+$$f(x, v) = -0.493165631499977 \cdot v + 0.493165631499977 \cdot x^2 \cdot v - 1.16769962902767 \cdot x \cdot \exp(-|x|)$$
+
+The key basis functions in the GT are:
+1. $v$ (linear damping)
+2. $x^2 v$ (Van der Pol-type nonlinear damping)
+3. $x \cdot \exp(-|x|)$ (nonlinear restoring force with exponential decay and absolute value)
+
+## Candidate 1 Analysis
+
+The candidate implements:
+$$f(x, v) = p_0 x + p_1 x^3 + p_2 v + p_3 x^2 v + p_4 \frac{x}{1 + p_5^2 x^2} + p_6 v^3 + p_7 x^2 + p_8 x v + p_9$$
+
+The basis functions available are:
+1. $x$ (linear restoring)
+2. $x^3$ (cubic restoring)
+3. $v$ (linear damping) ✓
+4. $x^2 v$ (Van der Pol damping) ✓
+5. $\frac{x}{1 + p_5^2 x^2}$ (rational/saturating restoring force)
+6. $v^3$ (cubic velocity damping)
+7. $x^2$ (quadratic restoring)
+8. $xv$ (position-velocity coupling)
+9. constant bias
+
+## Key Question: Can $\frac{x}{1 + p_5^2 x^2}$ match $x \cdot \exp(-|x|)$?
+
+The function $x \cdot \exp(-|x|)$ is a specific transcendental function. The rational function $\frac{x}{1 + c x^2}$ is an algebraic function. These are fundamentally different classes of functions.
+
+Let me check: for $x \cdot \exp(-|x|)$ vs $\frac{x}{1 + cx^2}$:
+- At $x = 0$: both are 0 ✓
+- For small $x$: $x \exp(-|x|) \approx x - |x| \cdot x + \frac{x \cdot x^2}{2} - ...$, note the $|x| \cdot x$ term which equals $x^2 \text{sgn}(x)$
+- The rational function $\frac{x}{1+cx^2}$ is an odd function of $x$
+- However, $x \cdot \exp(-|x|)$ is also an odd function (since $(-x)\exp(-|-x|) = -x\exp(-|x|)$)
+
+Even though both are odd, they are not the same function. The rational function $\frac{x}{1+cx^2}$ decays as $1/x$ for large $|x|$, while $x\exp(-|x|)$ decays exponentially. More importantly, no polynomial or rational combination of $x$ can exactly equal $x \cdot \exp(-|x|)$ for all $x$, because $\exp(-|x|)$ is transcendental.
+
+Even with all the other terms ($x, x^3, x^2$, etc.) combined with the rational term, we cannot produce $x \cdot \exp(-|x|)$ exactly. The exponential function $\exp(-|x|)$ cannot be represented as a finite rational function or polynomial. These are linearly independent basis function classes.
+
+Additionally, even if we set $p_1 = p_6 = p_7 = p_8 = p_9 = 0$ to zero out the extra terms, we're left with:
+$$p_0 x + p_2 v + p_3 x^2 v + p_4 \frac{x}{1 + p_5^2 x^2}$$
+
+The terms $p_2 v$ and $p_3 x^2 v$ can match the GT's damping terms, but $p_0 x + p_4 \frac{x}{1+p_5^2 x^2}$ cannot exactly equal $-1.16769962902767 \cdot x \cdot \exp(-|x|)$ for all $x$.
+
+## Conclusion
+
+The candidate uses rational/polynomial basis functions to approximate what is fundamentally an exponential-decay nonlinearity. These are not mathematically equivalent — they belong to different function classes and cannot be made identical by any choice of constants.
+
+[NO MATCH]
+
+Conclusion: No match
+============================================================
